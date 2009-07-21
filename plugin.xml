@@ -1,15 +1,19 @@
 <plugin name='file-uploader' version='0.1' grailsVersion='1.2-M1 &gt; *'>
-  <author>Your name</author>
-  <title>Plugin summary/headline</title>
+  <author>Lucas Teixeira</author>
+  <authorEmail>lucastex@gmail.com</authorEmail>
+  <title>File Upload Grails Plugin</title>
   <description>\
-Brief description of the plugin.
+This plugin provides easy integration with your grails application
+to handle file uploading
 </description>
   <documentation>http://grails.org/plugin/file-uploader</documentation>
   <resources>
     <resource>DataSource</resource>
+    <resource>FileUploadConfig</resource>
     <resource>UrlMappings</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploadController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
+    <resource>FileUploaderTagLib</resource>
   </resources>
   <dependencies />
   <behavior />
