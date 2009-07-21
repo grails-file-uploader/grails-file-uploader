@@ -12,7 +12,7 @@ class UFile {
     static constraints = {
 		name(maxSize:255)
 		extension(blank:true)
-		size(min:0)
+		size(min:0L)
 		contentType()
 		stream()
 		dateUploaded()
