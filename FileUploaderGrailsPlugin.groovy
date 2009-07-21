@@ -11,15 +11,16 @@ class FileUploaderGrailsPlugin {
     ]
 
     // TODO Fill in these fields
-    def author = "Your name"
-    def authorEmail = ""
-    def title = "Plugin summary/headline"
+    def author = "Lucas Teixeira"
+    def authorEmail = "lucastex@gmail.com"
+    def title = "File Upload Grails Plugin"
     def description = '''\\
-Brief description of the plugin.
+This plugin provides easy integration with your grails application
+to handle file uploading
 '''
 
     // URL to the plugin's documentation
-    def documentation = "http://grails.org/FileUploader+Plugin"
+    def documentation = "http://grails.org/plugin/file-uploader"
 
     def doWithSpring = {
         // TODO Implement runtime spring config (optional)
