@@ -1,20 +1,22 @@
 package com.lucastex.grails.fileuploader
 
 class UFile {
-	
+
+	Long size
+	String path
 	String name
 	String extension
-	Long size
-	String contentType
-	byte[] stream
 	Date dateUploaded
+	String description
+	Integer downloads
 
     static constraints = {
-		name(maxSize:255)
-		extension(blank:true)
 		size(min:0L)
-		contentType()
-		stream()
+		path()
+		name()
+		extension()
 		dateUploaded()
+		description(nullable:true, blank:true)
+		downloads()
     }
 }

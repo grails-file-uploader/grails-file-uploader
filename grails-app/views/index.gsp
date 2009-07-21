@@ -5,10 +5,10 @@
 	<body>
 		<h3>File Uploader plugin</h3>
 		<br /><br />
-		<fileuploader:form 	upload="xpto" 
-							successAction="${action}"
-							successController="${controller}"
-							errorAction="${action}"
-							errorController="${controller}"/>
+		<fileuploader:form 	upload="avatar" 
+							successAction="successAction"
+							successController="successController"
+							errorAction="errorAction"
+							errorController="errorController"/>
 	</body>
 </html>

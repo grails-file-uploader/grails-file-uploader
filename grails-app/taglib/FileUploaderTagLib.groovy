@@ -6,26 +6,61 @@ class FileUploaderTagLib {
 	
 	def form = { attrs ->
 		
+		//checking required fields
 		if (!attrs.upload) {
 			def errorMsg = "'upload' attribute not found in file-uploader form tag."
 			log.error (errorMsg)
 			throw new GrailsTagException(errorMsg)
 		}
 		
+		if (!attrs.successAction) {
+			def errorMsg = "'successAction' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		if (!attrs.successController) {
+			def errorMsg = "'successController' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		if (!attrs.errorAction) {
+			def errorMsg = "'errorAction' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		if (!attrs.errorController) {
+			def errorMsg = "'errorController' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		//upload group
+		def upload = attrs.upload
+		
+		//case success
 		def successAction = attrs.successAction
 		def successController = attrs.successController
 		
+		//case error
 		def errorAction = attrs.errorAction
 		def errorController = attrs.errorController
 		
+		def tagBody = """
+			<input type='hidden' name='upload' value='${upload}' />
+			<input type='hidden' name='errorAction' value='${errorAction}' />
+			<input type='hidden' name='errorController' value='${errorController}' />
+			<input type='hidden' name='successAction' value='${successAction}' />
+			<input type='hidden' name='successController' value='${successController}' />
+			<input type='file' name='file' />
+			<input type='submit' name='submit' value='Submit' />
+		"""
+		
+		//form build
 		StringBuilder sb = new StringBuilder()
-		sb.append g.uploadForm(controller: 'fileUpload', action: 'process') {
-			g.hiddenField name: 'errorAction', value: errorAction
-			g.hiddenField name: 'errorController', value: errorController
-			g.hiddenField name: 'successAction', value: successAction
-			g.hiddenField name: 'errorController', value: errorController
-			
-		}
+		sb.append g.uploadForm([controller: 'fileUploader', action: 'process'], tagBody)
 		
 		out << sb.toString()
 		
