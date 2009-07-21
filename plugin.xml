@@ -4,10 +4,11 @@
   <description>\
 Brief description of the plugin.
 </description>
-  <documentation>http://grails.org/FileUploader+Plugin</documentation>
+  <documentation>http://grails.org/plugin/file-uploader</documentation>
   <resources>
     <resource>DataSource</resource>
     <resource>UrlMappings</resource>
+    <resource>com.lucastex.grails.fileuploader.FileUploadController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
   </resources>
   <dependencies />
