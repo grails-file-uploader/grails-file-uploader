@@ -14,7 +14,7 @@ class UFile {
 		extension(blank:true)
 		size(min:0)
 		contentType()
-		stream(maxSize: 1638400)
+		stream()
 		dateUploaded()
     }
 }
