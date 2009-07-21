@@ -1,1 +1,14 @@
 File uploader grails plugin.
+
+* Functionalities
+	* File Upload 
+	* Multiple file upload configuration
+	* Taglib to build the multipart form
+	* Extension-based restriction (per configuration)
+	* Max permitted file size (per configuration)
+
+* TODO
+	* Detailed Docs
+	* Release plugin in grails.org
+	* Mini tutorial
+	
