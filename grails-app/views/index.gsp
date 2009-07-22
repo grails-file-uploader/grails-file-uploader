@@ -10,5 +10,11 @@
 							successController="successController"
 							errorAction="errorAction"
 							errorController="errorController"/>
+		<br /><br />
+		<g:each in="${grailsApplication.domainClasses}" var="x">
+			<g:each in="${x.properties}" var="property">
+				${property} <br />
+			</g:each>
+		</g:each>		
 	</body>
 </html>

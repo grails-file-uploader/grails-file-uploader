@@ -10,10 +10,12 @@ class FileUploaderGrailsPlugin {
             "grails-app/views/error.gsp"
     ]
 
+	def loadAfter = ['hibernate']
+
     // TODO Fill in these fields
     def author = "Lucas Teixeira"
     def authorEmail = "lucastex@gmail.com"
-    def title = "File Upload Grails Plugin"
+    def title = "File Uploader Grails Plugin"
     def description = '''\\
 This plugin provides easy integration with your grails application
 to handle file uploading

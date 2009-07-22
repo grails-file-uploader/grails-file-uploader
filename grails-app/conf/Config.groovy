@@ -24,7 +24,7 @@ log4j = {
 
 fileuploader {
 	avatar {
-		maxSize = 16000
+		maxSize = 1600000
 		allowedExtensions = ["*"]
 		path = "/tmp/"
 	}

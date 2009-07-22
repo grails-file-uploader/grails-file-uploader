@@ -37,10 +37,7 @@ class FileUploaderController {
 		/***********************
 			check extensions
 		************************/
-		println "FILE NAME = ${file.originalFilename}"
 		def fileExtension = file.originalFilename.substring(file.originalFilename.lastIndexOf('.')+1)
-		println "FILE EXTENSION: ${fileExtension}"
-		println "ALLOWED FILE EXTENSIONS: ${config.allowedExtensions}"
 		if (!config.allowedExtensions[0].equals("*")) {
 			if (!config.allowedExtensions.contains(fileExtension)) {
 				log.debug "FileUploader plugin received a file with an unauthorized extension (${fileExtension}). Permitted extensions ${config.allowedExtensions}"
@@ -57,7 +54,7 @@ class FileUploaderController {
 		if (config.maxSize) { //if maxSize config exists
 			def maxSizeInKb = ((int) (config.maxSize/1024))
 			if (file.size > config.maxSize) { //if filesize is bigger than allowed
-				log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb}"
+				log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
 				flash.message = messageSource.getMessage("fileupload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], request.locale)
 				redirect controller: params.errorController, action: params.errorAction
 				return
@@ -74,9 +71,11 @@ class FileUploaderController {
 			log.error "FileUploader plugin couldn't create directories: [${path}]"
 		path = path+file.originalFilename
 		
+		//move file
 		log.debug "FileUploader plugin received a ${file.size}b file. Moving to ${path}"
 		file.transferTo(new File(path))
 		
+		//save it on the database
 		def ufile = new UFile()
 		ufile.name = file.name
 		ufile.size = file.size
@@ -86,7 +85,9 @@ class FileUploaderController {
 		ufile.downloads = 0
 		ufile.save()
 		
-		redirect controller: params.successController, action: params.successAction
+		render UFile.count()
+		
+//		redirect controller: params.successController, action: params.successAction
 	}
 
 }

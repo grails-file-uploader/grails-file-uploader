@@ -6,6 +6,7 @@ File uploader grails plugin.
 	* Taglib to build the multipart form
 	* Extension-based restriction (per configuration)
 	* Max permitted file size (per configuration)
+	* i18n error messages
 
 * TODO
 	* Views and service
