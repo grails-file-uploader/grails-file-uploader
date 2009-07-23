@@ -4,7 +4,7 @@ class FileUploaderGrailsPlugin {
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.2-M1 > *"
     // the other plugins this plugin depends on
-    def dependsOn = [:]
+    def dependsOn = ["hibernate":"1.1 > *"]
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
             "grails-app/views/error.gsp"
@@ -24,9 +24,9 @@ to handle file uploading
     // URL to the plugin's documentation
     def documentation = "http://grails.org/plugin/file-uploader"
 
-    def doWithSpring = {
-        // TODO Implement runtime spring config (optional)
-    }
+	def doWithSpring = {
+		// TODO Implement runtime spring config (optional)
+	}
 
     def doWithApplicationContext = { applicationContext ->
         // TODO Implement post initialization spring config (optional)
