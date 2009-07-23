@@ -10,11 +10,10 @@
 							successController="successController"
 							errorAction="errorAction"
 							errorController="errorController"/>
+							
 		<br /><br />
-		<g:each in="${grailsApplication.domainClasses}" var="x">
-			<g:each in="${x.properties}" var="property">
-				${property} <br />
-			</g:each>
-		</g:each>		
+		<fileuploader:download 	id="1"
+								errorAction="errorAction"
+								errorController="errorController">download</fileuploader:download>
 	</body>
 </html>
