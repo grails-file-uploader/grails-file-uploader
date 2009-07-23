@@ -29,7 +29,7 @@ class FileUploaderController {
 		**************************/
 		if (file.size == 0) {
 			log.debug "FileUploader pluging received no file to upload. Rejecting request."
-			flash.message = messageSource.getMessage("fileupload.nofile", null, request.locale)
+			flash.message = messageSource.getMessage("fileupload.upload.nofile", null, request.locale)
 			redirect controller: params.errorController, action: params.errorAction
 			return
 		}
@@ -41,7 +41,7 @@ class FileUploaderController {
 		if (!config.allowedExtensions[0].equals("*")) {
 			if (!config.allowedExtensions.contains(fileExtension)) {
 				log.debug "FileUploader plugin received a file with an unauthorized extension (${fileExtension}). Permitted extensions ${config.allowedExtensions}"
-				flash.message = messageSource.getMessage("fileupload.unauthorizedExtension", [fileExtension] as Object[], request.locale)
+				flash.message = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension] as Object[], request.locale)
 				redirect controller: params.errorController, action: params.errorAction
 				return
 			}
@@ -55,7 +55,7 @@ class FileUploaderController {
 			def maxSizeInKb = ((int) (config.maxSize/1024))
 			if (file.size > config.maxSize) { //if filesize is bigger than allowed
 				log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
-				flash.message = messageSource.getMessage("fileupload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], request.locale)
+				flash.message = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], request.locale)
 				redirect controller: params.errorController, action: params.errorAction
 				return
 			}
@@ -85,9 +85,7 @@ class FileUploaderController {
 		ufile.downloads = 0
 		ufile.save()
 		
-		render UFile.count()
-		
-//		redirect controller: params.successController, action: params.successAction
+		redirect controller: params.successController, action: params.successAction
 	}
 
 }
