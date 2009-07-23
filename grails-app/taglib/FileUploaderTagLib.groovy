@@ -4,6 +4,34 @@ class FileUploaderTagLib {
 	
 	static namespace = 'fileuploader'
 	
+	def download = { attrs, body ->
+		
+		//checking required fields
+		if (!attrs.id) {
+			def errorMsg = "'id' attribute not found in file-uploader download tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+				
+		if (!attrs.errorAction) {
+			def errorMsg = "'errorAction' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		if (!attrs.errorController) {
+			def errorMsg = "'errorController' attribute not found in file-uploader form tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		params.errorAction = attrs.errorAction
+		params.errorController = attrs.errorController
+		
+		out << g.link([controller: "download", action: "index", params: params, id: attrs.id], body)
+		
+	}
+	
 	def form = { attrs ->
 		
 		//checking required fields
