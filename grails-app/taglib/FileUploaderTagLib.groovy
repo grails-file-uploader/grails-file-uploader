@@ -24,7 +24,7 @@ class FileUploaderTagLib {
 			log.error (errorMsg)
 			throw new GrailsTagException(errorMsg)
 		}
-		
+	
 		params.errorAction = attrs.errorAction
 		params.errorController = attrs.errorController
 		

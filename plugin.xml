@@ -11,6 +11,7 @@ to handle file uploading
     <resource>Config</resource>
     <resource>DataSource</resource>
     <resource>UrlMappings</resource>
+    <resource>TestController</resource>
     <resource>com.lucastex.grails.fileuploader.DownloadController</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>

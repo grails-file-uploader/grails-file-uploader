@@ -7,7 +7,6 @@ class UFile {
 	String name
 	String extension
 	Date dateUploaded
-	String description
 	Integer downloads
 
     static constraints = {
@@ -16,7 +15,6 @@ class UFile {
 		name()
 		extension()
 		dateUploaded()
-		description(nullable:true, blank:true)
 		downloads()
     }
 }

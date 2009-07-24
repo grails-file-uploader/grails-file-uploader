@@ -28,8 +28,9 @@ class FileUploaderController {
 			check if file exists
 		**************************/
 		if (file.size == 0) {
-			log.debug "FileUploader pluging received no file to upload. Rejecting request."
-			flash.message = messageSource.getMessage("fileupload.upload.nofile", null, request.locale)
+			def msg = messageSource.getMessage("fileupload.upload.nofile", null, request.locale)
+			log.debug msg
+			flash.message = msg
 			redirect controller: params.errorController, action: params.errorAction
 			return
 		}
@@ -40,8 +41,9 @@ class FileUploaderController {
 		def fileExtension = file.originalFilename.substring(file.originalFilename.lastIndexOf('.')+1)
 		if (!config.allowedExtensions[0].equals("*")) {
 			if (!config.allowedExtensions.contains(fileExtension)) {
-				log.debug "FileUploader plugin received a file with an unauthorized extension (${fileExtension}). Permitted extensions ${config.allowedExtensions}"
-				flash.message = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension] as Object[], request.locale)
+				def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], request.locale)
+				log.debug msg
+				flash.message = msg
 				redirect controller: params.errorController, action: params.errorAction
 				return
 			}
@@ -77,7 +79,7 @@ class FileUploaderController {
 		
 		//save it on the database
 		def ufile = new UFile()
-		ufile.name = file.name
+		ufile.name = file.originalFilename
 		ufile.size = file.size
 		ufile.extension = fileExtension
 		ufile.dateUploaded = new Date(currentTime)

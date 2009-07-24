@@ -10,12 +10,11 @@ File uploader grails plugin.
 	* Max permitted file size (per configuration)
 	* i18n error messages
 	* Download Action (with counter)	
+	* Taglib to create download link	
 
 * TODO
-	* Views and service
-	* Taglib to create download link
-	* Description for each uploaded file
 	* Detailed Docs
 	* Release plugin in grails.org
+	* Views and service	
 	* Mini tutorial
 	* Log all downloads (ip, date)
