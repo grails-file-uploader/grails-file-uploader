@@ -13,6 +13,7 @@ File uploader grails plugin.
 	* Taglib to create download link	
 
 * TODO
+	* Delete file fisically when domain instance is deleted
 	* Detailed Docs
 	* Put docs into grails.org
 	* Views and service	
