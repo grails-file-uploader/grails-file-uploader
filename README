@@ -18,3 +18,4 @@ File uploader grails plugin.
 	* Views and service	
 	* Mini tutorial
 	* Log all downloads (ip, date)
+	* Write some tests

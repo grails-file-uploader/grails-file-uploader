@@ -91,14 +91,6 @@ class FileUploaderTagLib {
 		sb.append g.uploadForm([controller: 'fileUploader', action: 'process'], tagBody)
 		
 		out << sb.toString()
-		
-		//if (!attrs.controller)
-		//	throw new GrailsTagException("'controller' attribute not found in file-uploader form tag")
-		//	
-		//if (!attrs.action)
-		//	throw new GrailsTagException("'action' attribute not found in file-uploader form tag")
-		
-		
 	}
 
 }

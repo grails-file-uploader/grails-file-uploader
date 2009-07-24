@@ -8,10 +8,8 @@ to handle file uploading
 </description>
   <documentation>http://grails.org/plugin/file-uploader</documentation>
   <resources>
-    <resource>Config</resource>
     <resource>DataSource</resource>
     <resource>UrlMappings</resource>
-    <resource>TestController</resource>
     <resource>com.lucastex.grails.fileuploader.DownloadController</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
