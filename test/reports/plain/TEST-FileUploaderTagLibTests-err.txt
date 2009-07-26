@@ -1,0 +1,5 @@
+--Output from testPrettySizeBytes--
+--Output from testPrettySize1KByte--
+--Output from testPrettySize16KBytes--
+--Output from testPrettySize18MBytes--
+--Output from testPrettySize2_5GBytes--

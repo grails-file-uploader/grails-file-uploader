@@ -1,0 +1,22 @@
+Testsuite: FileUploaderTagLibTests
+Tests run: 5, Failures: 0, Errors: 0, Time elapsed: 0.714 sec
+------------- Standard Output ---------------
+--Output from testPrettySizeBytes--
+--Output from testPrettySize1KByte--
+--Output from testPrettySize16KBytes--
+--Output from testPrettySize18MBytes--
+--Output from testPrettySize2_5GBytes--
+------------- ---------------- ---------------
+------------- Standard Error -----------------
+--Output from testPrettySizeBytes--
+--Output from testPrettySize1KByte--
+--Output from testPrettySize16KBytes--
+--Output from testPrettySize18MBytes--
+--Output from testPrettySize2_5GBytes--
+------------- ---------------- ---------------
+
+Testcase: testPrettySizeBytes took 0.681 sec
+Testcase: testPrettySize1KByte took 0.008 sec
+Testcase: testPrettySize16KBytes took 0.006 sec
+Testcase: testPrettySize18MBytes took 0.008 sec
+Testcase: testPrettySize2_5GBytes took 0.01 sec
