@@ -4,6 +4,11 @@ class FileUploaderTagLib {
 	
 	static namespace = 'fileuploader'
 	
+	static Long _byte  = 1
+	static Long _kbyte = 1	*	1000
+	static Long _mbyte = 1 	* 	1000	*	1024
+	static Long _gbyte = 1	*	1000	*	1024	*	1024
+	
 	def download = { attrs, body ->
 		
 		//checking required fields
@@ -92,5 +97,36 @@ class FileUploaderTagLib {
 		
 		out << sb.toString()
 	}
+	
+	def prettysize = { attrs ->
+		
+		if (!attrs.size) {
+			def errorMsg = "'size' attribute not found in file-uploader preetysize tag."
+			log.error (errorMsg)
+			throw new GrailsTagException(errorMsg)
+		}
+		
+		def size = attrs.size
+		def sb = new StringBuilder()
+		if (size >= _byte && size < _kbyte) {
+			sb.append(size).append("b")
+		} else if (size >= _kbyte && size < _mbyte) {
+			size = size / _kbyte
+			sb.append(size).append("kb")
+		} else if (size >= _mbyte && size < _gbyte) {
+			size = size / _mbyte
+			sb.append(size).append("mb")
+		} else if (size >= _gbyte) {
+			size = size / _gbyte
+			sb.append(size).append("gb")
+		}
+		out << sb.toString()
+	}
 
 }
+/*
+(0 - 1000) size = bytes
+(1000 - 1000*1024) size / 1000 = kbytes
+(1000*1024 - 1000*1024*1024) size / (1000 * 1024) = mbytes
+(else) size / (1000 * 1024 * 1024) = gbytes
+*/
