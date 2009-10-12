@@ -22,7 +22,7 @@ class DownloadController {
 			ufile.save()
 			response.setContentType("application/octet-stream")
 			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${file.name}")
-			response.outputStream << file.text
+			response.outputStream << file.readBytes()
 			return
 		} else {
 			def msg = messageSource.getMessage("fileupload.download.filenotfound", [ufile.name] as Object[], request.locale)
