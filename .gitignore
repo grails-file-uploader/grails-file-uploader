@@ -1,1 +1,27 @@
-stacktrace.log
+.* # Ignore all dotfiles...
+.classpath
+.project
+!.gitignore # except for .gitignore
+!.settings
+
+#ignoro la carpeta target
+target/*
+target/**/*
+
+#ignoro archivos de intellij idea
+*.iml
+*.ipr
+*.iws
+.idea/*
+.idea/**/*
+
+#ignoro logs
+*.log
+
+#ignoro css, images y js
+web-app/css/*
+web-app/css/**/*
+web-app/js/*
+web-app/js/**/*
+web-app/images/*
+web-app/images/**/*
