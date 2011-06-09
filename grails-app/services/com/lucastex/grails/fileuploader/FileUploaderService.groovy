@@ -70,4 +70,23 @@ class FileUploaderService {
 
     return ufile.save()
   }
+  
+  def boolean deleteFile(def idUfile) {
+    def borro = false;
+    def ufile = UFile.get(idUfile)
+      if (!ufile) {
+        log.error "could not delete file: ${file}"
+        return;
+      }
+    def file = new File(ufile.path)
+    if (file.exists()) {
+      if (file.delete()) {
+        log.debug "file [${ufile.path}] deleted"
+        borro=true;
+      } else {
+       log.error "could not delete file: ${file}"
+      }
+    }
+    return borro;
+    }
 }

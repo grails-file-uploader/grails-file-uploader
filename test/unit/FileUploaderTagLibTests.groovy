@@ -1,5 +1,5 @@
 import grails.test.*
-import com.lucastex.grails.fileuploader.DownloadControllerTests
+import com.lucastex.grails.fileuploader.DownloadController
 
 class FileUploaderTagLibTests extends TagLibUnitTestCase {
 	

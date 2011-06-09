@@ -93,7 +93,7 @@ class FileUploaderTagLib {
 		
 		//form build
 		StringBuilder sb = new StringBuilder()
-		sb.append g.uploadForm([controller: 'fileUploader', action: 'process'], tagBody)
+		sb.append g.uploadForm([controller: 'fileUploader', action: 'process', id:attrs.id], tagBody)
 		
 		out << sb.toString()
 	}
