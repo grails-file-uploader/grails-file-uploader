@@ -87,7 +87,7 @@ class FileUploaderController {
 		ufile.downloads = 0
 		ufile.save()
 		
-		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id]
+		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id,successParams:params.successParams]
 	}
 
 }
