@@ -1,4 +1,5 @@
 import org.codehaus.groovy.grails.web.taglib.exceptions.GrailsTagException
+import grails.converters.JSON
 
 class FileUploaderTagLib {
 	
@@ -90,6 +91,16 @@ class FileUploaderTagLib {
 			<input type='file' name='file' />
 			<input type='submit' name='submit' value='Submit' />
 		"""
+
+                if(attrs.successParams) {
+                    def paramMap = JSON.parse(attrs.successParams);
+                    paramMap.each { key,value ->
+                        tagBody +=
+                            """<input type='hidden' name='${key}' 
+                            value='${value}' />
+                            """;
+                    }    
+                }
 		
 		//form build
 		StringBuilder sb = new StringBuilder()
