@@ -90,6 +90,11 @@ class FileUploaderTagLib {
 			<input type='file' name='file' />
 			<input type='submit' name='submit' value='Submit' />
 		"""
+                //optional parameters for success action
+                if(attrs.successParams) {
+                    tagBody += """<input type='hidden' name='successParams' 
+                        value='${attrs.successParams}' />"""
+                }
 		
 		//form build
 		StringBuilder sb = new StringBuilder()
