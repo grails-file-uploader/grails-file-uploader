@@ -31,7 +31,7 @@ class FileUploaderController {
 			def msg = messageSource.getMessage("fileupload.upload.nofile", null, request.locale)
 			log.debug msg
 			flash.message = msg
-			redirect controller: params.errorController, action: params.errorAction
+			redirect controller: params.errorController, action: params.errorAction, id: params.id
 			return
 		}
 		
@@ -44,7 +44,7 @@ class FileUploaderController {
 				def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], request.locale)
 				log.debug msg
 				flash.message = msg
-				redirect controller: params.errorController, action: params.errorAction
+				redirect controller: params.errorController, action: params.errorAction, id: params.id
 				return
 			}
 		}
@@ -58,7 +58,7 @@ class FileUploaderController {
 			if (file.size > config.maxSize) { //if filesize is bigger than allowed
 				log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
 				flash.message = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], request.locale)
-				redirect controller: params.errorController, action: params.errorAction
+				redirect controller: params.errorController, action: params.errorAction, id: params.id
 				return
 			}
 		} 
@@ -87,7 +87,25 @@ class FileUploaderController {
 		ufile.downloads = 0
 		ufile.save()
 		
-		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id]
+		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id, id: params.id]
+	}
+    
+    def show={
+			def ufile = UFile.get(params.int("id"))
+            println "aaa--------------------------------------------------------"+ufile
+	        if (!ufile) {
+	          response.sendError(404)
+	          return;
+	        }
+			def file = new File(ufile.path)
+			if (file.exists()) {
+				response.setContentType("image/"+ufile.extension)
+		        response.setContentLength(ufile.size.toInteger())
+		        OutputStream out = response.getOutputStream();
+				out.write(file.bytes)
+		        out.close();
+			}
+	
 	}
 
 }
