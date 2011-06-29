@@ -8,11 +8,11 @@ to handle file uploading with multiple configuration.
 </description>
   <documentation>http://grails.org/plugin/file-uploader</documentation>
   <resources>
-    <resource>DataSource</resource>
     <resource>UrlMappings</resource>
     <resource>com.lucastex.grails.fileuploader.DownloadController</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
+    <resource>com.lucastex.grails.fileuploader.FileUploaderService</resource>
     <resource>FileUploaderTagLib</resource>
   </resources>
   <dependencies>
