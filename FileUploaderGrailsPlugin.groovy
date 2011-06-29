@@ -12,8 +12,8 @@ class FileUploaderGrailsPlugin {
 	def loadAfter = ['hibernate']
 
     // TODO Fill in these fields
-    def author = "Lucas Teixeira"
-    def authorEmail = "lucastex@gmail.com"
+    def author = "Federico Hofman"
+    def authorEmail = "fhofman@gmail.com"
     def title = "File Uploader Grails Plugin"
     def description = '''\\
 This plugin provides easy integration with your grails application
