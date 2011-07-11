@@ -75,7 +75,7 @@ class FileUploaderService {
     def borro = false;
     def ufile = UFile.get(idUfile)
       if (!ufile) {
-        log.error "could not delete file: ${file}"
+        log.error "could not find file with ID: ${idUfile}"
         return;
       }
     def file = new File(ufile.path)
