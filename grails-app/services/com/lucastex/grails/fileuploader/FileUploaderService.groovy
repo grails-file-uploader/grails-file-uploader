@@ -50,9 +50,10 @@ class FileUploaderService {
       path = path + "/"
 
     //sets new path
-    path = path + group + "/"
+    def currentTime = System.currentTimeMillis()
+    path = path+currentTime+"/"
     if (!new File(path).mkdirs())
-      log.info "FileUploader plugin couldn't create directories: [${path}]"
+            log.error "FileUploader plugin couldn't create directories: [${path}]"
     path = path + name + "." + fileExtension
 
     //move file
