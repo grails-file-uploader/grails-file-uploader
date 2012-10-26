@@ -87,12 +87,11 @@ class FileUploaderController {
 		ufile.downloads = 0
 		ufile.save()
 		
-		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id,successParams:params.successParams]
+		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id, id: params.id,successParams:params.successParams]
 	}
     
     def show={
 			def ufile = UFile.get(params.int("id"))
-            println "aaa--------------------------------------------------------"+ufile
 	        if (!ufile) {
 	          response.sendError(404)
 	          return;
@@ -100,7 +99,7 @@ class FileUploaderController {
 			def file = new File(ufile.path)
 			if (file.exists()) {
 				response.setContentType("image/"+ufile.extension)
-		        response.setContentLength(ufile.size.toInteger())
+		        response.setContentLength(file.size().toInteger())
 		        OutputStream out = response.getOutputStream();
 				out.write(file.bytes)
 		        out.close();
