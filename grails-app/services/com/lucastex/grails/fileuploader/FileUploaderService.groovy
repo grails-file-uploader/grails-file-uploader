@@ -2,6 +2,7 @@ package com.lucastex.grails.fileuploader
 
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.web.multipart.MultipartFile
+import java.nio.channels.FileChannel
 
 class FileUploaderService {
 
@@ -94,8 +95,8 @@ class FileUploaderService {
     ufile.dateUploaded = new Date()
     ufile.path = path
     ufile.downloads = 0
-
-    return ufile.save()
+    ufile.save()
+    return ufile
   }
   
   def boolean deleteFile(def idUfile) {
@@ -118,4 +119,48 @@ class FileUploaderService {
     }
     return borro;
     }
+  
+  /**
+   * Method to create a duplicate of an existing UFile
+   * @param group
+   * @param uFile
+   * @param name
+   * @param locale
+   * @return
+   * @throws FileUploaderServiceException
+   * @throws IOException
+   */
+  def UFile cloneFile(String group,UFile uFile, String name, Locale locale)
+      throws FileUploaderServiceException,IOException {
+      println("=====================Filename: ${name}")
+      def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+      new File(tempDirectory).mkdirs()
+      def tempFile = "${tempDirectory}/${uFile.name}.${uFile.extension}"
+      def destFile = new File(tempFile)
+      def sourceFile = new File(uFile.path)
+      if(!destFile.exists()) {
+          destFile.createNewFile();
+      }
+      
+      FileChannel source = null;
+      FileChannel destination = null;
+  
+      try {
+          source = new FileInputStream(sourceFile).getChannel();
+          destination = new FileOutputStream(destFile).getChannel();
+          destination.transferFrom(source, 0, source.size());
+      }
+      finally {
+          if(source != null) {
+              source.close();
+          }
+          if(destination != null) {
+              destination.close();
+          }
+          
+          if(destFile.exists()) {
+              return this.saveFile(group, destFile,name, locale)
+          }
+      }
+  }
 }
