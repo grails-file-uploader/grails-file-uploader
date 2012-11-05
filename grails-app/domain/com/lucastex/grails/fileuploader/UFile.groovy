@@ -24,10 +24,10 @@ class UFile {
 			if (f.delete()) {
 				log.debug "file [${path}] deleted"
 			} else {
-				log.error "could not delete file: ${file}"
+				log.error "could not delete file: ${f}"
 			}
 		} catch (Exception exp) {
-			log.error "Error deleting file: ${e.message}"
+			log.error "Error deleting file: ${exp.message}"
 			log.error exp
 		}
 	}
