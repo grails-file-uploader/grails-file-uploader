@@ -132,14 +132,13 @@ class FileUploaderService {
    */
   def UFile cloneFile(String group,UFile uFile, String name, Locale locale)
       throws FileUploaderServiceException,IOException {
-      println("=====================Filename: ${name}")
-      def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
-      new File(tempDirectory).mkdirs()
-      def tempFile = "${tempDirectory}/${uFile.name}.${uFile.extension}"
-      def destFile = new File(tempFile)
-      def sourceFile = new File(uFile.path)
-      if(!destFile.exists()) {
-          destFile.createNewFile();
+          def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+          new File(tempDirectory).mkdirs()
+          def tempFile = "${tempDirectory}/${uFile.name}.${uFile.extension}"
+          def destFile = new File(tempFile)
+          def sourceFile = new File(uFile.path)
+          if(!destFile.exists()) {
+              destFile.createNewFile();
       }
       
       FileChannel source = null;
