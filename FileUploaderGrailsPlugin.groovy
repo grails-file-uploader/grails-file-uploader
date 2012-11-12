@@ -7,6 +7,7 @@ class FileUploaderGrailsPlugin {
     def dependsOn = ["hibernate":"1.1 > *"]
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
+            "grails-app/views/error.gsp"
     ]
 
 	def loadAfter = ['hibernate']
