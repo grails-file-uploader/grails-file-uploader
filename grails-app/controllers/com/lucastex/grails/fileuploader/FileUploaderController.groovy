@@ -91,20 +91,24 @@ class FileUploaderController {
 	}
     
     def show={
-			def ufile = UFile.get(params.int("id"))
-	        if (!ufile) {
-	          response.sendError(404)
-	          return;
-	        }
-			def file = new File(ufile.path)
-			if (file.exists()) {
-				response.setContentType("image/"+ufile.extension)
-		        response.setContentLength(file.size().toInteger())
-		        OutputStream out = response.getOutputStream();
-				out.write(file.bytes)
-		        out.close();
-			}
-	
+        def ufile = UFile.get(params.int("id"))
+	if (!ufile) {
+	    response.sendError(404)
+	    return;
+        }
+        def file = new File(ufile.path)
+        if (file.exists()) {
+            response.setContentType("image/"+ufile.extension)
+	    response.setContentLength(file.size().toInteger())
+	    OutputStream out
+            try {
+                out = response.getOutputStream()
+                out?.write(file.bytes)
+            } finally {
+                out?.close()
+            }
 	}
+	
+    }
 
 }
