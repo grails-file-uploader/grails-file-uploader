@@ -53,10 +53,10 @@ class FileUploaderController {
 				return
 			}
 			
-			log.debug "Serving file id=[${ufile.id}] for the ${ufile.downloads} to ${request.remoteAddr}"
+			log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
 			
 			response.setContentType("application/octet-stream")  // :TODO setting the content type could be improved
-			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${file.name}")
+			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
 			response.outputStream << file.readBytes()
 	
 			return
