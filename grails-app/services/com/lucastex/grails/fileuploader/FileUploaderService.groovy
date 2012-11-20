@@ -86,13 +86,32 @@ class FileUploaderService {
 		if (!path.endsWith('/'))
 			path = path + "/"
 
-		//sets new path
-		def currentTime = System.currentTimeMillis()
-		path = path+currentTime+"/"
-		if (!new File(path).mkdirs()){
-			log.error "FileUploader plugin couldn't create directories: [${path}]"
+		//setup storage path
+		def storageTypes = config.storageTypes
+	
+		if(storageTypes?.contains('monthSubdirs')){  //subdirectories by month and year
+			Calendar cal = Calendar.getInstance()
+			path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
+		}else{  //subdirectories by millisecond
+			long currentTime = System.currentTimeMillis()
+			path = path + currentTime + "/"
 		}
-		path = path + (name ? (name + "." + fileExtension) : fileName) 
+		
+		//make sure the directory exists
+		if(! new File(path).exists() ){
+			if (!new File(path).mkdirs()){
+				log.error "FileUploader plugin couldn't create directories: [${path}]"
+			}else{
+				log.debug "Created plugin storage directory [${path}]"
+			}
+		}
+		
+		//If using the uuid storage type
+		if(storageTypes?.contains('uuid')){
+			path = path + UUID.randomUUID().toString()
+		}else{  //note:  this type of storage is a bit of a security / data loss risk.
+			path = path + (name ? (name + "." + fileExtension) : fileName)
+		}
 		
 		//move file
 		log.debug "FileUploader plugin received a ${fileSize} file. Moving to ${path}"
