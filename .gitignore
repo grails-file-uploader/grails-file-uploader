@@ -2,11 +2,13 @@
 .classpath
 .project
 !.gitignore # except for .gitignore
-!.settings
+.settings
+
+*.tmproj
 
 #ignoro la carpeta target
 target/*
-target/**/*
+target-eclipse/*
 
 #ignoro archivos de intellij idea
 *.iml
@@ -25,3 +27,6 @@ web-app/js/*
 web-app/js/**/*
 web-app/images/*
 web-app/images/**/*
+
+grails-file-uploader-*.zip
+grails-file-uploader-*.zip.sha1
