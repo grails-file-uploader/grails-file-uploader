@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+
 class UFile {
 
     Long size
@@ -8,7 +9,7 @@ class UFile {
     String extension
     Date dateUploaded
     Integer downloads
-
+	
     static constraints = {
         size(min:0L)
         path()
@@ -34,14 +35,4 @@ class UFile {
             log.error "Error deleting ufile: ${exp}"
         }
     }
-	
-	transient File getFile(){
-		File file = new File(path)
-		
-		if(file.exists()){
-			return file
-		}else{
-			throw new IOException("${id} ufile exists, but path to underlying file is invalid")
-		}
-	}
 }
