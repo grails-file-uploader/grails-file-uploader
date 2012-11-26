@@ -1,12 +1,11 @@
 package com.lucastex.grails.fileuploader
 
-import java.io.File;
+import groovy.io.FileType
+
 import java.nio.channels.FileChannel
-import java.util.Locale;
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.context.MessageSource
-import org.springframework.web.multipart.MultipartFile
 
 class FileUploaderService {
 
@@ -141,17 +140,30 @@ class FileUploaderService {
 				return;
 			}
 		File file = new File(ufile.path)
+		
+		try{
+			ufile.delete()
+			borro=true;
+		}catch(Exception e){
+			log.error("could not delete ufile: ${idUfile}", e)
+		}
+		
 		if(file.exists()) {
+			File timestampFolder = file.parentFile
+			
 			if (file.delete()) {
 				log.debug "file [${ufile.path}] deleted"
-				String timestampFolder = ufile.path.substring(0,ufile.path.lastIndexOf("/"))
-				new File(timestampFolder).delete()
-				try{
-					ufile.delete()
-					borro=true;
-				}catch(Exception e){
-					log.error("could not delete ufile: ${idUfile}", e)
+				
+				int numFilesInParentFolder = 0
+				timestampFolder.eachFile(FileType.FILES) {
+					numFilesInParentFolder++
 				}
+				if(numFilesInParentFolder==0){
+					timestampFolder.delete()
+				}else{
+					log.debug("not deleting ${timestampFolder} as it contains files")
+				}
+				
 			}else {
 				log.error "could not delete file: ${file}"
 			}
