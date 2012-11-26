@@ -134,21 +134,26 @@ class FileUploaderService {
 
 	
 	boolean deleteFile(Serializable idUfile) {
-		def borro = false;
-		def ufile = UFile.get(idUfile)
+		boolean borro = false;
+		UFile ufile = UFile.get(idUfile)
 			if (!ufile) {
 				log.error "could not delete file: ${ufile?.path}"
 				return;
 			}
-		def file = new File(ufile.path)
-		if (file.exists()) {
+		File file = new File(ufile.path)
+		if(file.exists()) {
 			if (file.delete()) {
 				log.debug "file [${ufile.path}] deleted"
-				def timestampFolder = ufile.path.substring(0,ufile.path.lastIndexOf("/"))
+				String timestampFolder = ufile.path.substring(0,ufile.path.lastIndexOf("/"))
 				new File(timestampFolder).delete()
-				borro=true;
-			} else {
-			 log.error "could not delete file: ${file}"
+				try{
+					ufile.delete()
+					borro=true;
+				}catch(Exception e){
+					log.error("could not delete ufile: ${idUfile}", e)
+				}
+			}else {
+				log.error "could not delete file: ${file}"
 			}
 		}
 		return borro;
