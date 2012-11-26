@@ -44,26 +44,31 @@ class FileUploaderController {
 				
 			}catch(FileNotFoundException fnfe){
 				log.debug fnfe.message
-				fileRetrievalFailed(fnfe.message)
+				flash.message = fnfe.message
+				redirect controller: params.errorController, action: params.errorAction
 				return
 				
 			}catch(IOException ioe){
 				log.error ioe.message
-				fileRetrievalFailed(ioe.message)
+				flash.message = ioe.message
+				redirect controller: params.errorController, action: params.errorAction
 				return
 			}
 			
 			log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
 			
-			response.setContentType("application/octet-stream")  // :TODO setting the content type could be improved
+			response.setContentType("application/octet-stream")
 			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
 			response.outputStream << file.readBytes()
 	
 			return
 		}
-		
-		private fileRetrievalFailed(String message){
-			flash.message = message
-			redirect controller: params.errorController, action: params.errorAction
+	
+	def deleteFile() {
+		if(fileUploaderService.deleteFile(params.id)){
+			redirect controller: params.successController, action: params.successAction, params:(params.successParams)
+		}else{
+			redirect controller: params.errorController, action: params.errorAction, params:(params.errorParams)
 		}
+	}
 }
