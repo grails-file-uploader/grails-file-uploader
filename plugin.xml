@@ -1,21 +1,34 @@
-<plugin name='file-uploader' version='1.2.1' grailsVersion='1.2-M1 &gt; *'>
+<plugin name='file-uploader' version='2.0.11' grailsVersion='2.1 &gt; *'>
   <author>Federico Hofman</author>
   <authorEmail>fhofman@gmail.com</authorEmail>
   <title>File Uploader Grails Plugin</title>
   <description>\
 This plugin provides easy integration with your grails application
 to handle file uploading with multiple configuration.
+
+This is a heavily modified version with updates from visheshd and danieldbower"
 </description>
   <documentation>http://grails.org/plugin/file-uploader</documentation>
+  <type>FileUploaderGrailsPlugin</type>
   <resources>
-    <resource>com.lucastex.grails.fileuploader.DownloadController</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderService</resource>
     <resource>FileUploaderTagLib</resource>
   </resources>
-  <dependencies>
-    <plugin name='hibernate' version='1.1 &gt; *' />
-  </dependencies>
+  <repositories>
+    <repository name='grailsCentral' url='http://grails.org/plugins' />
+    <repository name='http://repo.grails.org/grails/core' url='http://repo.grails.org/grails/core/' />
+    <repository name='mavenCentral' url='http://repo1.maven.org/maven2/' />
+  </repositories>
+  <dependencies />
+  <plugins>
+    <build>
+      <plugin group='org.grails.plugins' name='release' version='2.0.3' />
+    </build>
+  </plugins>
+  <runtimePluginRequirements>
+    <plugin name='hibernate' version='2.1 &gt; *' />
+  </runtimePluginRequirements>
   <behavior />
 </plugin>

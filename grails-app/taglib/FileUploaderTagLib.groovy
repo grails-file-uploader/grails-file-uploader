@@ -33,7 +33,7 @@ class FileUploaderTagLib {
 		params.errorAction = attrs.errorAction
 		params.errorController = attrs.errorController
 		
-		out << g.link([controller: "download", action: "index", params: params, id: attrs.id], body)
+		out << g.link([controller: "fileUploader", action: "download", params: params, id: attrs.id], body)
 		
 	}
 	
@@ -98,33 +98,37 @@ class FileUploaderTagLib {
 		
 		//form build
 		StringBuilder sb = new StringBuilder()
-		sb.append g.uploadForm([controller: 'fileUploader', action: 'process', id:attrs.id], tagBody)
+		sb.append g.uploadForm([controller: 'fileUploader', action: 'upload', id:attrs.id], tagBody)
 		
 		out << sb.toString()
 	}
 	
+	/**
+	 * @attr size REQUIRED the value to convert
+	 */
 	def prettysize = { attrs ->
-		
-		if (!attrs.size) {
-			def errorMsg = "'size' attribute not found in file-uploader preetysize tag."
+		if (!attrs['size']) {
+			def errorMsg = "'size' attribute not found in file-uploader prettysize tag."
 			log.error (errorMsg)
 			throw new GrailsTagException(errorMsg)
 		}
 		
-		def size = attrs.size
+		BigDecimal valSize = new BigDecimal(attrs['size'])	
+		
 		def sb = new StringBuilder()
-		if (size >= _byte && size < _kbyte) {
-			sb.append(size).append("b")
-		} else if (size >= _kbyte && size < _mbyte) {
-			size = size / _kbyte
-			sb.append(size).append("kb")
-		} else if (size >= _mbyte && size < _gbyte) {
-			size = size / _mbyte
-			sb.append(size).append("mb")
-		} else if (size >= _gbyte) {
-			size = size / _gbyte
-			sb.append(size).append("gb")
+		if (valSize >= _byte && valSize < _kbyte) {
+			sb.append(valSize).append("b")
+		} else if (valSize >= _kbyte && valSize < _mbyte) {
+			valSize = valSize / _kbyte
+			sb.append(valSize).append("kb")
+		} else if (valSize >= _mbyte && valSize < _gbyte) {
+			valSize = valSize / _mbyte
+			sb.append(valSize).append("mb")
+		} else if (valSize >= _gbyte) {
+			valSize = valSize / _gbyte
+			sb.append(valSize).append("gb")
 		}
+		
 		out << sb.toString()
 	}
 

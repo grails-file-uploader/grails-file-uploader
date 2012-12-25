@@ -1,114 +1,74 @@
 package com.lucastex.grails.fileuploader
 
+import org.springframework.context.MessageSource
+
 class FileUploaderController {
 	
-	//messagesource
-	def messageSource
+	MessageSource messageSource
+	
+	FileUploaderService fileUploaderService
 
-	//defaultaction
-	def defaultAction = "process"
-
-	def process = {
+	def upload(){
 
 		//upload group
-		def upload = params.upload
-				
-		//config handler
-		def config = grailsApplication.config.fileuploader[upload]
+		String upload = params.upload
+		
+		String overrideFileName = params.overrideFileName
 		
 		//request file
 		def file = request.getFile("file")
 		
-		//base path to save file
-		def path = config.path
-		if (!path.endsWith('/'))
-			path = path+"/"
+		UFile ufile
 		
-		/**************************
-			check if file exists
-		**************************/
-		if (file.size == 0) {
-			def msg = messageSource.getMessage("fileupload.upload.nofile", null, request.locale)
-			log.debug msg
-			flash.message = msg
+		try{
+			ufile = fileUploaderService.saveFile(upload, file, overrideFileName, request.locale)
+			
+		}catch(FileUploaderServiceException e){
+			flash.message = e.message
 			redirect controller: params.errorController, action: params.errorAction, id: params.id
 			return
+			
 		}
-		
-		/***********************
-			check extensions
-		************************/
-		def fileExtension = file.originalFilename.substring(file.originalFilename.lastIndexOf('.')+1)
-		if (!config.allowedExtensions[0].equals("*")) {
-			if (!config.allowedExtensions.contains(fileExtension)) {
-				def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], request.locale)
-				log.debug msg
-				flash.message = msg
-				redirect controller: params.errorController, action: params.errorAction, id: params.id
-				return
-			}
-		}
-		
-		
-		/*********************
-			check file size
-		**********************/
-		if (config.maxSize) { //if maxSize config exists
-			def maxSizeInKb = ((int) (config.maxSize/1024))
-			if (file.size > config.maxSize) { //if filesize is bigger than allowed
-				log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
-				flash.message = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], request.locale)
-				redirect controller: params.errorController, action: params.errorAction, id: params.id
-				return
-			}
-		} 
-		
-		//reaches here if file.size is smaller or equal config.maxSize or if config.maxSize ain't configured (in this case
-		//plugin will accept any size of files).
-		
-		//sets new path
-		def currentTime = System.currentTimeMillis()
-		path = path+currentTime+"/"
-		if (!new File(path).mkdirs())
-			log.error "FileUploader plugin couldn't create directories: [${path}]"
-		path = path+file.originalFilename
-		
-		//move file
-		log.debug "FileUploader plugin received a ${file.size}b file. Moving to ${path}"
-		file.transferTo(new File(path))
-		
-		//save it on the database
-		def ufile = new UFile()
-		ufile.name = file.originalFilename
-		ufile.size = file.size
-		ufile.extension = fileExtension
-		ufile.dateUploaded = new Date(currentTime)
-		ufile.path = path
-		ufile.downloads = 0
-		ufile.save()
 		
 		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id, id: params.id,successParams:params.successParams]
 	}
-    
-    def show={
-        def ufile = UFile.get(params.int("id"))
-	if (!ufile) {
-	    response.sendError(404)
-	    return;
-        }
-        def file = new File(ufile.path)
-        if (file.exists()) {
-            response.setContentType("image/"+ufile.extension)
-	    response.setContentLength(file.size().toInteger())
-	    OutputStream out
-            try {
-                out = response.getOutputStream()
-                out?.write(file.bytes)
-            } finally {
-                out?.close()
-            }
-	}
 	
-    }
-
+	def download() {
+		
+			UFile ufile
+			File file
+			
+			try{
+				ufile = fileUploaderService.ufileById(params.id, request.locale)
+				file = fileUploaderService.fileForUFile(ufile, request.locale)
+				
+			}catch(FileNotFoundException fnfe){
+				log.debug fnfe.message
+				flash.message = fnfe.message
+				redirect controller: params.errorController, action: params.errorAction
+				return
+				
+			}catch(IOException ioe){
+				log.error ioe.message
+				flash.message = ioe.message
+				redirect controller: params.errorController, action: params.errorAction
+				return
+			}
+			
+			log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
+			
+			response.setContentType("application/octet-stream")
+			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
+			response.outputStream << file.readBytes()
+	
+			return
+		}
+	
+	def deleteFile() {
+		if(fileUploaderService.deleteFile(params.id)){
+			redirect controller: params.successController, action: params.successAction, params:(params.successParams)
+		}else{
+			redirect controller: params.errorController, action: params.errorAction, params:(params.errorParams)
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+
 class UFile {
 
     Long size
@@ -8,7 +9,7 @@ class UFile {
     String extension
     Date dateUploaded
     Integer downloads
-
+	
     static constraints = {
         size(min:0L)
         path()
