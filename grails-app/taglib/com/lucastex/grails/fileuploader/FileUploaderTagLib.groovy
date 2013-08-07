@@ -1,4 +1,4 @@
-import org.codehaus.groovy.grails.web.taglib.exceptions.GrailsTagException
+package com.lucastex.grails.fileuploader
 
 class FileUploaderTagLib {
 	
@@ -14,20 +14,17 @@ class FileUploaderTagLib {
 		//checking required fields
 		if (!attrs.id) {
 			def errorMsg = "'id' attribute not found in file-uploader download tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 				
 		if (!attrs.errorAction) {
 			def errorMsg = "'errorAction' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		if (!attrs.errorController) {
 			def errorMsg = "'errorController' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 	
 		params.errorAction = attrs.errorAction
@@ -42,32 +39,27 @@ class FileUploaderTagLib {
 		//checking required fields
 		if (!attrs.upload) {
 			def errorMsg = "'upload' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		if (!attrs.successAction) {
 			def errorMsg = "'successAction' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		if (!attrs.successController) {
 			def errorMsg = "'successController' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		if (!attrs.errorAction) {
 			def errorMsg = "'errorAction' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		if (!attrs.errorController) {
 			def errorMsg = "'errorController' attribute not found in file-uploader form tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		//upload group
@@ -109,8 +101,7 @@ class FileUploaderTagLib {
 	def prettysize = { attrs ->
 		if (!attrs['size']) {
 			def errorMsg = "'size' attribute not found in file-uploader prettysize tag."
-			log.error (errorMsg)
-			throw new GrailsTagException(errorMsg)
+			throwTagError(errorMsg)
 		}
 		
 		BigDecimal valSize = new BigDecimal(attrs['size'])	
@@ -133,9 +124,3 @@ class FileUploaderTagLib {
 	}
 
 }
-/*
-(0 - 1000) size = bytes
-(1000 - 1000*1024) size / 1000 = kbytes
-(1000*1024 - 1000*1024*1024) size / (1000 * 1024) = mbytes
-(else) size / (1000 * 1024 * 1024) = gbytes
-*/
