@@ -5,7 +5,8 @@ class FileUploaderGrailsPlugin {
     def groupId = "com.cc.plugins"
     def dependsOn = ["hibernate":"2.1 > *"]
     def pluginExcludes = [
-        "grails-app/views/error.gsp"
+        "grails-app/views/error.gsp",
+        "src/templates"
     ]
 
     def loadAfter = ['hibernate']
