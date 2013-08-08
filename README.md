@@ -21,6 +21,7 @@
 1. Added `/fileUploader/show/$id` to render any image to hide actual directory path of the file,
 2. Added List page for admins to see list of files,
 3. Deleting a UFile instance will automatically delete the physical file.
+4. Receiving an empty or blank file will not throw an exception, instead it simply returns null value. Useful to directly write service irrespective of nullable constraints of the field.
 
 ### Version 2.0.11
 

@@ -4,29 +4,38 @@ import groovy.io.FileType
 
 import java.nio.channels.FileChannel
 
+import org.springframework.transaction.annotation.Transactional
+
 class FileUploaderService {
+    
+    static transactional = false
 
     def messageSource
     def grailsApplication
 
+    @Transactional
     UFile saveFile(String group, def file, String name = "", Locale locale = null) throws FileUploaderServiceException {
-        def config = grailsApplication.config.fileuploader[group]
+        Long fileSize
+        boolean empty = true
+        String contentType, fileExtension, fileName
 
         if(file instanceof File) {
-            if(!file || !file.exists() || file.isEmpty()) {
-                log.info "Empty or no file received"
-                return null
-            }
-        }
-
-        String fileName = ""
-        String fileExtension = ""
-        if(file instanceof File) {
+            contentType = ""
+            empty = !file.exists()
             fileName = file.name
-        } else {
-            fileName = file.originalFilename
+            fileSize = file.size()
+        } else {    // Means instance of Spring's CommonsMultipartFile.
+            contentType = file?.contentType
+            empty = file?.isEmpty()
+            fileName = file?.originalFilename
+            fileSize = file?.size
+        }
+        log.info "Received ${empty ? 'empty ' : ''}file [$fileName] of size [$fileSize] & content type [$contentType]."
+        if(empty || !file) {
+            return null
         }
 
+        def config = grailsApplication.config.fileuploader[group]
         int extensionAt = fileName.lastIndexOf('.') + 1
         if(extensionAt >= 0) {
             fileExtension = fileName.substring(extensionAt).toLowerCase()
@@ -37,16 +46,6 @@ class FileUploaderService {
                     [fileExtension, config.allowedExtensions] as Object[], locale)
             log.debug msg
             throw new FileUploaderServiceException(msg)
-        }
-
-        /**
-         * Check file size
-         */
-        def fileSize
-        if(file instanceof File) {
-            fileSize = file.size()
-        } else {
-            fileSize = file.size
         }
 
         /**
@@ -81,8 +80,6 @@ class FileUploaderService {
         if(! new File(path).exists() ){
             if (!new File(path).mkdirs()) {
                 log.error "FileUploader plugin couldn't create directories: [${path}]"
-            } else {
-                log.debug "Created plugin storage directory [${path}]"
             }
         }
 
@@ -94,7 +91,7 @@ class FileUploaderService {
         }
 
         // Move file
-        log.debug "FileUploader plugin received a ${fileSize} file. Moving to ${path}"
+        log.debug "Moving [$fileName] to [${path}]."
         if(file instanceof File)
             file.renameTo(new File(path))
         else
@@ -112,6 +109,7 @@ class FileUploaderService {
     }
 
 
+    @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
         if (!ufile) {
@@ -186,21 +184,27 @@ class FileUploaderService {
     /**
      * Method to create a duplicate of an existing UFile
      * @param group
-     * @param uFile
+     * @param ufileInstance
      * @param name
      * @param locale
      * @throws FileUploaderServiceException
      * @throws IOException
      */
-    UFile cloneFile(String group, UFile uFile, String name, Locale locale) throws FileUploaderServiceException,IOException {
+    @Transactional
+    UFile cloneFile(String group, UFile ufileInstance, String name = "", Locale locale = null) throws FileUploaderServiceException, IOException {
+        log.info "Cloning ufile [${ufileInstance?.id}][${ufileInstance?.name}]"
+        if(!ufileInstance) {
+            log.warn "Invalid/null ufileInstance received."
+            return null
+        }
         //Create temp directory
         def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
         new File(tempDirectory).mkdirs()
 
         //create file
-        def tempFile = "${tempDirectory}/${uFile.name}.${uFile.extension}"
+        def tempFile = "${tempDirectory}/${ufileInstance.name}" // No need to append extension. name field already have that.
         def destFile = new File(tempFile)
-        def sourceFile = new File(uFile.path)
+        def sourceFile = new File(ufileInstance.path)
         if(!destFile.exists()) {
             destFile.createNewFile();
         }
