@@ -8,8 +8,10 @@ class UFile {
     String path
     String name
     String extension
-    Date dateUploaded
-    Integer downloads
+    Date dateUploaded = new Date()
+    int downloads
+
+    UFileType type
 
     static constraints = {
         size min: 0L
@@ -21,4 +23,8 @@ class UFile {
         fileUploaderService.deleteFileForUFile(new File(path))
     }
 
+}
+
+enum UFileType {
+    CDN_PRIVATE, CDN_PUBLIC, LOCAL
 }

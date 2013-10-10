@@ -7,17 +7,19 @@ import java.nio.channels.FileChannel
 import org.springframework.transaction.annotation.Transactional
 
 class FileUploaderService {
-    
+
     static transactional = false
 
     def CDNFileUploaderService
-    def grailsApplicationc
+    def grailsApplication
     def messageSource
-    
+    def springSecurityService
+
     @Transactional
     UFile saveFile(String group, def file, String name = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
         boolean empty = true
+        UFileType type = UFileType.LOCAL
         String contentType, fileExtension, fileName
 
         if(file instanceof File) {
@@ -61,54 +63,73 @@ class FileUploaderService {
             }
         }
 
+        fileName = name ? (name + "." + fileExtension) : fileName
+
         // Base path to save file
-        def path = config.path
+        String path = config.path
         if (!path.endsWith('/'))
             path = path + "/"
 
         // Setup storage path
         def storageTypes = config.storageTypes
-        
+
         if(storageTypes == "CDN") {
-            CDNFileUploaderService.saveFileToCDN()
-            return
-        } else if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
-            Calendar cal = Calendar.getInstance()
-            path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
-        } else {  //subdirectories by millisecond
-            long currentTime = System.currentTimeMillis()
-            path = path + currentTime + "/"
-        }
+            type = UFileType.CDN_PUBLIC
+            String containerName = config.container
+            String userId = springSecurityService.currentUser?.id
+            String tempFilePath = "./web-app/temp/${System.currentTimeMillis()}-${fileName}"
+            fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
 
-        // Make sure the directory exists
-        if(! new File(path).exists() ){
-            if (!new File(path).mkdirs()) {
-                log.error "FileUploader plugin couldn't create directories: [${path}]"
+            if(file instanceof File)
+                file.renameTo(new File(tempFilePath))
+            else
+                file.transferTo(new File(tempFilePath))
+            File tempFile = new File(tempFilePath)
+            tempFile.deleteOnExit()
+
+            String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
+            path = publicBaseURL + "/" + fileName
+        } else {
+            if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
+                Calendar cal = Calendar.getInstance()
+                path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
+            } else {  //subdirectories by millisecond
+                long currentTime = System.currentTimeMillis()
+                path = path + currentTime + "/"
             }
-        }
 
-        // If using the uuid storage type
-        if(storageTypes?.contains('uuid')){
-            path = path + UUID.randomUUID().toString()
-        } else {  //note:  this type of storage is a bit of a security / data loss risk.
-            path = path + (name ? (name + "." + fileExtension) : fileName)
-        }
+            // Make sure the directory exists
+            if(! new File(path).exists() ){
+                if (!new File(path).mkdirs()) {
+                    log.error "FileUploader plugin couldn't create directories: [${path}]"
+                }
+            }
 
-        // Move file
-        log.debug "Moving [$fileName] to [${path}]."
-        if(file instanceof File)
-            file.renameTo(new File(path))
-        else
-            file.transferTo(new File(path))
+            // If using the uuid storage type
+            if(storageTypes?.contains('uuid')){
+                path = path + UUID.randomUUID().toString()
+            } else {  //note:  this type of storage is a bit of a security / data loss risk.
+                path = path + fileName
+            }
+
+            // Move file
+            log.debug "Moving [$fileName] to [${path}]."
+            if(file instanceof File)
+                file.renameTo(new File(path))
+            else
+                file.transferTo(new File(path))
+        }
 
         UFile ufile = new UFile()
-        ufile.name = (name ? (name + "." + fileExtension) : fileName)
+        ufile.name = fileName
         ufile.size = fileSize
         ufile.extension = fileExtension
-        ufile.dateUploaded = new Date()
         ufile.path = path
-        ufile.downloads = 0
+        ufile.type = type
         ufile.save()
+        if(ufile.hasErrors()) {
+            log.warn "Error saving UFile instance: $ufile.errors"
+        }
         return ufile
     }
 
@@ -233,5 +254,5 @@ class FileUploaderService {
             }
         }
     }
-    
+
 }

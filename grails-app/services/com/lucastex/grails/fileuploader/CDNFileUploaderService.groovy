@@ -9,13 +9,14 @@ import org.jclouds.ContextBuilder
 import org.jclouds.blobstore.BlobStore
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.blobstore.domain.Blob
+import org.jclouds.cloudfiles.CloudFilesApiMetadata
+import org.jclouds.cloudfiles.CloudFilesClient
 import org.jclouds.openstack.swift.CommonSwiftAsyncClient
 import org.jclouds.openstack.swift.CommonSwiftClient
 import org.jclouds.openstack.swift.domain.ContainerMetadata
-import org.jclouds.openstack.swift.options.CreateContainerOptions
+import org.jclouds.openstack.swift.domain.SwiftObject
 import org.jclouds.rest.RestContext
 
-import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Lists
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -31,8 +32,18 @@ class CDNFileUploaderService {
     private static int THREADS = Integer.getInteger("upload.threadpool.size", 10)
 
     private BlobStore blobStore
-    private RestContext<CommonSwiftClient, CommonSwiftAsyncClient> swift
+    private CloudFilesClient cloudFilesClient
     private Set<ContainerMetadata> containers = []
+    private RestContext<CommonSwiftClient, CommonSwiftAsyncClient> swift
+
+    String uploadFileToCDN(String containerName, def file, String fileName) {
+        SwiftObject object = swift.getApi().newSwiftObject()
+        println swift.api.class
+        object.getInfo().setName(fileName)
+        object.setPayload(file)
+        println swift.getApi().putObject(containerName, object)
+        cdnEnableContainer(containerName)
+    }
 
     void saveFileToCDN(String containerName) {
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(newFixedThreadPool(THREADS))
@@ -79,12 +90,25 @@ class CDNFileUploaderService {
         println "Containers" + containers
     }
 
+    String cdnEnableContainer(String containerName) {
+        URI cdnURI = cloudFilesClient.enableCDN(containerName)
+        cdnURI.toString()
+    }
+
     void authenticate() {
+        String key = grailsApplication.config.fileuploader.CDNKey
+        String username = grailsApplication.config.fileuploader.CDNUsername
+        if(!key || !username) {
+            log.info "No username or key configured for file uploader CDN service."
+            return
+        }
+
         BlobStoreContext context = ContextBuilder.newBuilder("cloudfiles-us")
-                .credentials(grailsApplication.config.fileuploader.CDNUsername, grailsApplication.config.fileuploader.CDNKey)
+                .credentials(username, key)
                 .buildView(BlobStoreContext.class)
         blobStore = context.getBlobStore()
         swift = context.unwrap()
+        cloudFilesClient = context.unwrap(CloudFilesApiMetadata.CONTEXT_TOKEN).getApi()
     }
 
     void close() {
