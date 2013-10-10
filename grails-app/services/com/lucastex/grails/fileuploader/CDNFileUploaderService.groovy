@@ -1,0 +1,149 @@
+package com.lucastex.grails.fileuploader
+
+import static com.google.common.base.Preconditions.checkArgument
+import static java.util.concurrent.Executors.newFixedThreadPool
+
+import java.util.concurrent.Callable
+
+import org.jclouds.ContextBuilder
+import org.jclouds.blobstore.BlobStore
+import org.jclouds.blobstore.BlobStoreContext
+import org.jclouds.blobstore.domain.Blob
+import org.jclouds.openstack.swift.CommonSwiftAsyncClient
+import org.jclouds.openstack.swift.CommonSwiftClient
+import org.jclouds.openstack.swift.domain.ContainerMetadata
+import org.jclouds.openstack.swift.options.CreateContainerOptions
+import org.jclouds.rest.RestContext
+
+import com.google.common.collect.ImmutableMap
+import com.google.common.collect.Lists
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.ListeningExecutorService
+import com.google.common.util.concurrent.MoreExecutors
+
+class CDNFileUploaderService {
+
+    static transactional = false
+
+    def grailsApplication
+
+    private static int THREADS = Integer.getInteger("upload.threadpool.size", 10)
+
+    private BlobStore blobStore
+    private RestContext<CommonSwiftClient, CommonSwiftAsyncClient> swift
+    private Set<ContainerMetadata> containers = []
+
+    void saveFileToCDN(String containerName) {
+        ListeningExecutorService executor = MoreExecutors.listeningDecorator(newFixedThreadPool(THREADS))
+        List<ListenableFuture<BlobDetail>> blobUploaderFutures = Lists.newArrayList()
+
+        List<BlobDetail> blobDetails = [new BlobDetail("test-dir/test-img.gif", new File("./web-app/images/star.gif"))]
+
+        for (BlobDetail blobDetail: blobDetails) {
+            BlobUploader blobUploader = new BlobUploader(containerName, blobDetail)
+            ListenableFuture<BlobDetail> blobDetailFuture = executor.submit(blobUploader)
+            blobUploaderFutures.add(blobDetailFuture)
+        }
+
+        ListenableFuture<List<BlobDetail>> future = Futures.successfulAsList(blobUploaderFutures)
+        List<BlobDetail> uploadedBlobDetails = future.get() // begin the upload
+
+        uploadedBlobDetails.each {
+            if(it) {
+                System.out.format("  %s (eTag: %s)%n", it.getRemoteBlobName(), it.getETag())
+            } else {
+                System.out.format(" %s (ERROR)%n", it.getLocalFile().getAbsolutePath())
+            }
+        }
+    }
+
+    boolean checkIfContainerExist(String containerName) {
+        for(container in containers) {
+            if(container.name == name) {
+                return true
+                break
+            }
+            return false
+        }
+    }
+
+    boolean crateContainer(String containerName) {
+        boolean success = swift.getApi().createContainer(containerName)
+        listContainers()    // update container list
+        success
+    }
+
+    void listContainers() {
+        swift.getApi().listContainers()
+        println "Containers" + containers
+    }
+
+    void authenticate() {
+        BlobStoreContext context = ContextBuilder.newBuilder("cloudfiles-us")
+                .credentials(grailsApplication.config.fileuploader.CDNUsername, grailsApplication.config.fileuploader.CDNKey)
+                .buildView(BlobStoreContext.class)
+        blobStore = context.getBlobStore()
+        swift = context.unwrap()
+    }
+
+    void close() {
+        blobStore?.getContext()?.close()
+    }
+
+    public static class BlobDetail {
+        private final String remoteBlobName
+        private final File localFile
+        private final String eTag
+
+        protected BlobDetail(String remoteBlobName, File localFile) {
+            this(remoteBlobName, localFile, null)
+        }
+
+        protected BlobDetail(String remoteBlobName, File localFile, String eTag) {
+            this.remoteBlobName = remoteBlobName
+            this.localFile = localFile
+            this.eTag = eTag
+        }
+
+        public String getRemoteBlobName() {
+            return remoteBlobName
+        }
+
+        public File getLocalFile() {
+            return localFile
+        }
+
+        public String getETag() {
+            return eTag
+        }
+
+        public boolean isUploaded() {
+            return eTag != null
+        }
+    }
+
+    private class BlobUploader implements Callable<BlobDetail> {
+        private final String container
+        private final BlobDetail toBeUploadedBlobDetail
+
+        protected BlobUploader(String container, BlobDetail toBeUploadedBlobDetail) {
+            this.container = container
+            this.toBeUploadedBlobDetail = toBeUploadedBlobDetail
+        }
+
+        @Override
+        public BlobDetail call() throws Exception {
+            Blob blob = blobStore.blobBuilder(toBeUploadedBlobDetail.getRemoteBlobName())
+                    .payload(toBeUploadedBlobDetail.getLocalFile())
+                    .contentType("") // allows Cloud Files to determine the content type
+                    .build()
+            String eTag = blobStore.putBlob(container, blob)
+            BlobDetail uploadedBlobDetail = new BlobDetail(
+                    toBeUploadedBlobDetail.getRemoteBlobName(), toBeUploadedBlobDetail.getLocalFile(), eTag)
+
+            return uploadedBlobDetail
+        }
+    }
+
+}

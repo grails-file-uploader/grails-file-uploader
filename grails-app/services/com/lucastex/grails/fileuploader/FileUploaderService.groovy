@@ -10,9 +10,10 @@ class FileUploaderService {
     
     static transactional = false
 
+    def CDNFileUploaderService
+    def grailsApplicationc
     def messageSource
-    def grailsApplication
-
+    
     @Transactional
     UFile saveFile(String group, def file, String name = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
@@ -67,8 +68,11 @@ class FileUploaderService {
 
         // Setup storage path
         def storageTypes = config.storageTypes
-
-        if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
+        
+        if(storageTypes == "CDN") {
+            CDNFileUploaderService.saveFileToCDN()
+            return
+        } else if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
             Calendar cal = Calendar.getInstance()
             path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
         } else {  //subdirectories by millisecond
@@ -229,5 +233,5 @@ class FileUploaderService {
             }
         }
     }
-
+    
 }
