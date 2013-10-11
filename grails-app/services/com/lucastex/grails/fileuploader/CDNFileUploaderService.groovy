@@ -113,6 +113,10 @@ class CDNFileUploaderService {
         cloudFilesClient = context.unwrap(CloudFilesApiMetadata.CONTEXT_TOKEN).getApi()
     }
 
+    void deleteFile(String containerName, String fileName) {
+        swift.api.removeObject(containerName, fileName)
+    }
+
     void close() {
         blobStore?.getContext()?.close()
     }

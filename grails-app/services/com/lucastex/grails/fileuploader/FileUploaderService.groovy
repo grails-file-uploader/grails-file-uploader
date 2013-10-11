@@ -135,12 +135,11 @@ class FileUploaderService {
         return ufile
     }
 
-
     @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
         if (!ufile) {
-            log.error "could not delete file: ${ufile?.path}"
+            log.error "No UFile found with id: [$idUfile]"
             return false
         }
         File file = new File(ufile.path)
@@ -152,12 +151,17 @@ class FileUploaderService {
             return false
         }
 
-        deleteFileForUFile(file)
         return true
     }
 
-    boolean deleteFileForUFile(File file) {
+    boolean deleteFileForUFile(UFile ufileInstance) {
+        if(ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
+            CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.name)
+            return true
+        }
+        File file = new File(ufileInstance.path)
         if(!file.exists()) {
+            log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
             return false
         }
         File timestampFolder = file.parentFile

@@ -3,6 +3,7 @@ package com.lucastex.grails.fileuploader
 class UFile {
 
     transient fileUploaderService
+    transient grailsApplication
 
     int downloads
 
@@ -25,7 +26,7 @@ class UFile {
     }
 
     def afterDelete() {
-        fileUploaderService.deleteFileForUFile(new File(path))
+        fileUploaderService.deleteFileForUFile(this)
     }
 
     String searchLink() {
@@ -38,6 +39,10 @@ class UFile {
 
     boolean isFileExists() {
         new File(path).exists()
+    }
+
+    String getContainer() {
+        grailsApplication.config.fileuploader[fileGroup].container
     }
 
 }

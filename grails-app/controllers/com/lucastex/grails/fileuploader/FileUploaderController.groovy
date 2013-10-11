@@ -110,6 +110,7 @@ class FileUploaderController {
     }
 
     def moveToCloud() {
+        String container = grailsApplication.config.fileuploader.defaultContainer
         List<Long> ufileIdList = params.list('ufileId')
         Set<UFile> validUFilesToMoveToCloud = []
 
@@ -118,9 +119,11 @@ class FileUploaderController {
             if(ufileInstance?.canMoveToCDN() && ufileInstance.fileExists) validUFilesToMoveToCloud << ufileInstance
         }
 
-        List<Long> failedUFileIdList = fileUploaderService.moveFileToCloud(validUFilesToMoveToCloud as List, "causecode")
+        List<Long> failedUFileIdList = fileUploaderService.moveFileToCloud(validUFilesToMoveToCloud as List, container)
+
         int total = validUFilesToMoveToCloud.size()
         int totalMoved = validUFilesToMoveToCloud.size() - failedUFileIdList.size()
+
         String message = "$totalMoved/$total Files moved to cloud."
         if(failedUFileIdList) {
             message += " Id list of failed ufiles are: $failedUFileIdList"

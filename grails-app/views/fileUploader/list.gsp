@@ -58,7 +58,7 @@
             </g:each>
             <g:if test="${!UFileInstanceList }">
                 <tr>
-                    <td>
+                    <td colspan="6">
                         No records found. <g:link action="create">Create new</g:link>.
                     </td>
                 </tr>
