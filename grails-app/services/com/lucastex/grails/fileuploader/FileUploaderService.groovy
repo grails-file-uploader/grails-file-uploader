@@ -41,6 +41,9 @@ class FileUploaderService {
         }
 
         def config = grailsApplication.config.fileuploader[group]
+        if(config.isEmpty()) {
+            throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
+        }
         int extensionAt = fileName.lastIndexOf('.') + 1
         if(extensionAt >= 0) {
             fileExtension = fileName.substring(extensionAt).toLowerCase()
@@ -66,6 +69,7 @@ class FileUploaderService {
         }
 
         fileName = name ? (name + "." + fileExtension) : fileName
+        fileName = fileName.trim().replaceAll(" ", "-")
 
         // Setup storage path
         def storageTypes = config.storageTypes

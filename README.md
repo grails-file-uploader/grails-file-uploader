@@ -44,6 +44,7 @@ To upload files to CDN (Only Supports Rackspace now) one must have some configur
 fileuploader {
     CDNUsername = "myusername"
     CDNKey = "mykey"
+    defaultContainer = "anyConatainer"  // Container to move local files to cloud
     degreeApplication {			// Non CDN files, will be stored in local directory.
         maxSize = 1000 * 1024 //256 kbytes
         allowedExtensions = ["xls"]
