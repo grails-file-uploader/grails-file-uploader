@@ -4,12 +4,16 @@ class UFile {
 
     transient fileUploaderService
 
-    Long size
-    String path
-    String name
-    String extension
-    Date dateUploaded = new Date()
     int downloads
+
+    Date dateUploaded = new Date()
+
+    Long size
+
+    String extension
+    String fileGroup
+    String name
+    String path
 
     UFileType type
 
@@ -17,10 +21,23 @@ class UFile {
         size min: 0L
         path blank: false
         name blank: false
+        fileGroup blank: false
     }
 
     def afterDelete() {
         fileUploaderService.deleteFileForUFile(new File(path))
+    }
+
+    String searchLink() {
+        fileUploaderService.resolvePath(this)
+    }
+
+    boolean canMoveToCDN() {
+        type == UFileType.LOCAL
+    }
+
+    boolean isFileExists() {
+        new File(path).exists()
     }
 
 }

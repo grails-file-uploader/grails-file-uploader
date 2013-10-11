@@ -6,6 +6,8 @@ import java.nio.channels.FileChannel
 
 import org.springframework.transaction.annotation.Transactional
 
+import com.lucastex.grails.fileuploader.cdn.BlobDetail
+
 class FileUploaderService {
 
     static transactional = false
@@ -125,6 +127,7 @@ class FileUploaderService {
         ufile.extension = fileExtension
         ufile.path = path
         ufile.type = type
+        ufile.fileGroup = group
         ufile.save()
         if(ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -264,6 +267,38 @@ class FileUploaderService {
         } else if(ufileInstance.type == UFileType.CDN_PUBLIC) {
             return ufileInstance.path
         }
+    }
+
+    List<Long> moveFileToCloud(List<UFile> ufileInstanceList, String containerName) {
+        List<Long> failedUFileIdList = []
+        List<BlobDetail> blobDetailList = []
+
+        ufileInstanceList.each {
+            String newFileName = "${System.currentTimeMillis()}-${it.name}"
+            blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
+        }
+
+        CDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
+        String baseURL = CDNFileUploaderService.cdnEnableContainer(containerName)
+
+        blobDetailList.each {
+            UFile uploadUFileInstance = ufileInstanceList.find { ufileInstance ->
+                it.ufileId == ufileInstance.id
+            }
+            if(uploadUFileInstance) {
+                if(it.eTag) {
+                    uploadUFileInstance.name = it.remoteBlobName
+                    uploadUFileInstance.path = baseURL + "/" + it.remoteBlobName
+                    uploadUFileInstance.type = UFileType.CDN_PUBLIC
+                    uploadUFileInstance.save()
+                } else {
+                    failedUFileIdList << it.ufileId
+                }
+            } else {
+                log.error "Missing blobInstance. Never reach condition occured."
+            }
+        }
+        return failedUFileIdList
     }
 
 }

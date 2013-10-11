@@ -125,9 +125,9 @@ class FileUploaderTagLib {
 		out << sb.toString()
 	}
 
-    def ufilePath = { attrs ->
+    def resolvePath = { attrs ->
         if(!attrs.id && !attrs.instance) {
-            log.error "No Ufile instance found to resolve path for tag fileuploader:ufilePath"
+            log.error "No Ufile instance found to resolve path for tag fileuploader:resolvePath"
             return
         }
         UFile ufileInstance = attrs.instance ?: UFile.get(attrs.id)

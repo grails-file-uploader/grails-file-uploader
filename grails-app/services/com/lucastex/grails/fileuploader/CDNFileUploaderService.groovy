@@ -22,11 +22,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
+import com.lucastex.grails.fileuploader.cdn.BlobDetail
 
-@Grapes([
-    @Grab("org.apache.jclouds.provider:cloudfiles-us:1.6.2-incubating"),
-    @Grab("org.jclouds:jclouds-compute:1.6.0")
-])
 class CDNFileUploaderService {
 
     static transactional = false
@@ -48,14 +45,12 @@ class CDNFileUploaderService {
         cdnEnableContainer(containerName)
     }
 
-    void saveFileToCDN(String containerName) {
+    void uploadFilesToCloud(String containerName, List<BlobDetail> blobDetails) {
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(newFixedThreadPool(THREADS))
         List<ListenableFuture<BlobDetail>> blobUploaderFutures = Lists.newArrayList()
 
-        List<BlobDetail> blobDetails = [new BlobDetail("test-dir/test-img.gif", new File("./web-app/images/star.gif"))]
-
-        for (BlobDetail blobDetail: blobDetails) {
-            BlobUploader blobUploader = new BlobUploader(containerName, blobDetail)
+        blobDetails.each {
+            BlobUploader blobUploader = new BlobUploader(containerName, it)
             ListenableFuture<BlobDetail> blobDetailFuture = executor.submit(blobUploader)
             blobUploaderFutures.add(blobDetailFuture)
         }
@@ -64,10 +59,14 @@ class CDNFileUploaderService {
         List<BlobDetail> uploadedBlobDetails = future.get() // begin the upload
 
         uploadedBlobDetails.each {
+            BlobDetail blobInstance = blobDetails.find { blobDetailInstance ->
+                blobDetailInstance.ufileId == it.ufileId
+            }
             if(it) {
-                System.out.format("  %s (eTag: %s)%n", it.getRemoteBlobName(), it.getETag())
+                blobInstance.eTag = it.eTag
+                log.info "UFile [$blobInstance.ufileId] eTag: [$it.eTag] uploaded successfully."
             } else {
-                System.out.format(" %s (ERROR)%n", it.getLocalFile().getAbsolutePath())
+                log.info "UFile [$blobInstance.ufileId] eTag: [$it.eTag] uploaded failed."
             }
         }
     }
@@ -90,7 +89,7 @@ class CDNFileUploaderService {
 
     void listContainers() {
         swift.getApi().listContainers()
-        println "Containers" + containers
+        log.info "Containers" + containers
     }
 
     String cdnEnableContainer(String containerName) {
@@ -107,8 +106,8 @@ class CDNFileUploaderService {
         }
 
         BlobStoreContext context = ContextBuilder.newBuilder("cloudfiles-us")
-        .credentials(username, key)
-        .buildView(BlobStoreContext.class)
+                .credentials(username, key)
+                .buildView(BlobStoreContext.class)
         blobStore = context.getBlobStore()
         swift = context.unwrap()
         cloudFilesClient = context.unwrap(CloudFilesApiMetadata.CONTEXT_TOKEN).getApi()
@@ -118,39 +117,8 @@ class CDNFileUploaderService {
         blobStore?.getContext()?.close()
     }
 
-    public static class BlobDetail {
-        private final String remoteBlobName
-        private final File localFile
-        private final String eTag
-
-        protected BlobDetail(String remoteBlobName, File localFile) {
-            this(remoteBlobName, localFile, null)
-        }
-
-        protected BlobDetail(String remoteBlobName, File localFile, String eTag) {
-            this.remoteBlobName = remoteBlobName
-            this.localFile = localFile
-            this.eTag = eTag
-        }
-
-        public String getRemoteBlobName() {
-            return remoteBlobName
-        }
-
-        public File getLocalFile() {
-            return localFile
-        }
-
-        public String getETag() {
-            return eTag
-        }
-
-        public boolean isUploaded() {
-            return eTag != null
-        }
-    }
-
     private class BlobUploader implements Callable<BlobDetail> {
+
         private final String container
         private final BlobDetail toBeUploadedBlobDetail
 
@@ -162,15 +130,17 @@ class CDNFileUploaderService {
         @Override
         public BlobDetail call() throws Exception {
             Blob blob = blobStore.blobBuilder(toBeUploadedBlobDetail.getRemoteBlobName())
-            .payload(toBeUploadedBlobDetail.getLocalFile())
-            .contentType("") // allows Cloud Files to determine the content type
-            .build()
+                    .payload(toBeUploadedBlobDetail.getLocalFile())
+                    .contentType("") // allows Cloud Files to determine the content type
+                    .build()
             String eTag = blobStore.putBlob(container, blob)
             BlobDetail uploadedBlobDetail = new BlobDetail(
-            toBeUploadedBlobDetail.getRemoteBlobName(), toBeUploadedBlobDetail.getLocalFile(), eTag)
+                    toBeUploadedBlobDetail.getRemoteBlobName(), toBeUploadedBlobDetail.getLocalFile(),
+                    toBeUploadedBlobDetail.ufileId, eTag)
 
             return uploadedBlobDetail
         }
+
     }
 
 }

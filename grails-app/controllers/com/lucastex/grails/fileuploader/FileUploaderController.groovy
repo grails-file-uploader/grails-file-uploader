@@ -1,9 +1,11 @@
 package com.lucastex.grails.fileuploader
 
-import org.springframework.dao.DataIntegrityViolationException
+import com.lucastex.grails.fileuploader.cdn.BlobDetail
+
 
 class FileUploaderController {
 
+    def CDNFileUploaderService
     def messageSource
     def fileUploaderService
 
@@ -107,56 +109,25 @@ class FileUploaderController {
         [UFileInstanceList: UFileInstanceList, UFileInstanceTotal: UFileInstanceList.totalCount]
     }
 
-    def create() {
-        [uFileInstance: new UFile(params)]
-    }
+    def moveToCloud() {
+        List<Long> ufileIdList = params.list('ufileId')
+        Set<UFile> validUFilesToMoveToCloud = []
 
-    def save() {
-        uFileInstance = new UFile(params)
-        if (!uFileInstance.save(flush: true)) {
-            render(view: "create", model: [uFileInstance: uFileInstance])
-            return
+        ufileIdList.each {
+            UFile ufileInstance = UFile.get(it)
+            if(ufileInstance?.canMoveToCDN() && ufileInstance.fileExists) validUFilesToMoveToCloud << ufileInstance
         }
 
-        flash.message = message(code: 'default.created.message', args: [message(code: 'UFile.label'), uFileInstance.id])
-        redirect(action: "edit", id: uFileInstance.id)
-    }
-
-    def edit(Long id) {
-        [uFileInstance: uFileInstance]
-    }
-
-    def update(Long id, Long version) {
-        if(version != null) {
-            if (uFileInstance.version > version) {
-                uFileInstance.errors.rejectValue("version", "default.optimistic.locking.failure",
-                        [message(code: 'UFile.label')] as Object[],
-                        "Another user has updated this UFile while you were editing")
-                render(view: "edit", model: [uFileInstance: uFileInstance])
-                return
-            }
+        List<Long> failedUFileIdList = fileUploaderService.moveFileToCloud(validUFilesToMoveToCloud as List, "causecode")
+        int total = validUFilesToMoveToCloud.size()
+        int totalMoved = validUFilesToMoveToCloud.size() - failedUFileIdList.size()
+        String message = "$totalMoved/$total Files moved to cloud."
+        if(failedUFileIdList) {
+            message += " Id list of failed ufiles are: $failedUFileIdList"
         }
+        flash.message = message
 
-        uFileInstance.properties = params
-
-        if (!uFileInstance.save(flush: true)) {
-            render(view: "edit", model: [uFileInstance: uFileInstance])
-            return
-        }
-
-        flash.message = message(code: 'default.updated.message', args: [message(code: 'UFile.label'), uFileInstance.id])
-        redirect(action: "edit", id: uFileInstance.id)
-    }
-
-    def delete(Long id) {
-        try {
-            uFileInstance.delete(flush: true)
-            flash.message = message(code: 'default.deleted.message', args: [message(code: 'UFile.label'), id])
-            redirect(action: "list")
-        } catch (DataIntegrityViolationException e) {
-            flash.message = message(code: 'default.not.deleted.message', args: [message(code: 'UFile.label'), id])
-            redirect(action: "edit", id: id)
-        }
+        render true
     }
 
 }
