@@ -12,7 +12,7 @@
 
 ## ChangeLog
 
-### Version 3.0
+### Version 2.2
 
 #### Database changes
 

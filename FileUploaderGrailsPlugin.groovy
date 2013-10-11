@@ -1,6 +1,6 @@
 class FileUploaderGrailsPlugin {
 
-    def version = "2.1"
+    def version = "2.2"
     def grailsVersion = "2.1 > *"
     def groupId = "com.cc.plugins"
     def dependsOn = ["hibernate":"2.1 > *"]
