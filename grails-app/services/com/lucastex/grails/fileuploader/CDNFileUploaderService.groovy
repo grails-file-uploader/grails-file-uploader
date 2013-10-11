@@ -23,6 +23,10 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
 
+@Grapes([
+    @Grab("org.apache.jclouds.provider:cloudfiles-us:1.6.2-incubating"),
+    @Grab("org.jclouds:jclouds-compute:1.6.0")
+])
 class CDNFileUploaderService {
 
     static transactional = false
@@ -38,10 +42,9 @@ class CDNFileUploaderService {
 
     String uploadFileToCDN(String containerName, def file, String fileName) {
         SwiftObject object = swift.getApi().newSwiftObject()
-        println swift.api.class
         object.getInfo().setName(fileName)
         object.setPayload(file)
-        println swift.getApi().putObject(containerName, object)
+        swift.getApi().putObject(containerName, object)
         cdnEnableContainer(containerName)
     }
 
@@ -104,8 +107,8 @@ class CDNFileUploaderService {
         }
 
         BlobStoreContext context = ContextBuilder.newBuilder("cloudfiles-us")
-                .credentials(username, key)
-                .buildView(BlobStoreContext.class)
+        .credentials(username, key)
+        .buildView(BlobStoreContext.class)
         blobStore = context.getBlobStore()
         swift = context.unwrap()
         cloudFilesClient = context.unwrap(CloudFilesApiMetadata.CONTEXT_TOKEN).getApi()
@@ -159,12 +162,12 @@ class CDNFileUploaderService {
         @Override
         public BlobDetail call() throws Exception {
             Blob blob = blobStore.blobBuilder(toBeUploadedBlobDetail.getRemoteBlobName())
-                    .payload(toBeUploadedBlobDetail.getLocalFile())
-                    .contentType("") // allows Cloud Files to determine the content type
-                    .build()
+            .payload(toBeUploadedBlobDetail.getLocalFile())
+            .contentType("") // allows Cloud Files to determine the content type
+            .build()
             String eTag = blobStore.putBlob(container, blob)
             BlobDetail uploadedBlobDetail = new BlobDetail(
-                    toBeUploadedBlobDetail.getRemoteBlobName(), toBeUploadedBlobDetail.getLocalFile(), eTag)
+            toBeUploadedBlobDetail.getRemoteBlobName(), toBeUploadedBlobDetail.getLocalFile(), eTag)
 
             return uploadedBlobDetail
         }

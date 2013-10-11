@@ -20,7 +20,7 @@ class FileUploaderService {
         Long fileSize
         boolean empty = true
         UFileType type = UFileType.LOCAL
-        String contentType, fileExtension, fileName
+        String contentType, fileExtension, fileName, path
 
         if(file instanceof File) {
             contentType = ""
@@ -65,11 +65,6 @@ class FileUploaderService {
 
         fileName = name ? (name + "." + fileExtension) : fileName
 
-        // Base path to save file
-        String path = config.path
-        if (!path.endsWith('/'))
-            path = path + "/"
-
         // Setup storage path
         def storageTypes = config.storageTypes
 
@@ -90,6 +85,10 @@ class FileUploaderService {
             String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
             path = publicBaseURL + "/" + fileName
         } else {
+            // Base path to save file
+            path = config.path
+            if(!path.endsWith('/')) path = path + "/";
+
             if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
                 Calendar cal = Calendar.getInstance()
                 path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
@@ -252,6 +251,18 @@ class FileUploaderService {
             if(destFile.exists()) {
                 return this.saveFile(group, destFile, name, locale)
             }
+        }
+    }
+
+    String resolvePath(UFile ufileInstance) {
+        if(!ufileInstance) {
+            log.error "No Ufile instance found to resolve path."
+            return ""
+        }
+        if(ufileInstance.type == UFileType.LOCAL) {
+            return "/fileUploader/show/$ufileInstance.id"
+        } else if(ufileInstance.type == UFileType.CDN_PUBLIC) {
+            return ufileInstance.path
         }
     }
 

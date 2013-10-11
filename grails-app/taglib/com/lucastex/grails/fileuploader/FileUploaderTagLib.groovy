@@ -3,6 +3,8 @@ package com.lucastex.grails.fileuploader
 class FileUploaderTagLib {
 	
 	static namespace = 'fileuploader'
+    
+    def fileUploaderService
 	
 	static Long _byte  = 1
 	static Long _kbyte = 1	*	1000
@@ -122,5 +124,25 @@ class FileUploaderTagLib {
 		
 		out << sb.toString()
 	}
+
+    def ufilePath = { attrs ->
+        if(!attrs.id && !attrs.instance) {
+            log.error "No Ufile instance found to resolve path for tag fileuploader:ufilePath"
+            return
+        }
+        UFile ufileInstance = attrs.instance ?: UFile.get(attrs.id)
+        out << fileUploaderService.resolvePath(ufileInstance)
+    }
+
+    def img = { attrs ->
+        if(!attrs.id && !attrs.instance) {
+            log.error "No Ufile instance found to resolve path for tag fileuploader:img"
+            return
+        }
+        UFile ufileInstance = attrs.remove('instance') ?: UFile.get(attrs.remove('id'))
+        attrs.uri = fileUploaderService.resolvePath(ufileInstance)
+
+        out << r.img(attrs)
+    }
 
 }
