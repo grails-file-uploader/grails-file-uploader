@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+import grails.util.Environment
 import groovy.io.FileType
 
 import java.nio.channels.FileChannel
@@ -87,6 +88,9 @@ class FileUploaderService {
                 file.transferTo(new File(tempFilePath))
             File tempFile = new File(tempFilePath)
             tempFile.deleteOnExit()
+            if(Environment.current != Environment.PRODUCTION) {
+                containerName += "-" + Environment.current.name
+            }
 
             String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
             path = publicBaseURL + "/" + fileName
@@ -284,6 +288,9 @@ class FileUploaderService {
         ufileInstanceList.each {
             String newFileName = "${System.currentTimeMillis()}-${it.name}"
             blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
+        }
+        if(Environment.current != Environment.PRODUCTION) {
+            containerName += "-" + Environment.current.name
         }
 
         CDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)

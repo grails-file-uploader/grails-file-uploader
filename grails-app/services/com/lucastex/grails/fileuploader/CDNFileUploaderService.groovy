@@ -94,6 +94,9 @@ class CDNFileUploaderService {
 
     String cdnEnableContainer(String containerName) {
         URI cdnURI = cloudFilesClient.enableCDN(containerName)
+        if(grailsApplication.config.grails.serverURL.contains("https")) {
+            cdnURI = cloudFilesClient.getCDNMetadata(containerName).getCDNSslUri()
+        }
         cdnURI.toString()
     }
 
