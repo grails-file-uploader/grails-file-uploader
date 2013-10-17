@@ -12,6 +12,14 @@
 
 ## ChangeLog
 
+### Version 2.3
+
+### Improvement
+
+1. Fixed jar dependency resolution,
+2. Appending environment name to the container name in other then production environment,
+3. Retrieving ssl url of file if app server url is ssl.
+
 ### Version 2.2
 
 #### Database changes
