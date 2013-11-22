@@ -100,12 +100,12 @@ class CDNFileUploaderService {
         cdnURI.toString()
     }
 
-    void authenticate() {
-        String key = grailsApplication.config.fileuploader.CDNKey
-        String username = grailsApplication.config.fileuploader.CDNUsername
-        if(!key || !username) {
+    boolean authenticate() {
+        def key = grailsApplication.config.fileuploader.CDNKey
+        def username = grailsApplication.config.fileuploader.CDNUsername
+        if(key instanceof ConfigObject || username instanceof ConfigObject) {
             log.info "No username or key configured for file uploader CDN service."
-            return
+            return false
         }
 
         BlobStoreContext context = ContextBuilder.newBuilder("cloudfiles-us")
@@ -114,6 +114,7 @@ class CDNFileUploaderService {
         blobStore = context.getBlobStore()
         swift = context.unwrap()
         cloudFilesClient = context.unwrap(CloudFilesApiMetadata.CONTEXT_TOKEN).getApi()
+        return true
     }
 
     void deleteFile(String containerName, String fileName) {

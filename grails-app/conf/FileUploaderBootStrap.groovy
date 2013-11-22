@@ -6,8 +6,9 @@ class FileUploaderBootStrap {
 
     def init = { servletContext ->
         log.debug "Fileuploader bootstap started executing."
-        CDNFileUploaderService.authenticate()
-        CDNFileUploaderService.listContainers()
+        if(CDNFileUploaderService.authenticate()) {
+            CDNFileUploaderService.listContainers()
+        }
         log.debug "Fileuploader bootstap finished executing."
     }
 

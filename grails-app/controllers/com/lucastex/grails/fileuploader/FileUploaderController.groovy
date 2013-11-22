@@ -80,6 +80,8 @@ class FileUploaderController {
             try {
                 out = response.getOutputStream()
                 out?.write(file.bytes)
+            } catch(e) {
+                log.error "Error serving image to response", e
             } finally {
                 out?.close()
             }
