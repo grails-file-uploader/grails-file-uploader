@@ -40,8 +40,8 @@ class FileUploaderService {
 		/** *********************
 		 check extensions
 		 *********************** */
-		def fileExtension
-		def fileName
+		String fileExtension
+		String fileName
 		if(file instanceof File) {
 			fileName = file.name
 		} else {
@@ -140,6 +140,11 @@ class FileUploaderService {
 				return;
 			}
 		File file = new File(ufile.path)
+		File parent
+		
+		if(file.exists()){
+			parent = new File(file.parentFile)
+		}
 		
 		try{
 			ufile.delete()
@@ -149,28 +154,31 @@ class FileUploaderService {
 		}
 		
 		if(file.exists()) {
-			File timestampFolder = file.parentFile
-			
 			if (file.delete()) {
 				log.debug "file [${ufile.path}] deleted"
-				
-				int numFilesInParentFolder = 0
-				timestampFolder.eachFile(FileType.FILES) {
-					numFilesInParentFolder++
-				}
-				if(numFilesInParentFolder==0){
-					timestampFolder.delete()
-				}else{
-					log.debug("not deleting ${timestampFolder} as it contains files")
-				}
-				
 			}else {
 				log.error "could not delete file: ${file}"
 			}
 		}
-		return borro;
-		}
 
+		//after deleting the file, lets manage the parent folder
+		manageFolder(file.parentFile)
+
+		return borro;
+	}
+
+	void manageFolder(File folder){
+		int numFilesInParentFolder = 0
+		folder.eachFile(FileType.FILES) {
+			numFilesInParentFolder++
+		}
+		if(numFilesInParentFolder==0){
+			folder.delete()
+		}else{
+			log.debug("not deleting ${folder} as it contains files")
+		}
+	}
+	
 	/**
 	 * Access the Ufile, returning the appropriate message if the UFile does not exist.
 	 */
