@@ -20,13 +20,10 @@ target-eclipse/*
 #ignoro logs
 *.log
 
-#ignoro css, images y js
-web-app/css/*
-web-app/css/**/*
-web-app/js/*
-web-app/js/**/*
-web-app/images/*
-web-app/images/**/*
+web-app/*
+web-app/**/*
 
 grails-file-uploader-*.zip
 grails-file-uploader-*.zip.sha1
+
+plugin.xml
