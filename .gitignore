@@ -7,7 +7,7 @@ target-eclipse
 
 web-app
 
-grails-file-uploader-*.zip
-grails-file-uploader-*.zip.sha1
+grails-local-upload-*.zip
+grails-local-upload-*.zip.sha1
 
 plugin.xml

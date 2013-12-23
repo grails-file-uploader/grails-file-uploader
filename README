@@ -2,7 +2,6 @@ Based on the File uploader grails plugin at: http://grails.org/plugin/file-uploa
 
 
 
-
 To Build plugin:
 Go to grails-file-uploader directory in this directory and run: grails maven-install
 
@@ -12,9 +11,8 @@ Go to fileUploaderExampleProject directory in this directory and run: grails run
 
 
 
-
 Example config block:
-fileuploader {
+localUpload {
   docs {
     maxSize = 1000 * 1024 * 10   //10 MB
     allowedExtensions = ['*']    //all
@@ -25,28 +23,34 @@ fileuploader {
 
 
 
-
 Security:
-If using spring-security, you can secure access to the File Uploader Controller by adding it to your static rules.  
+If using spring-security, you can secure access to the Local Upload Controller by adding it to your static rules.  
 Example with annotations enabled:
   grails.plugins.springsecurity.controllerAnnotations.staticRules = [
     '/fileUploader/**': ['ROLE_USER']
   ]
 
-You must create a service that implements com.lucastex.grails.fileuploader.IFileUploaderSecurityService
+You must create a service that implements org.grails.plugins.localUpload.ILocalUploadSecurityService
 
 At an insecure minimum, it would look like:
-class FileUploaderSecurityService implements IFileUploaderSecurityService {
+class LocalUploadSecurityService implements ILocalUploadSecurityService {
   @Override
   boolean allowed(UFile ufile) {
-    log.info("Allowing access to $ufile")
+    return true
+  }
+  @Override
+  boolean allowedToDelete(UFile ufile) {
     return true
   }
 }
 
 Ideally, you would do something like pull the current user from the session, and check to see if they have access to this UFile.  Another option would be creating a UFileRole table that would associate specific files with roles, and you could verify that the user had that role here.
 
-The IFileUploaderSecurityService is only invoked on download or delete.  Uploads are only restricted by the staticRules above.
+The ILocalUploadSecurityService is only invoked on download or delete.  Uploads are only restricted by the staticRules above.
+
+
+
+Ajax:
 
 
 
