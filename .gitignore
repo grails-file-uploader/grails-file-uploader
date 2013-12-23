@@ -1,27 +1,11 @@
-.* # Ignore all dotfiles...
-.classpath
-.project
-!.gitignore # except for .gitignore
-.settings
-
-*.tmproj
-
 #ignoro la carpeta target
-target/*
-target-eclipse/*
-
-#ignoro archivos de intellij idea
-*.iml
-*.ipr
-*.iws
-.idea/*
-.idea/**/*
+target
+target-eclipse
 
 #ignoro logs
 *.log
 
-web-app/*
-web-app/**/*
+web-app
 
 grails-file-uploader-*.zip
 grails-file-uploader-*.zip.sha1
