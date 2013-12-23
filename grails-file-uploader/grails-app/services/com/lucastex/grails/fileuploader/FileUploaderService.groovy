@@ -105,11 +105,15 @@ class FileUploaderService {
 			}
 		}
 		
-		//If using the uuid storage type
-		if(storageTypes?.contains('uuid')){
-			path = path + UUID.randomUUID().toString()
-		}else{  //note:  this type of storage is a bit of a security / data loss risk.
+		if(storageTypes?.contains('plain')){
+			//note:  this type of storage is a bit of a security / data loss risk.
 			path = path + (name ? (name + "." + fileExtension) : fileName)
+		}else{  
+			/* Using uuids as filenames, this lends us slightly more security.  If 
+			 * two users upload a file with the same name, the files will not 
+			 * overlap
+			 */
+			path = path + UUID.randomUUID().toString()
 		}
 		
 		//move file
@@ -132,13 +136,9 @@ class FileUploaderService {
 	}
 
 	
-	boolean deleteFile(Serializable idUfile) {
+	boolean deleteFile(UFile ufile) {
 		boolean borro = false;
-		UFile ufile = UFile.get(idUfile)
-			if (!ufile) {
-				log.error "could not delete file: ${ufile?.path}"
-				return;
-			}
+		
 		File file = new File(ufile.path)
 		File parent
 		

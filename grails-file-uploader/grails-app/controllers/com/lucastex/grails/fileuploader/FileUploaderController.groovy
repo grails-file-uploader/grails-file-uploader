@@ -7,6 +7,8 @@ class FileUploaderController {
 	MessageSource messageSource
 	
 	FileUploaderService fileUploaderService
+	
+	IFileUploaderSecurityService fileUploaderSecurityService
 
 	def upload(){
 
@@ -35,37 +37,61 @@ class FileUploaderController {
 	
 	def download() {
 		
-			UFile ufile
-			File file
+		UFile ufile
+		File file
 			
-			try{
-				ufile = fileUploaderService.ufileById(params.id, request.locale)
-				file = fileUploaderService.fileForUFile(ufile, request.locale)
-				
-			}catch(FileNotFoundException fnfe){
-				log.debug fnfe.message
-				flash.message = fnfe.message
-				redirect controller: params.errorController, action: params.errorAction
-				return
-				
-			}catch(IOException ioe){
-				log.error ioe.message
-				flash.message = ioe.message
+		try{
+			ufile = fileUploaderService.ufileById(params.id, request.locale)
+			
+			if (!fileUploaderSecurityService.allowed(ufile)){
+				log.error = 'Not permitted access to $ufile'
+				flash.message = message(code: "fileupload.security.notpermitted", args: [params.id])
 				redirect controller: params.errorController, action: params.errorAction
 				return
 			}
+		
+			file = fileUploaderService.fileForUFile(ufile, request.locale)
 			
-			log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
+		}catch(FileNotFoundException fnfe){
+			log.debug fnfe.message
+			flash.message = fnfe.message
+			redirect controller: params.errorController, action: params.errorAction
+			return
 			
-			response.setContentType("application/octet-stream")
-			response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
-			response.outputStream << file.readBytes()
-	
+		}catch(IOException ioe){
+			log.error ioe.message
+			flash.message = ioe.message
+			redirect controller: params.errorController, action: params.errorAction
 			return
 		}
+		
+		log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
+		
+		response.setContentType("application/octet-stream")
+		response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
+		response.outputStream << file.readBytes()
+	
+		return
+	}
 	
 	def deleteFile() {
-		if(fileUploaderService.deleteFile(params.id)){
+		UFile ufile
+		
+		try{
+			ufile = fileUploaderService.ufileById(params.id, request.locale)
+			
+			if (!fileUploaderSecurityService.allowed(ufile)){
+				log.error = 'Not permitted access to $ufile'
+				flash.message = message(code: "fileupload.security.notpermitted", args: [params.id])
+				redirect controller: params.errorController, action: params.errorAction
+				return
+			}
+		}catch(Exception e){
+			redirect controller: params.errorController, action: params.errorAction, params:(params.errorParams)
+			return
+		}
+		
+		if(fileUploaderService.deleteFile(ufile)){
 			redirect controller: params.successController, action: params.successAction, params:(params.successParams)
 		}else{
 			redirect controller: params.errorController, action: params.errorAction, params:(params.errorParams)

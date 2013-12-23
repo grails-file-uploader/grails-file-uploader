@@ -18,4 +18,7 @@ class UFile {
         downloads()
     }
 
+	String toString(){
+		return path
+	}
 }

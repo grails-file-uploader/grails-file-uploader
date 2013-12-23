@@ -1,10 +1,58 @@
-File uploader grails plugin.
+Based on the File uploader grails plugin at: http://grails.org/plugin/file-uploader
 
-More information available at: http://grails.org/plugin/file-uploader
 
----------
-YourKit is kindly supporting open source projects with its full-featured Java Profiler.
-YourKit, LLC is the creator of innovative and intelligent tools for profiling
-Java and .NET applications. Take a look at YourKit's leading software products:
-YourKit Java Profiler (http://www.yourkit.com/java/profiler/index.jsp) and
-YourKit .NET Profiler (http://www.yourkit.com/.net/profiler/index.jsp).
+
+
+To Build plugin:
+Go to grails-file-uploader directory in this directory and run: grails maven-install
+
+To Run exampleProject
+Follow steps above to build plugin first.
+Go to fileUploaderExampleProject directory in this directory and run: grails run-app
+
+
+
+
+Example config block:
+fileuploader {
+  docs {
+    maxSize = 1000 * 1024 * 10   //10 MB
+    allowedExtensions = ['*']    //all
+    path = "/tmp/docs/"
+    storageTypes = ['monthSubdirs']
+  }
+}
+
+
+
+
+Security:
+If using spring-security, you can secure access to the File Uploader Controller by adding it to your static rules.  
+Example with annotations enabled:
+  grails.plugins.springsecurity.controllerAnnotations.staticRules = [
+    '/fileUploader/**': ['ROLE_USER']
+  ]
+
+You must create a service that implements com.lucastex.grails.fileuploader.IFileUploaderSecurityService
+
+At an insecure minimum, it would look like:
+class FileUploaderSecurityService implements IFileUploaderSecurityService {
+  @Override
+  boolean allowed(UFile ufile) {
+    log.info("Allowing access to $ufile")
+    return true
+  }
+}
+
+The IFileUploaderSecurityService is only invoked on download or delete.  Uploads are only restricted by the staticRules above.
+
+
+
+
+Storage:
+By default, the plugin will store files on the file system with no extension and the name as a uuid.  
+This should lend us slightly more security.  If two users upload a file with the same name, the files 
+will not overlap.
+
+You can revert to the previous functionality of storing absolute file names by adding 'plain' 
+to the storageTypes block in your config.
