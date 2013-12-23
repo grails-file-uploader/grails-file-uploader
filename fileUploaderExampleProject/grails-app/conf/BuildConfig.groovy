@@ -61,6 +61,6 @@ grails.project.dependency.resolution = {
         compile ':cache:1.0.1'
 		
 		//compile ":bootstrap-file-upload:2.1.2"
-		compile ":file-uploader:2.0.13"
+		compile ":file-uploader:2.1.0"
     }
 }

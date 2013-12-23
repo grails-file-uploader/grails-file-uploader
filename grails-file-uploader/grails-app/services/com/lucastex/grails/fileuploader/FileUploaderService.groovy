@@ -82,18 +82,18 @@ class FileUploaderService {
 
 		//base path to save file
 		def path = config.path
-		if (!path.endsWith('/'))
-			path = path + "/"
+		if (!path.endsWith('/') || !path.endsWith(File.separator))
+			path = path + File.separator
 
 		//setup storage path
 		def storageTypes = config.storageTypes
 	
 		if(storageTypes?.contains('monthSubdirs')){  //subdirectories by month and year
 			Calendar cal = Calendar.getInstance()
-			path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
+			path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + File.separator
 		}else{  //subdirectories by millisecond
 			long currentTime = System.currentTimeMillis()
-			path = path + currentTime + "/"
+			path = path + currentTime + File.separator
 		}
 		
 		//make sure the directory exists
@@ -150,7 +150,7 @@ class FileUploaderService {
 			ufile.delete()
 			borro=true;
 		}catch(Exception e){
-			log.error("could not delete ufile: ${idUfile}", e)
+			log.error("could not delete ufile: ${ufile.id}", e)
 		}
 		
 		if(file.exists()) {
@@ -233,11 +233,11 @@ class FileUploaderService {
 			throws FileUploaderServiceException,IOException {
 		
 		//Create temp directory
-		def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+		def tempDirectory = "./web-app${File.separator}temp${File.separator}${System.currentTimeMillis()}${File.separator}"
 		new File(tempDirectory).mkdirs()
 	
 		//create file
-		def tempFile = "${tempDirectory}/${uFile.name}.${uFile.extension}"
+		def tempFile = "${tempDirectory}${File.separator}${uFile.name}.${uFile.extension}"
 		def destFile = new File(tempFile)
 		def sourceFile = new File(uFile.path)
 		if(!destFile.exists()) {
