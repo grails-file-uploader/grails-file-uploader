@@ -44,6 +44,8 @@ class FileUploaderSecurityService implements IFileUploaderSecurityService {
   }
 }
 
+Ideally, you would do something like pull the current user from the session, and check to see if they have access to this UFile.  Another option would be creating a UFileRole table that would associate specific files with roles, and you could verify that the user had that role here.
+
 The IFileUploaderSecurityService is only invoked on download or delete.  Uploads are only restricted by the staticRules above.
 
 
