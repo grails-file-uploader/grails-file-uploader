@@ -3,11 +3,11 @@ Based on the File uploader grails plugin at: http://grails.org/plugin/file-uploa
 
 
 To Build plugin:
-Go to grails-file-uploader directory in this directory and run: grails maven-install
+Go to grails-local-upload directory in this directory and run: grails maven-install
 
 To Run exampleProject
 Follow steps above to build plugin first.
-Go to fileUploaderExampleProject directory in this directory and run: grails run-app
+Go to localUploadExampleProject directory in this directory and run: grails run-app
 
 
 
@@ -27,7 +27,7 @@ Security:
 If using spring-security, you can secure access to the Local Upload Controller by adding it to your static rules.  
 Example with annotations enabled:
   grails.plugins.springsecurity.controllerAnnotations.staticRules = [
-    '/fileUploader/**': ['ROLE_USER']
+    '/localUpload/**': ['ROLE_USER']
   ]
 
 You must create a service that implements org.grails.plugins.localUpload.ILocalUploadSecurityService
