@@ -9,10 +9,19 @@ class LocalUploadSupportService implements ILocalUploadSupportService {
 
 	@Override
 	List<UFile> listFor(Map params) {
-		println params
+		List<UFile> results = []
 		
+		if(params.saveAssoc){
+			switch(params.saveAssoc){
+				case 'example':
+					results.addAll(Example.load(params.id)?.files)
+					break
+				default:
+					break
+			}
+		}
 		
-		return []
+		return results
 	}
 
 	@Override

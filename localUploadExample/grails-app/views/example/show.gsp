@@ -1,4 +1,3 @@
-
 <%@ page import="com.bowerstudios.fileManager.Example" %>
 <!DOCTYPE html>
 <html>
@@ -6,6 +5,8 @@
 		<meta name="layout" content="main">
 		<g:set var="entityName" value="${message(code: 'example.label', default: 'Example')}" />
 		<title><g:message code="default.show.label" args="[entityName]" /></title>
+		
+		<r:require modules="bootstrap-file-upload"/>
 	</head>
 	<body>
 		<a href="#show-example" class="skip" tabindex="-1"><g:message code="default.link.skip.label" default="Skip to content&hellip;"/></a>
@@ -58,6 +59,8 @@
 						successAction="show" successController="example"
 						errorAction="show" errorController="example" 
 						id="${exampleInstance.id}"/>
+						
+				<bsfu:fileUpload action="ajaxUpload" controller="localUpload" formData="${[id:exampleInstance.id, saveAssoc:'example'] }"/>
 				
 			
 			</ol>

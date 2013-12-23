@@ -48,9 +48,7 @@ class LocalUploadController {
 				List<UFile> ufiles = localUploadSupportService.listFor(params)
 				
 				if(ufiles){
-					for(UFile ufile: ufiles){
-						results << ufileToAjaxResult(ufile)
-					}
+					results.addAll(ufileToAjaxResult)
 				}
 				
 				break

@@ -46,7 +46,7 @@ grails.project.dependency.resolution = {
 
     plugins {
         runtime ":hibernate:$grailsVersion"
-        runtime ":jquery:1.8.3"
+		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3",":twitter-bootstrap:3.0.3"
         runtime ":resources:1.2"
 
         // Uncomment these (or add new ones) to enable additional resources capabilities
@@ -61,6 +61,6 @@ grails.project.dependency.resolution = {
         compile ':cache:1.0.1'
 		
 		compile ":bootstrap-file-upload:2.1.2"
-		compile ":local-upload:latest.release"
+		compile ":local-upload:1.0.3"
     }
 }
