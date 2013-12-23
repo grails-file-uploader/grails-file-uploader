@@ -50,9 +50,6 @@ The IFileUploaderSecurityService is only invoked on download or delete.  Uploads
 
 
 Storage:
-By default, the plugin will store files on the file system with no extension and the name as a uuid.  
-This should lend us slightly more security.  If two users upload a file with the same name, the files 
-will not overlap.
+By default, the plugin will store files on the file system with no extension and the name as a uuid.  This should lend us slightly more security.  If two users upload a file with the same name, the files will not overlap.
 
-You can revert to the previous functionality of storing absolute file names by adding 'plain' 
-to the storageTypes block in your config.
+You can revert to the previous functionality of storing absolute file names by adding 'plain' to the storageTypes block in your config.
