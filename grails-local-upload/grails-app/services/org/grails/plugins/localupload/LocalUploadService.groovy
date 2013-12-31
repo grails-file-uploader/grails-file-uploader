@@ -21,35 +21,28 @@ class LocalUploadService {
 	 * Primary save method that will store a file to a bucket.  
 	 * 
 	 * @param bucket LocalUpload bucket in which the file is stored.
-	 * @param file Either a java.io.File or a org.springframework.web.multipart.MultipartFile
+	 * @param file MultipartFile
 	 * @param name Desired name for the file, defaults to submitted file name
 	 * @param Locale Locale for the current request
 	 * @return UFile that was successfully saved
 	 */
-	UFile saveFile(String bucket, def file, String name, Locale locale) throws LocalUploadServiceException {
+	UFile saveFile(String bucket, MultipartFile file, String name, Locale locale) throws LocalUploadServiceException {
 
 		//config handler
 		def config = grailsApplication.config.localUpload[bucket]
 		
 		//Check if file is empty
-		if(file instanceof File) {
-			if(!file || !file.exists() || file.isEmpty()){
-				def msg = messageSource.getMessage("fileupload.upload.nofile", null, locale)
-				log.debug msg
-				throw new LocalUploadServiceException(msg)
-			}
+		if(!file || file.isEmpty()){
+			def msg = messageSource.getMessage("localupload.upload.nofile", null, locale)
+			log.info msg
+			throw new LocalUploadServiceException(msg)
 		}
 
 		/** *********************
 		 check extensions
 		 *********************** */
 		String fileExtension
-		String fileName
-		if(file instanceof File) {
-			fileName = file.name
-		} else {
-			fileName = file.originalFilename
-		}
+		String fileName = file.originalFilename
 		
 		int extensionAt = fileName?.lastIndexOf('.') + 1
 		if(extensionAt >= 0){
@@ -59,7 +52,7 @@ class LocalUploadService {
 		}
 		
 		if (!config.allowedExtensions[0].equals("*") && !config.allowedExtensions.contains(fileExtension)) {
-			def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], locale)
+			def msg = messageSource.getMessage("localupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], locale)
 			log.debug msg
 			throw new LocalUploadServiceException(msg)
 		}
@@ -78,7 +71,7 @@ class LocalUploadService {
 			def maxSizeInKb = ((int) (config.maxSize)) / 1024
 			if (fileSize > config.maxSize) { //if filesize is bigger than allowed
 				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
-				def msg = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
+				def msg = messageSource.getMessage("localupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
 				throw new LocalUploadServiceException(msg)
 			}
 		}
@@ -110,7 +103,7 @@ class LocalUploadService {
 		
 		if(storageTypes?.contains('plain')){
 			//note:  this type of storage is a bit of a security / data loss risk.
-			path = path + (name ? (name + "." + fileExtension) : fileName)
+			path = path + (name ?: fileName)
 		}else{  
 			/* Using uuids as filenames, this lends us slightly more security.  If 
 			 * two users upload a file with the same name, the files will not 
@@ -128,7 +121,7 @@ class LocalUploadService {
 
 		//save it on the database
 		def ufile = new UFile()
-		ufile.name = (name ? (name + "." + fileExtension) : fileName)
+		ufile.name = (name ?: fileName)
 		ufile.size = fileSize 
 		ufile.extension = fileExtension
 		ufile.dateUploaded = new Date()
@@ -194,7 +187,7 @@ class LocalUploadService {
 		
 		}else{
 			String msg = messageSource.getMessage(
-					"fileupload.download.nofile",
+					"localupload.download.nofile",
 					[idUfile] as Object[], locale)
 			throw new FileNotFoundException(idUfile.toString())
 			
@@ -216,7 +209,7 @@ class LocalUploadService {
 			
 		}else{
 			String msg = messageSource.getMessage(
-						"fileupload.download.filenotfound",
+						"localupload.download.filenotfound",
 						[ufile.name] as Object[], locale)
 			
 			throw new IOException(msg)
@@ -285,6 +278,10 @@ class LocalUploadService {
 		if (request instanceof MultipartHttpServletRequest){
 			MultipartHttpServletRequest req = request
 			for(MultipartFile file in req.getFiles(fileParam)){
+				if(file.empty){
+					continue
+				}
+				
 				UFile ufile
 				try{
 					ufile = saveFile(bucket, file, file.originalFilename, request.locale)

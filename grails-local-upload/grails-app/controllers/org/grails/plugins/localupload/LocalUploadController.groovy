@@ -38,6 +38,7 @@ class LocalUploadController {
 		def results = []
 		
 		String bucket = params.bucket
+		String fileParam = params.fileParam ?: 'files'
 		
 		switch(request.method){
 			/* If we get a GET response, we'll just return back a list of ufiles
@@ -57,11 +58,14 @@ class LocalUploadController {
 			// accept files
 			case "POST":
 				if (request instanceof MultipartHttpServletRequest){
-					for(filename in request.getFileNames()){
-						MultipartFile file = request.getFile(filename)
+					for(MultipartFile file in request.getFiles(fileParam)){
+						if(file.empty){
+							continue
+						}
+						
 						UFile ufile
 						try{
-							ufile = localUploadService.saveFile(bucket, file, filename, request.locale)
+							ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
 							localUploadSupportService.associateUFile(ufile, params)
 							results << ufileToAjaxResult(ufile)
 						}catch(LocalUploadServiceException e){
@@ -89,10 +93,15 @@ class LocalUploadController {
 	def upload(){
 
 		String bucket = params.bucket
+		String fileParam = params.fileParam ?: 'files'
 
 		if (request instanceof MultipartHttpServletRequest){
 			MultipartHttpServletRequest req = request
-			for(MultipartFile file in req.getFiles('files')){
+			for(MultipartFile file in req.getFiles(fileParam)){
+				if(file.empty){
+					continue
+				}
+				
 				UFile ufile
 				try{
 					ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
@@ -124,7 +133,7 @@ class LocalUploadController {
 			
 			if (!localUploadSecurityService.allowed(ufile)){
 				log.error = 'Not permitted access to $ufile'
-				flash.message = message(code: "fileupload.security.notpermitted", args: [params.id])
+				flash.message = message(code: "localupload.security.notpermitted", args: [params.id])
 				redirect controller: params.errorController, action: params.errorAction, id: params.saveAssocId
 				return
 			}
@@ -187,7 +196,7 @@ class LocalUploadController {
 			
 			if (!localUploadSecurityService.allowedToDelete(ufile)){
 				log.error = 'Not permitted access to delete $ufile'
-				flash.message = message(code: "fileupload.security.notpermitted", args: [params.id])
+				flash.message = message(code: "localupload.security.notpermitted", args: [params.id])
 				redirect controller: params.errorController, action: params.errorAction
 				return
 			}

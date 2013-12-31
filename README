@@ -1,26 +1,90 @@
 Based on the File uploader grails plugin at: http://grails.org/plugin/file-uploader
 
 
+This plugin adds local storage as an alternative to the Grails native way of storing files into the database as byte arrays.  It allows several ways of doing this.  
+
+FIRST METHOD: Use the LocalUploadService.lookForNewAttachments() closure to associate incoming file attachments with your domain model as UFile objects while you are editing that domain object.  In your controller, you would do:
+
+localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
+    if(!example.files){
+        example.files = []
+    }
+    example.files << ufile
+}
+
+and in your view:
+<span>
+<g:each in="${exampleInstance?.files}" var="f">
+<localUpload:download fileId="${f.id}">${f.name}</localUpload:download>
+</g:each>
+
+<g:hiddenField name="bucket" value="docs" />
+<input type="file" name="files" multiple="multiple" />
+</span>
+
+Examples usages of this are in localUploadExample/grails-app/views/example/_form.gsp and localUploadExample/grails-app/controllers/com/bowerstudios/fileManager/ExampleController.groovy.  (Don't forget to switch form tag from g:form to g:uploadForm
+
+
+SECOND METHOD:  If you already have a domain object persisted, you can use the LocalUploadController and LocalUpload tag library to attach files to a domain object.  In your view:
+<localUpload:form bucket="docs" saveAssoc="example" multiple="true" id="${exampleInstance.id}"/>
+You'll then need to implement ILocalUploadSupportService as a grails service.  Specifically, you need to tell the plugin how to associate a UFile with your domain object.
+@Override
+void associateUFile(UFile ufile, Map params) {
+    if(ufile){
+        switch(params.saveAssoc){
+            case 'example':
+                Example example = Example.load(params.id)
+
+                if(example.files){
+                    example.files.add(ufile)
+                }else{
+                    example.files = [ufile]
+                }
+
+                example.save(failOnError:true)
+
+                break
+            default:
+                log.error("Save Association ${params.saveAssoc} not handled in associateUFile")
+                break
+            }
+    }
+
+    return
+}
+
+Note the use of the saveAssoc parameter as a "key".  There's a better way to persist this link, but for now this works.
+
+Leaving out or setting multiple="false" will only clue the browser to submit a single file.  This means the browser will only submit a single file at a time, instead of multiple.  It does not add business logic to limit how many files will be associated with the model.
+
+
+THIRD METHOD:  This plugin integrates with the bootstrap-file-upload plugin to provide the pleasant jquery-ui.  It is currently being developed.
+
 
 To Build plugin:
 Go to grails-local-upload directory in this directory and run: grails maven-install
 
 To Run exampleProject
 Follow steps above to build plugin first.
-Go to localUploadExampleProject directory in this directory and run: grails run-app
+Go to localUploadExample directory in this directory and run: grails run-app
 
+
+Installing:
+Add compile ":local-upload:1.0.17" to your BuildConfig.groovy in the plugins block
 
 
 Example config block:
 localUpload {
   docs {
-    maxSize = 1000 * 1024 * 10   //10 MB
-    allowedExtensions = ['*']    //all
+    maxSize = 1000 * 1024 * 10       //10 MB
+    allowedExtensions = ['*']        //all extensions allowed
     path = "/tmp/docs/"
-    storageTypes = ['monthSubdirs']
+    // path = "C:\\attachments"      // for windows path
+    storageTypes = ['monthSubdirs']  // options (comma separated list of strings): monthSubdirs, plain
   }
 }
 
+In the storageTypes section, you can specify parameters for storage, the default stores files with a uuid name and no extension.  You can store the file by the original filename by using 'plain'.  You can have the plugin create subdirectories by year and month with 'monthSubdirs'
 
 
 Security:
@@ -28,6 +92,7 @@ If using spring-security, you can secure access to the Local Upload Controller b
 Example with annotations enabled:
   grails.plugins.springsecurity.controllerAnnotations.staticRules = [
     '/localUpload/**': ['ROLE_USER']
+    '/image/**': ['ROLE_ADMIN']  // if you are also using bootstrap-file-upload
   ]
 
 You must create a service that implements org.grails.plugins.localUpload.ILocalUploadSecurityService
@@ -59,3 +124,8 @@ Storage:
 By default, the plugin will store files on the file system with no extension and the name as a uuid.  This should lend us slightly more security.  If two users upload a file with the same name, the files will not overlap.
 
 You can revert to the previous functionality of storing absolute file names by adding 'plain' to the storageTypes block in your config.
+
+
+Todo:
+ - Params should pass correctly in download links
+ - Test error flows
