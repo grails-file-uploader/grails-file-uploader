@@ -9,39 +9,53 @@ class LocalUploadTagLib {
 	static Long _mbyte = 1 	* 	1000	*	1024
 	static Long _gbyte = 1	*	1000	*	1024	*	1024
 	
+	/**
+	 * Create a download link for a ufile
+	 * @attr fileId The UFile id
+	 * @attr saveAssocId The id of the domain object we're associating with, defaults to params.id
+	 * @attr errorController The controller to redirect to in case of an error, defaults to params.controller
+	 * @attr errorAction The action to redirect to in case of an error, defaults to params.action
+	 */
 	def download = { attrs, body ->
 		
 		//checking required fields
-		if (!attrs.id) {
-			def errorMsg = "'id' attribute not found in localUpload download tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-				
-		if (!attrs.errorAction) {
-			def errorMsg = "'errorAction' attribute not found in localUpload form tag."
+		if (!attrs.fileId) {
+			def errorMsg = "'fileId' attribute not found in localUpload:download tag."
 			log.error (errorMsg)
 			throwTagError(errorMsg)
 		}
 		
-		if (!attrs.errorController) {
-			def errorMsg = "'errorController' attribute not found in localUpload form tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-	
-		params.errorAction = attrs.errorAction
-		params.errorController = attrs.errorController
+		def linkParams = [:]
 		
-		out << g.link([controller: "localUpload", action: "download", params: params, id: attrs.id], body)
+		/* If a specific error action and controller has been specified, use them.
+		 * Otherwise, just use the current action and controller
+		 */
+		linkParams.errorAction = attrs.errorAction ? attrs.errorAction : params.action
+		linkParams.errorController = attrs.errorController ? attrs.errorController : params.controller
+		
+		//grab the id of the domain object we're associating with
+		linkParams.saveAssocId = attrs.saveAssocId ? attrs.saveAssocId : params.id
+		
+		out << g.link([controller: "localUpload", action: "download", params: linkParams, id: attrs.fileId], body)
 		
 	}
 	
+	/**
+	 * Create a form to upload files to an existing domain object
+	 * @attr upload LocalUpload group/bucket to which this file should be uploaded
+	 * @attr multiple boolean true if should allow multiple files to be uploaded
+	 * @attr saveAssoc Key that is passed along to your implementation of ILocalUploadSupportService
+	 * @attr successParams request params passed to success controller and action
+	 * @attr successController The controller to redirect, defaults to params.controller
+	 * @attr successAction The action to redirect, defaults to params.action
+	 * @attr errorController The controller to redirect to in case of an error, defaults to params.controller
+	 * @attr errorAction The action to redirect to in case of an error, defaults to params.action
+	 */
 	def form = { attrs ->
 		
 		//checking required fields
-		if (!attrs.upload) {
-			def errorMsg = "'upload' attribute not found in localUpload form tag."
+		if (!attrs.bucket) {
+			def errorMsg = "'bucket' attribute not found in localUpload form tag."
 			log.error (errorMsg)
 			throwTagError(errorMsg)
 		}
@@ -52,56 +66,39 @@ class LocalUploadTagLib {
 			throwTagError(errorMsg)
 		}
 		
-		if (!attrs.successAction) {
-			def errorMsg = "'successAction' attribute not found in localUpload form tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-		
-		if (!attrs.successController) {
-			def errorMsg = "'successController' attribute not found in localUpload form tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-		
-		if (!attrs.errorAction) {
-			def errorMsg = "'errorAction' attribute not found in localUpload form tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-		
-		if (!attrs.errorController) {
-			def errorMsg = "'errorController' attribute not found in localUpload form tag."
-			log.error (errorMsg)
-			throwTagError(errorMsg)
-		}
-		
 		//upload group
-		def upload = attrs.upload
+		def bucket = attrs.bucket
 		
 		//case success
-		def successAction = attrs.successAction
-		def successController = attrs.successController
+		def successAction = attrs.successAction ? attrs.successAction : params.action
+		def successController = attrs.successController ? attrs.successController : params.controller
 		
 		//case error
-		def errorAction = attrs.errorAction
-		def errorController = attrs.errorController
+		def errorAction = attrs.errorAction ? attrs.errorAction : params.action
+		def errorController = attrs.errorController ? attrs.errorController : params.controller
 		
 		def tagBody = """
-			<input type='hidden' name='upload' value='${upload}' />
+			<input type="hidden" name="bucket" value="${bucket}" />
 			<input type="hidden" name="saveAssoc" value="${attrs.saveAssoc}" />
-			<input type='hidden' name='errorAction' value='${errorAction}' />
-			<input type='hidden' name='errorController' value='${errorController}' />
-			<input type='hidden' name='successAction' value='${successAction}' />
-			<input type='hidden' name='successController' value='${successController}' />
-			<input type='file' name='file' />
-			<input type='submit' name='submit' value='Submit' />
+			<input type="hidden" name="errorAction" value="${errorAction}" />
+			<input type="hidden" name="errorController" value="${errorController}" />
+			<input type="hidden" name="successAction" value="${successAction}" />
+			<input type="hidden" name="successController" value="${successController}" />
 		"""
-                //optional parameters for success action
-                if(attrs.successParams) {
-                    tagBody += """<input type='hidden' name='successParams' 
-                        value='${attrs.successParams}' />"""
-                }
+		
+		if(attrs.multiple){
+			tagBody += """<input type="file" name="files" multiple="multiple"/>"""
+		}else{
+			tagBody += """<input type="file" name="files" />"""
+		}
+		
+		//optional parameters for success action
+		if(attrs.successParams) {
+			tagBody += """<input type="hidden" name="successParams" 
+                        value="${attrs.successParams}" />"""
+		}
+		
+		tagBody += """<input type="submit" name="submit" value="Submit" />"""
 		
 		//form build
 		StringBuilder sb = new StringBuilder()
@@ -140,6 +137,7 @@ class LocalUploadTagLib {
 	}
 
 }
+
 /*
 (0 - 1000) size = bytes
 (1000 - 1000*1024) size / 1000 = kbytes

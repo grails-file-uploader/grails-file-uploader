@@ -41,27 +41,65 @@
 					
 				</li>
 				</g:if>
-			
+				
+				
+				
+				
 				<g:if test="${exampleInstance?.files}">
 				<li class="fieldcontain">
-					<span id="files-label" class="property-label"><g:message code="example.files.label" default="Files" /></span>
+					<span id="files-label" class="property-label">
+					Displaying the file download links using gsp:</span>
 					
-						<g:each in="${exampleInstance.files}" var="f">
+					<g:each in="${exampleInstance.files}" var="f">
 						<span class="property-value" aria-labelledby="files-label">
-							<localUpload:download id="${f.id}"
-								errorAction="error" errorController="mycontroller">${f.name }</localUpload:download>
+							<localUpload:download fileId="${f.id}">${f.name}</localUpload:download>
 						</span>
 						</g:each>
 				</li>
 				</g:if>
 				
-				<localUpload:form upload="docs" saveAssoc="example"
-						successAction="show" successController="example"
-						errorAction="show" errorController="example" 
-						id="${exampleInstance.id}"/>
-						
-				<bsfu:fileUpload action="ajaxUpload" controller="localUpload" formData="${[id:exampleInstance.id, saveAssoc:'example'] }"/>
 				
+				
+				
+				<li class="fieldcontain">
+					<span id="files-form-label" class="property-label">
+					Displaying the file upload form using gsp which redirects back
+					to the show action of this controller after it successfully
+					uploads the file (allows only single file submission)</span>
+					
+					<span class="property-value" aria-labelledby="files-form-label">
+						<localUpload:form bucket="docs" saveAssoc="example"
+							id="${exampleInstance.id}"/>
+					</span>
+				</li>
+				
+				
+				
+				
+				<li class="fieldcontain">
+					<span id="files-form-multiple-label" class="property-label">
+					Displaying the file upload form using gsp which redirects back
+					to the show action of this controller after it successfully
+					uploads the file (allows multiple file submission)</span>
+					
+					<span class="property-value" aria-labelledby="files-form-multiple-label">
+						<localUpload:form bucket="docs" saveAssoc="example"
+							multiple="true" id="${exampleInstance.id}"/>
+					</span>
+				</li>
+				
+				
+				
+				
+				<li class="fieldcontain">
+					<span id="files-ajax-form-label" class="property-label">
+					Displaying the file upload form using the ajax</span>
+					
+					<span class="property-value" aria-labelledby="files-ajax-form-label">
+						<bsfu:fileUpload action="ajaxUpload" controller="localUpload" 
+							formData="${[id:exampleInstance.id, saveAssoc:'example'] }"/>
+					</span>
+				</li>
 			
 			</ol>
 			<g:form>

@@ -11,14 +11,13 @@ class LocalUploadSupportService implements ILocalUploadSupportService {
 	List<UFile> listFor(Map params) {
 		List<UFile> results = []
 		
-		if(params.saveAssoc){
-			switch(params.saveAssoc){
-				case 'example':
-					results.addAll(Example.load(params.id)?.files)
-					break
-				default:
-					break
-			}
+		switch(params.saveAssoc){
+			case 'example':
+				results.addAll(Example.load(params.id)?.files)
+				break
+			default:
+				log.error("Save Association ${params.saveAssoc} not handled in listFor")
+				break
 		}
 		
 		return results
@@ -26,19 +25,27 @@ class LocalUploadSupportService implements ILocalUploadSupportService {
 
 	@Override
 	void associateUFile(UFile ufile, Map params) {
-		println params
-		
-		Example example = Example.load(params.id)
 		
 		if(ufile){
-			if(example.files){
-				example.files.add(ufile)
-			}else{
-				example.files = [ufile]
+			switch(params.saveAssoc){
+				case 'example':
+					Example example = Example.load(params.id)
+				
+					if(example.files){
+						example.files.add(ufile)
+					}else{
+						example.files = [ufile]
+					}
+				
+					example.save(failOnError:true)
+		
+					break
+				default:
+					log.error("Save Association ${params.saveAssoc} not handled in associateUFile")
+					break
 			}
 		}
-		example.save(failOnError:true)
-
+		
 		return
 	}
 

@@ -5,31 +5,29 @@ import groovy.io.FileType
 import java.nio.channels.FileChannel
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.grails.plugins.localupload.UFile;
 import org.springframework.context.MessageSource
+import org.springframework.transaction.annotation.Transactional
 
-import org.grails.plugins.localupload.LocalUploadServiceException;
-
+@Transactional
 class LocalUploadService {
 
 	MessageSource messageSource
 
 	GrailsApplication grailsApplication
-	
-	boolean transactional = true
 
 	/**
-	 * Función que sube un archivo al servidor
-	 * @param group El grupo del archivo
-	 * @param file El archivo a subir
-	 * @param name El nombre con el que se guardará el archivo
-	 * @param Locale El locale en el cual se desean los mensajes de error.
-	 * @return La entidad UFile que modela el archivo
+	 * Primary save method that will store a file to a bucket.  
+	 * 
+	 * @param bucket LocalUpload bucket in which the file is stored.
+	 * @param file Either a java.io.File or a org.springframework.web.multipart.MultipartFile
+	 * @param name Desired name for the file, defaults to submitted file name
+	 * @param Locale Locale for the current request
+	 * @return UFile that was successfully saved
 	 */
-	UFile saveFile(String group, def file, String name, Locale locale) throws LocalUploadServiceException {
+	UFile saveFile(String bucket, def file, String name, Locale locale) throws LocalUploadServiceException {
 
 		//config handler
-		def config = grailsApplication.config.localUpload[group]
+		def config = grailsApplication.config.localUpload[bucket]
 		
 		//Check if file is empty
 		if(file instanceof File) {
@@ -101,10 +99,10 @@ class LocalUploadService {
 		
 		//make sure the directory exists
 		if(! new File(path).exists() ){
-			if (!new File(path).mkdirs()){
-				log.error "LocalUpload plugin couldn't create directories: [${path}]"
+			if (new File(path).mkdirs()){
+				log.debug "Created LocalUpload plugin storage directory [${path}]"
 			}else{
-				log.debug "Created plugin storage directory [${path}]"
+				log.error "LocalUpload plugin couldn't create directories: [${path}]"
 			}
 		}
 		
@@ -185,6 +183,7 @@ class LocalUploadService {
 	/**
 	 * Access the Ufile, returning the appropriate message if the UFile does not exist.
 	 */
+	@Transactional(readOnly = true)
 	UFile ufileById(Serializable idUfile, Locale locale){
 		UFile ufile = UFile.get(idUfile)
 		
@@ -224,7 +223,7 @@ class LocalUploadService {
 	
 	/**
 	 * Method to create a duplicate of an existing UFile
-	 * @param group
+	 * @param bucket
 	 * @param uFile
 	 * @param name
 	 * @param locale
@@ -232,8 +231,8 @@ class LocalUploadService {
 	 * @throws LocalUploadServiceException
 	 * @throws IOException
 	 */
-	UFile cloneFile(String group, UFile uFile, String name, Locale locale)
-			throws LocalUploadServiceException,IOException {
+	UFile cloneFile(String bucket, UFile uFile, String name, Locale locale)
+			throws LocalUploadServiceException, IOException {
 		
 		//Create temp directory
 		def tempDirectory = "./web-app${File.separator}temp${File.separator}${System.currentTimeMillis()}${File.separator}"
@@ -263,7 +262,7 @@ class LocalUploadService {
 			}
 
 			if(destFile.exists()) {
-				return this.saveFile(group, destFile,name, locale)
+				return this.saveFile(bucket, destFile,name, locale)
 			}
 		}
 	}

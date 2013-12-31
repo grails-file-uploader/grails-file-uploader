@@ -37,18 +37,19 @@ class LocalUploadController {
 	def ajaxUpload(){
 		def results = []
 		
-		//upload group
-		String upload = params.upload
+		String bucket = params.bucket
 		
 		switch(request.method){
-			/* If we get a get response, we'll just return back a list of ufiles
+			/* If we get a GET response, we'll just return back a list of ufiles
 			 * that this request can access
 			 */
 			case "GET":
 				List<UFile> ufiles = localUploadSupportService.listFor(params)
 				
 				if(ufiles){
-					results.addAll(ufileToAjaxResult)
+					for(UFile ufile: ufiles){
+						results.add(ufileToAjaxResult(ufile))
+					}
 				}
 				
 				break
@@ -60,7 +61,7 @@ class LocalUploadController {
 						MultipartFile file = request.getFile(filename)
 						UFile ufile
 						try{
-							ufile = localUploadService.saveFile(upload, file, filename, request.locale)
+							ufile = localUploadService.saveFile(bucket, file, filename, request.locale)
 							localUploadSupportService.associateUFile(ufile, params)
 							results << ufileToAjaxResult(ufile)
 						}catch(LocalUploadServiceException e){
@@ -87,27 +88,30 @@ class LocalUploadController {
 	
 	def upload(){
 
-		//upload group
-		String upload = params.upload
-		
-		String overrideFileName = params.overrideFileName
-		
-		//request file
-		def file = request.getFile("file")
-		
-		UFile ufile
-		
-		try{
-			ufile = localUploadService.saveFile(upload, file, overrideFileName, request.locale)
-			localUploadSupportService.associateUFile(ufile, params)
-		}catch(LocalUploadServiceException e){
-			flash.message = e.message
+		String bucket = params.bucket
+
+		if (request instanceof MultipartHttpServletRequest){
+			MultipartHttpServletRequest req = request
+			for(MultipartFile file in req.getFiles('files')){
+				UFile ufile
+				try{
+					ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
+					localUploadSupportService.associateUFile(ufile, params)
+				}catch(LocalUploadServiceException e){
+					flash.message = e.message
+					redirect controller: params.errorController, action: params.errorAction, id: params.id
+					return
+				}
+			}
+			
+			redirect controller: params.successController, action: params.successAction, params:[id: params.id,successParams:params.successParams]
+			
+		}else{
+			log.error("Received a post request that was not a MultipartHttpServletRequest")
+			flash.message = message(code: "localupload.upload.multipartExpected")
 			redirect controller: params.errorController, action: params.errorAction, id: params.id
 			return
-			
 		}
-		
-		redirect controller: params.successController, action: params.successAction, params:[ufileId:ufile.id, id: params.id,successParams:params.successParams]
 	}
 	
 	def download() {
@@ -121,7 +125,7 @@ class LocalUploadController {
 			if (!localUploadSecurityService.allowed(ufile)){
 				log.error = 'Not permitted access to $ufile'
 				flash.message = message(code: "fileupload.security.notpermitted", args: [params.id])
-				redirect controller: params.errorController, action: params.errorAction
+				redirect controller: params.errorController, action: params.errorAction, id: params.saveAssocId
 				return
 			}
 		
@@ -130,13 +134,13 @@ class LocalUploadController {
 		}catch(FileNotFoundException fnfe){
 			log.debug fnfe.message
 			flash.message = fnfe.message
-			redirect controller: params.errorController, action: params.errorAction
+			redirect controller: params.errorController, action: params.errorAction, id: params.saveAssocId
 			return
 			
 		}catch(IOException ioe){
 			log.error ioe.message
 			flash.message = ioe.message
-			redirect controller: params.errorController, action: params.errorAction
+			redirect controller: params.errorController, action: params.errorAction, id: params.saveAssocId
 			return
 		}
 		
