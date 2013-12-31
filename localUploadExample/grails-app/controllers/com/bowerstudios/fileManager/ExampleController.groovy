@@ -1,13 +1,18 @@
 package com.bowerstudios.fileManager
 
-import org.springframework.dao.DataIntegrityViolationException
-
+import org.grails.plugins.localupload.LocalUploadService
+import org.grails.plugins.localupload.LocalUploadServiceException
 import org.grails.plugins.localupload.UFile
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.MultipartHttpServletRequest
 
 class ExampleController {
 
     static allowedMethods = [save: "POST", update: "POST", delete: "POST"]
 
+	LocalUploadService localUploadService
+	
     def index() {
         redirect(action: "list", params: params)
     }
@@ -21,8 +26,24 @@ class ExampleController {
         [exampleInstance: new Example(params)]
     }
 
+	/**
+	 * Remember to save the domain object afterward with example.save()
+	 * @param example domain object
+	 */
+	private List<UFile> lookForNewAttachments(Example example){
+		return localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
+			if(!example.files){
+				example.files = []
+			}
+			example.files << ufile
+		}
+	}
+	
     def save() {
         def exampleInstance = new Example(params)
+		
+		lookForNewAttachments(exampleInstance)
+		
         if (!exampleInstance.save(flush: true)) {
             render(view: "create", model: [exampleInstance: exampleInstance])
             return
@@ -73,6 +94,8 @@ class ExampleController {
         }
 
         exampleInstance.properties = params
+		
+		lookForNewAttachments(exampleInstance)
 
         if (!exampleInstance.save(flush: true)) {
             render(view: "edit", model: [exampleInstance: exampleInstance])

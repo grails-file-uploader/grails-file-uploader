@@ -48,5 +48,4 @@ class LocalUploadSupportService implements ILocalUploadSupportService {
 		
 		return
 	}
-
 }

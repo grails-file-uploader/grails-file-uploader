@@ -7,6 +7,8 @@ import java.nio.channels.FileChannel
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.MultipartHttpServletRequest
 
 @Transactional
 class LocalUploadService {
@@ -265,5 +267,39 @@ class LocalUploadService {
 				return this.saveFile(bucket, destFile,name, locale)
 			}
 		}
+	}
+	
+	/**
+	 * Helper method for Controllers to Look for new attachments, and add them 
+	 * to the domain object.  Passes a UFile object to the closure.  Iterates over
+	 * all files submitted, and runs the closure for each
+	 * @param closure
+	 * @return a list of the new UFiles
+	 */
+	List<UFile> lookForNewAttachments(def request, def params, def flash, Closure closure){
+		String bucket = params.bucket
+		String fileParam = params.fileParam ?: 'files'
+		
+		List<UFile> newAttachments = []
+		
+		if (request instanceof MultipartHttpServletRequest){
+			MultipartHttpServletRequest req = request
+			for(MultipartFile file in req.getFiles(fileParam)){
+				UFile ufile
+				try{
+					ufile = saveFile(bucket, file, file.originalFilename, request.locale)
+					
+					newAttachments << ufile
+					
+					closure.call(ufile)
+					
+				}catch(LocalUploadServiceException e){
+					log.error("Failed to upload file", e)
+					flash.message = "Failed to upload ${file?.originalFilename}"
+				}
+			}
+		}
+		
+		return newAttachments
 	}
 }
