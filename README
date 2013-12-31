@@ -84,7 +84,7 @@ localUpload {
   }
 }
 
-In the storageTypes section, you can specify parameters for storage, the default stores files with a uuid name and no extension.  You can store the file by the original filename by using 'plain'.  You can have the plugin create subdirectories by year and month with 'monthSubdirs'
+In the storageTypes section, you can specify parameters for storage, the default stores files with a uuid name and no extension.  This should lend slightly more security.  If two users upload a file with the same name, the files will not overlap or be unintentionally revealed to an incorrect person.  You can store the file by the original filename by using 'plain'.  You can have the plugin create subdirectories by year and month with 'monthSubdirs'
 
 
 Security:
@@ -114,16 +114,6 @@ Ideally, you would do something like pull the current user from the session, and
 The ILocalUploadSecurityService is only invoked on download or delete.  Uploads are only restricted by the staticRules above.
 
 
-
-Ajax:
-
-
-
-
-Storage:
-By default, the plugin will store files on the file system with no extension and the name as a uuid.  This should lend us slightly more security.  If two users upload a file with the same name, the files will not overlap.
-
-You can revert to the previous functionality of storing absolute file names by adding 'plain' to the storageTypes block in your config.
 
 
 Todo:
