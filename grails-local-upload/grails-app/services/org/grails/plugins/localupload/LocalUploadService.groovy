@@ -122,7 +122,7 @@ class LocalUploadService {
 		//save it on the database
 		def ufile = new UFile()
 		ufile.name = (name ?: fileName)
-		ufile.size = fileSize 
+		ufile.sizeInBytes = fileSize 
 		ufile.extension = fileExtension
 		ufile.dateUploaded = new Date()
 		ufile.path = path

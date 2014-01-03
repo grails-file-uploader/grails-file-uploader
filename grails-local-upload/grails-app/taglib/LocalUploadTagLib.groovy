@@ -108,7 +108,7 @@ class LocalUploadTagLib {
 	}
 	
 	/**
-	 * @attr size REQUIRED the value to convert
+	 * @attr size REQUIRED the value in bytes to convert
 	 */
 	def prettysize = { attrs ->
 		if (!attrs['size']) {

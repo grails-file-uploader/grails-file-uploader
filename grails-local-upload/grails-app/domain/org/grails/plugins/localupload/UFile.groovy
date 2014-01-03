@@ -2,7 +2,7 @@ package org.grails.plugins.localupload
 
 class UFile {
 
-    Long size
+    Long sizeInBytes
     String path
     String name
     String extension
@@ -11,7 +11,7 @@ class UFile {
 	String pathToThumbnail
 	
     static constraints = {
-        size(min:0L)
+        sizeInBytes(min:0L)
         path()
         name()
         extension()

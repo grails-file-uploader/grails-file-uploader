@@ -26,7 +26,7 @@ class LocalUploadController {
 	private Map ufileToAjaxResult(UFile ufile){
 		return [
 			name: ufile.name,
-			size: ufile.size,
+			size: ufile.sizeInBytes,
 			url: createLink(action:'download', id:ufile.id),
 			thumbnail_url: ufile.pathToThumbnail,
 			delete_url: createLink(action:'ajaxDeleteFile', id:ufile.id),
