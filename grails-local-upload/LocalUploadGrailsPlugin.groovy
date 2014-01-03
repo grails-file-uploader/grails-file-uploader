@@ -3,7 +3,7 @@ import org.grails.plugins.localupload.LocalUploadSupportService
 
 class LocalUploadGrailsPlugin {
     // the plugin version
-    def version = "1.0.17"
+    def version = "1.0.18"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.1 > *"
     // the other plugins this plugin depends on

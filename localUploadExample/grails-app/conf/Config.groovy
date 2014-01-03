@@ -89,7 +89,10 @@ log4j = {
            'org.codehaus.groovy.grails.orm.hibernate',      // hibernate integration
            'org.springframework',
            'org.hibernate',
-           'net.sf.ehcache.hibernate'
+           'net.sf.ehcache.hibernate',
+		   'grails.app.services.org.grails.plugin.resource',
+		   'grails.app.taglib.org.grails.plugin.resource',
+		   'grails.app.resourceMappers.org.grails.plugin.resource'
 }
 
 localUpload {

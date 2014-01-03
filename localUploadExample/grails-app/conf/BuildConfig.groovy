@@ -44,23 +44,28 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.22'
     }
 
-    plugins {
-        runtime ":hibernate:$grailsVersion"
-		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3",":twitter-bootstrap:3.0.3"
-        runtime ":resources:1.2"
-
-        // Uncomment these (or add new ones) to enable additional resources capabilities
-        //runtime ":zipped-resources:1.0"
-        //runtime ":cached-resources:1.0"
-        //runtime ":yui-minify-resources:0.1.5"
-
-        build ":tomcat:$grailsVersion"
-
-        runtime ":database-migration:1.3.2"
-
-        compile ':cache:1.0.1'
+	plugins {
+		runtime ":hibernate:$grailsVersion"
 		
-		compile ":bootstrap-file-upload:2.1.2"
-		compile ":local-upload:1.0.17"
-    }
+		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3"
+		runtime ":resources:1.2"
+
+		// Uncomment these (or add new ones) to enable additional resources capabilities
+		//runtime ":zipped-resources:1.0"
+		//runtime ":cached-resources:1.0"
+		//runtime ":yui-minify-resources:0.1.5"
+
+		build ":tomcat:$grailsVersion"
+
+		runtime ":database-migration:1.3.2"
+
+		compile ':cache:1.0.1'
+		
+		compile ":local-upload:1.0.18"
+		
+		//Attempt to use bootstrap-file-upload on frontend
+		//runtime ':twitter-bootstrap:3.0.3'
+		//runtime ':lesscss-resources:1.3.0.3'
+		//compile ":bootstrap-file-upload:2.1.2"
+	}
 }

@@ -70,7 +70,7 @@ class LocalUploadService {
 		if (config.maxSize) { //if maxSize config exists	
 			def maxSizeInKb = ((int) (config.maxSize)) / 1024
 			if (fileSize > config.maxSize) { //if filesize is bigger than allowed
-				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
+				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb.  Size was ${fileSize}"
 				def msg = messageSource.getMessage("localupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
 				throw new LocalUploadServiceException(msg)
 			}
@@ -113,7 +113,7 @@ class LocalUploadService {
 		}
 		
 		//move file
-		log.debug "LocalUpload plugin received a ${fileSize} file. Moving to ${path}"
+		log.debug "LocalUpload plugin received a file of size ${fileSize}. Moving to ${path}"
 		if(file instanceof File)
 			file.renameTo(new File(path))
 		else
