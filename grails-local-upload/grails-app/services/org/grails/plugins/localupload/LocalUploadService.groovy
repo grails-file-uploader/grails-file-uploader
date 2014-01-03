@@ -86,7 +86,7 @@ class LocalUploadService {
 	
 		if(storageTypes?.contains('monthSubdirs')){  //subdirectories by month and year
 			Calendar cal = Calendar.getInstance()
-			path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + File.separator
+			path = path + cal[Calendar.YEAR].toString() + (cal[Calendar.MONTH]+1).toString() + File.separator
 		}else{  //subdirectories by millisecond
 			long currentTime = System.currentTimeMillis()
 			path = path + currentTime + File.separator
