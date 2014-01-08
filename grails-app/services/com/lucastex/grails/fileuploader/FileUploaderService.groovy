@@ -245,23 +245,19 @@ class FileUploaderService {
         def destFile = new File(tempFile)
         def sourceFile = new File(ufileInstance.path)
         if(!destFile.exists()) {
-            destFile.createNewFile();
+            destFile.createNewFile()
         }
 
-        FileChannel source = null;
-        FileChannel destination = null;
+        FileChannel source = null
+        FileChannel destination = null
 
         try {
-            source = new FileInputStream(sourceFile).getChannel();
-            destination = new FileOutputStream(destFile).getChannel();
-            destination.transferFrom(source, 0, source.size());
+            source = new FileInputStream(sourceFile).getChannel()
+            destination = new FileOutputStream(destFile).getChannel()
+            destination.transferFrom(source, 0, source.size())
         } finally {
-            if(source) {
-                source.close()
-            }
-            if(destination) {
-                destination.close()
-            }
+            source?.close()
+            destination?.close()
 
             if(destFile.exists()) {
                 return this.saveFile(group, destFile, name, locale)
