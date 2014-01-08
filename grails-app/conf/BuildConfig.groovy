@@ -14,10 +14,10 @@ grails.project.dependency.resolution = {
         mavenCentral()
     }
     dependencies {
-        compile ("org.apache.jclouds.provider:cloudfiles-us:1.6.2-incubating", "org.jclouds:jclouds-compute:1.6.0") {
+        compile ("org.apache.jclouds.provider:cloudfiles-us:1.7.0", "org.apache.jclouds:jclouds-compute:1.7.0") {
             excludes "jclouds-core"
         }
-        compile "org.apache.jclouds:jclouds-core:1.6.2-incubating"
+        compile "org.apache.jclouds:jclouds-core:1.7.0"
     }
     plugins {
         runtime (":hibernate:$grailsVersion") {
