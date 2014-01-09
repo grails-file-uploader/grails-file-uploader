@@ -33,6 +33,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         blobStore = context.getBlobStore()
         println "Blobstore ${blobStore.class}"
 
+        // Storing wrapped api of S3Client with apache jcloud
         client = context.unwrap().getApi()
 
         return false

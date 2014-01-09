@@ -1,6 +1,10 @@
 import com.lucastex.grails.fileuploader.CDNFileUploaderService
+import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl;
 
 class FileUploaderBootStrap {
+
+    def fileUploaderService
+    def grailsApplication
 
     CDNFileUploaderService CDNFileUploaderService
 
@@ -9,6 +13,7 @@ class FileUploaderBootStrap {
         if(CDNFileUploaderService.authenticate()) {
             CDNFileUploaderService.listContainers()
         }
+
         log.debug "Fileuploader bootstap finished executing."
     }
 
