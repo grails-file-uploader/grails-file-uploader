@@ -7,6 +7,8 @@ class UFile {
 
     int downloads
 
+    CDNProvider provider
+
     Date dateUploaded = new Date()
 
     Long size
@@ -23,6 +25,7 @@ class UFile {
         path blank: false
         name blank: false
         fileGroup blank: false
+        provider nullable: true
     }
 
     def afterDelete() {
@@ -44,9 +47,19 @@ class UFile {
     String getContainer() {
         grailsApplication.config.fileuploader[fileGroup].container
     }
-
 }
 
 enum UFileType {
     CDN_PRIVATE, CDN_PUBLIC, LOCAL
+}
+
+enum CDNProvider {
+
+    AMAZON(1),
+    RACKSPACE(2)
+
+    final int id
+    CDNProvider(int id) {
+        this.id = id
+    }
 }

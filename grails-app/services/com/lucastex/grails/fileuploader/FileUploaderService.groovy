@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel
 import org.springframework.transaction.annotation.Transactional
 
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
+import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 
 class FileUploaderService {
 
@@ -22,6 +23,7 @@ class FileUploaderService {
     UFile saveFile(String group, def file, String name = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
         boolean empty = true
+        CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
         String contentType, fileExtension, fileName, path
 
@@ -80,7 +82,11 @@ class FileUploaderService {
             String containerName = config.container
             String userId = springSecurityService.currentUser?.id
             String tempFilePath = "./web-app/temp/${System.currentTimeMillis()}-${fileName}"
-            fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
+            if(config.provider == CDNProvider.AMAZON) {
+                fileName = group + "-" + userId + "-" + System.currentTimeMillis() + "-" + fileName
+            } else {
+                fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
+            }
 
             if(file instanceof File)
                 file.renameTo(new File(tempFilePath))
@@ -92,8 +98,18 @@ class FileUploaderService {
                 containerName += "-" + Environment.current.name
             }
 
-            String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
-            path = publicBaseURL + "/" + fileName
+            if(config.provider == CDNProvider.AMAZON) {
+                cdnProvider = CDNProvider.AMAZON
+                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+                amazonFileUploaderInstance.authenticate()
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, fileName, true)
+                amazonFileUploaderInstance.close()
+                path = amazonFileUploaderInstance.getURI(containerName, fileName)
+            } else {
+                cdnProvider = CDNProvider.RACKSPACE
+                String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
+                path = publicBaseURL + "/" + fileName
+            }
         } else {
             // Base path to save file
             path = config.path
@@ -136,6 +152,7 @@ class FileUploaderService {
         ufile.path = path
         ufile.type = type
         ufile.fileGroup = group
+        ufile.provider = cdnProvider
         ufile.save()
         if(ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -164,7 +181,14 @@ class FileUploaderService {
 
     boolean deleteFileForUFile(UFile ufileInstance) {
         if(ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
-            CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.name)
+            if(ufileInstance.provider == CDNProvider.AMAZON) {
+                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+                amazonFileUploaderInstance.authenticate()
+                amazonFileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.name)
+                amazonFileUploaderInstance.close()
+            } else {
+                CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.name)
+            }
             return true
         }
         File file = new File(ufileInstance.path)

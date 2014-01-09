@@ -1,4 +1,5 @@
 # File Uploader Plugin
+
 #### Causecode Technologies Pvt. Ltd.
 
 ## Access Protect Controller & Actions
@@ -12,7 +13,21 @@
 
 ## ChangeLog
 
-### Version 2.3
+### Version 2.4
+
+### Improvement
+
+1. Upgraded apache jcloud jar dependency from incubating to stable version.
+
+#### New Features
+
+1. Added support for uploading files to Amazon S3 provider.
+
+#### Database changes
+
+1. Added provider field in UFile domain
+
+### Version 2.3, 2.3.1
 
 ### Improvement
 
@@ -49,9 +64,13 @@
 To upload files to CDN (Only Supports Rackspace now) one must have some configuration like given below:
 
 ```
+import com.lucastex.grails.fileuploader.CDNProvider
+
 fileuploader {
     CDNUsername = "myusername"
     CDNKey = "mykey"
+    AmazonKey = "somekey"	// For amazon S3
+    AmazonSecret = "somesecret"
     defaultContainer = "anyConatainer"  // Container to move local files to cloud
     degreeApplication {			// Non CDN files, will be stored in local directory.
         maxSize = 1000 * 1024 //256 kbytes
@@ -64,6 +83,13 @@ fileuploader {
         allowedExtensions = ["jpg","jpeg","gif","png"]
         storageTypes = "CDN"
         container = "anyContainerName"
+    }
+    logo {
+        maxSize = 1024 * 1024 * 2 //256 kbytes
+        allowedExtensions = ["jpg","jpeg","gif","png"]
+        storageTypes = "CDN"
+        container = "anyContainerName"
+        provider = CDNProvider.AMAZON
     }
 }
 ```
