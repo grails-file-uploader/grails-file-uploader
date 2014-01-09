@@ -132,7 +132,7 @@ class LocalUploadController {
 			ufile = localUploadService.ufileById(params.id, request.locale)
 			
 			if (!localUploadSecurityService.allowed(ufile)){
-				log.error = 'Not permitted access to $ufile'
+				log.error 'Not permitted access to $ufile'
 				flash.message = message(code: "localupload.security.notpermitted", args: [params.id])
 				redirect controller: params.errorController, action: params.errorAction, id: params.saveAssocId
 				return
@@ -195,7 +195,7 @@ class LocalUploadController {
 			ufile = localUploadService.ufileById(params.id, request.locale)
 			
 			if (!localUploadSecurityService.allowedToDelete(ufile)){
-				log.error = 'Not permitted access to delete $ufile'
+				log.error 'Not permitted access to delete $ufile'
 				flash.message = message(code: "localupload.security.notpermitted", args: [params.id])
 				redirect controller: params.errorController, action: params.errorAction
 				return
