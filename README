@@ -70,7 +70,7 @@ Go to localUploadExample directory in this directory and run: grails run-app
 
 
 Installing:
-Add compile ":local-upload:1.0.21" to your BuildConfig.groovy in the plugins block
+Add compile ":local-upload:3.0.0" to your BuildConfig.groovy in the plugins block
 
 
 Example config block:
