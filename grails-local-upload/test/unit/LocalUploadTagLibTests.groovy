@@ -4,25 +4,65 @@ import grails.test.mixin.TestFor
 @TestFor(LocalUploadTagLib)
 class LocalUploadTagLibTests {
 
-
-    void testPrettySizeBytes() {
-		assert applyTemplate('<localUpload:prettysize size="850" />') == '850b'
-    }
-
-    void testPrettySize1KByte() {
-		assert applyTemplate('<localUpload:prettysize size="1000" />') == '1kb'
+	private void setBasics(controllerName, actionName, params){
+		LocalUploadTagLib.metaClass.controllerName = controllerName
+		LocalUploadTagLib.metaClass.actionName= actionName
+		LocalUploadTagLib.metaClass.params = params
 	}
 	
-	void testPrettySize16KBytes() {
-		assert applyTemplate('<localUpload:prettysize size="16000" />') == '16kb'
+	void testMinimalParamsForDownload(){
+		setBasics('example', 'show', [id:'1'])
+		assert applyTemplate('<localUpload:download fileId="30">my link</localUpload:download>') == 
+				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=example&amp;saveAssocId=1">my link</a>'
 	}
-			
-	void testPrettySize18MBytes() {
-		assert applyTemplate('<localUpload:prettysize size="18432000" />') == '18mb'
-    }
-
-    void testPrettySize2_5GBytes() {
-		assert applyTemplate('<localUpload:prettysize size="2621440000" />') == '2.5gb'
+	
+	void testMaxParamsForDownload(){
+		setBasics('example', 'show', [id:'1'])
+		assert applyTemplate('<localUpload:download class="btn btn-default" fileId="30" errorController="widgets" errorAction="show" saveAssocId="2"><i>myfile</i></localUpload:download>') == 
+				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=widgets&amp;saveAssocId=2" class="btn btn-default"><i>myfile</i></a>'
 	}
-
+	
+	void testPrettySizeBytes(){
+		assert applyTemplate('<localUpload:prettysize size="850" />') == '850b'
+	}
+	
+	void testMinimalParamsForMinUpload(){
+		assert applyTemplate('<localUpload:minupload bucket="docs"/>') ==
+			'''<input type="hidden" name="bucket" value="docs" /><input type="file" name="files" />'''
+	}
+	
+	void testMaxParamsForMinUpload(){
+		assert applyTemplate('<localUpload:minupload class="inSession" bucket="docs" name="bobs" multiple="true"/>') ==
+			'''<input type="hidden" name="bucket" value="docs" /><input type="file" name="bobs" multiple="multiple" class="inSession" />'''
+	}
+	
+	void testForm(){
+		setBasics('example', 'show', [id:'1'])
+		
+		String tag = '''<form action="/localUpload/upload/1" method="post" enctype="multipart/form-data" >'''
+		tag += '''<input type="hidden" name="bucket" value="docs" />'''
+		tag += '''<input type="hidden" name="saveAssoc" value="example" />'''
+		tag += '''<input type="hidden" name="errorAction" value="show" />'''
+		tag += '''<input type="hidden" name="errorController" value="example" />'''
+		tag += '''<input type="hidden" name="successAction" value="show" />'''
+		tag += '''<input type="hidden" name="successController" value="example" />'''
+		tag += '''<input type="file" name="files" /><input type="submit" name="submit" value="Submit" /></form>'''
+		
+		assert applyTemplate('<localUpload:form bucket="docs" saveAssoc="example" id="1" />') == tag
+	}
+	
+	void testMultipleTrueForm(){
+		setBasics('example', 'show', [id:'1'])
+		
+		String tag = '''<form action="/localUpload/upload/1" method="post" enctype="multipart/form-data" >'''
+		tag += '''<input type="hidden" name="bucket" value="docs" />'''
+		tag += '''<input type="hidden" name="saveAssoc" value="example" />'''
+		tag += '''<input type="hidden" name="errorAction" value="show" />'''
+		tag += '''<input type="hidden" name="errorController" value="example" />'''
+		tag += '''<input type="hidden" name="successAction" value="show" />'''
+		tag += '''<input type="hidden" name="successController" value="example" />'''
+		tag += '''<input type="file" name="files" multiple="multiple"/><input type="submit" name="submit" value="Submit" /></form>'''
+		
+		assert applyTemplate('<localUpload:form bucket="docs" multiple="true" saveAssoc="example" id="1" />') == tag
+	}
 }

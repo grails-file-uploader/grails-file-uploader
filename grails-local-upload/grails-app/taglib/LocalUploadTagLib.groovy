@@ -9,6 +9,8 @@ class LocalUploadTagLib {
 	static Long _mbyte = 1 	* 	1000	*	1024
 	static Long _gbyte = 1	*	1000	*	1024	*	1024
 	
+	static final Set downloadBaseAttribs = ['errorAction', 'errorController', 'saveAssocId', 'fileId']
+	
 	/**
 	 * Create a download link for a ufile
 	 * @attr fileId The UFile id
@@ -30,19 +32,66 @@ class LocalUploadTagLib {
 		/* If a specific error action and controller has been specified, use them.
 		 * Otherwise, just use the current action and controller
 		 */
-		linkParams.errorAction = attrs.errorAction ? attrs.errorAction : params.action
-		linkParams.errorController = attrs.errorController ? attrs.errorController : params.controller
+		linkParams.errorAction = attrs.errorAction ?: actionName
+		linkParams.errorController = attrs.errorController ?: controllerName
 		
-		//grab the id of the domain object we're associating with
-		linkParams.saveAssocId = attrs.saveAssocId ? attrs.saveAssocId : params.id
+		// grab the id of the domain object we're associating with
+		linkParams.saveAssocId = attrs.saveAssocId ?: (params?.id)
 		
-		out << g.link([controller: "localUpload", action: "download", params: linkParams, id: attrs.fileId], body)
+		// basic attributes to pass to the link builder
+		def linkAttribs = [controller: "localUpload", action: "download", params: linkParams, id: attrs.fileId]
 		
+		// pass through extra attribs
+		def remainingKeys = attrs.keySet() - downloadBaseAttribs
+		remainingKeys.each{key ->
+			linkAttribs.put(key, attrs[key])
+		}
+		
+		out << g.link(linkAttribs, body)
+	}
+	
+	static final Set minUploadBaseAttribs = ['bucket', 'name', 'multiple']
+	/**
+	 * Create just the fields necessary to add files. 
+	 * Should be used within an existing form.
+	 * Passes through any additional attribs to an input type="file" element
+	 * @attr bucket LocalUpload group/bucket to which this file should be uploaded
+	 * @attr name name of files field to submit to your form
+	 * @attr multiple boolean true if should allow multiple files to be uploaded
+	 */
+	def minupload = { attrs, body ->
+		
+		//checking required fields
+		if (!attrs.bucket) {
+			def errorMsg = "'bucket' attribute not found in localUpload minupload tag."
+			log.error (errorMsg)
+			throwTagError(errorMsg)
+		}
+		
+		//upload group
+		def bucket = attrs.bucket
+		def name = attrs.name ?: 'files'
+		
+		def tagBody = """<input type="hidden" name="bucket" value="${bucket}" />"""
+		tagBody += """<input type="file" name="${name}" """
+		
+		if(attrs.multiple){
+			tagBody += 'multiple="multiple" '
+		}
+		
+		// pass through extra attribs
+		def remainingKeys = attrs.keySet() - minUploadBaseAttribs
+		remainingKeys.each{key ->
+			tagBody += """${key}="${attrs[key]}" """
+		}
+		
+		tagBody += '/>'
+		out << tagBody
 	}
 	
 	/**
 	 * Create a form to upload files to an existing domain object
-	 * @attr upload LocalUpload group/bucket to which this file should be uploaded
+	 * @attr bucket LocalUpload group/bucket to which this file should be uploaded
 	 * @attr multiple boolean true if should allow multiple files to be uploaded
 	 * @attr saveAssoc Key that is passed along to your implementation of ILocalUploadSupportService
 	 * @attr successParams request params passed to success controller and action
@@ -70,41 +119,36 @@ class LocalUploadTagLib {
 		def bucket = attrs.bucket
 		
 		//case success
-		def successAction = attrs.successAction ? attrs.successAction : params.action
-		def successController = attrs.successController ? attrs.successController : params.controller
+		def successAction = attrs.successAction ?: actionName
+		def successController = attrs.successController ?: controllerName
 		
 		//case error
-		def errorAction = attrs.errorAction ? attrs.errorAction : params.action
-		def errorController = attrs.errorController ? attrs.errorController : params.controller
+		def errorAction = attrs.errorAction ?: actionName
+		def errorController = attrs.errorController ?: controllerName
 		
-		def tagBody = """
-			<input type="hidden" name="bucket" value="${bucket}" />
-			<input type="hidden" name="saveAssoc" value="${attrs.saveAssoc}" />
-			<input type="hidden" name="errorAction" value="${errorAction}" />
-			<input type="hidden" name="errorController" value="${errorController}" />
-			<input type="hidden" name="successAction" value="${successAction}" />
-			<input type="hidden" name="successController" value="${successController}" />
-		"""
+		def tagBody = """<input type="hidden" name="bucket" value="${bucket}" />"""
+		tagBody += """<input type="hidden" name="saveAssoc" value="${attrs.saveAssoc}" />"""
+		tagBody += """<input type="hidden" name="errorAction" value="${errorAction}" />"""
+		tagBody += """<input type="hidden" name="errorController" value="${errorController}" />"""
+		tagBody += """<input type="hidden" name="successAction" value="${successAction}" />"""
+		tagBody += """<input type="hidden" name="successController" value="${successController}" />"""
+		tagBody += """<input type="file" name="files" """
 		
 		if(attrs.multiple){
-			tagBody += """<input type="file" name="files" multiple="multiple"/>"""
+			tagBody += 'multiple="multiple"/>'
 		}else{
-			tagBody += """<input type="file" name="files" />"""
+			tagBody += '/>'
 		}
 		
 		//optional parameters for success action
 		if(attrs.successParams) {
-			tagBody += """<input type="hidden" name="successParams" 
-                        value="${attrs.successParams}" />"""
+			tagBody += """<input type="hidden" name="successParams" value="${attrs.successParams}" />"""
 		}
 		
 		tagBody += """<input type="submit" name="submit" value="Submit" />"""
 		
 		//form build
-		StringBuilder sb = new StringBuilder()
-		sb.append g.uploadForm([controller: 'localUpload', action: 'upload', id:attrs.id], tagBody)
-		
-		out << sb.toString()
+		out << g.uploadForm([controller: 'localUpload', action: 'upload', id:attrs.id], tagBody)
 	}
 	
 	/**
