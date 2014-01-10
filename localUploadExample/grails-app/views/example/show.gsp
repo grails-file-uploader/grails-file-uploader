@@ -52,7 +52,7 @@
 					
 					<g:each in="${exampleInstance.files}" var="f">
 						<span class="property-value" aria-labelledby="files-label">
-							<localUpload:download fileId="${f.id}">${f.name}</localUpload:download>
+							<localUpload:download fileId="${f.id}">${f.name}</localUpload:download> - <localUpload:prettysize size="${f.sizeInBytes }"/>
 						</span>
 						</g:each>
 				</li>

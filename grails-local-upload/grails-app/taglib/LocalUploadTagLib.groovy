@@ -1,13 +1,8 @@
-import org.codehaus.groovy.grails.web.taglib.exceptions.GrailsTagException
+import org.grails.plugins.localupload.FileSizeUtils
 
 class LocalUploadTagLib {
 	
 	static namespace = 'localUpload'
-	
-	static Long _byte  = 1
-	static Long _kbyte = 1	*	1000
-	static Long _mbyte = 1 	* 	1000	*	1024
-	static Long _gbyte = 1	*	1000	*	1024	*	1024
 	
 	/**
 	 * Create a download link for a ufile
@@ -117,30 +112,7 @@ class LocalUploadTagLib {
 			throwTagError(errorMsg)
 		}
 		
-		BigDecimal valSize = new BigDecimal(attrs['size'])	
-		
-		def sb = new StringBuilder()
-		if (valSize >= _byte && valSize < _kbyte) {
-			sb.append(valSize).append("b")
-		} else if (valSize >= _kbyte && valSize < _mbyte) {
-			valSize = valSize / _kbyte
-			sb.append(valSize).append("kb")
-		} else if (valSize >= _mbyte && valSize < _gbyte) {
-			valSize = valSize / _mbyte
-			sb.append(valSize).append("mb")
-		} else if (valSize >= _gbyte) {
-			valSize = valSize / _gbyte
-			sb.append(valSize).append("gb")
-		}
-		
-		out << sb.toString()
+		out << FileSizeUtils.prettySizeFromBytes(attrs['size'])
 	}
 
 }
-
-/*
-(0 - 1000) size = bytes
-(1000 - 1000*1024) size / 1000 = kbytes
-(1000*1024 - 1000*1024*1024) size / (1000 * 1024) = mbytes
-(else) size / (1000 * 1024 * 1024) = gbytes
-*/

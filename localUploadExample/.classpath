@@ -87,32 +87,32 @@
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/grails-app/controllers">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/grails-app/controllers">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/grails-app/domain">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/grails-app/domain">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/grails-app/i18n">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/grails-app/i18n">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/grails-app/services">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/grails-app/services">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/grails-app/taglib">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/grails-app/taglib">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.0/src/groovy">
+	<classpathentry kind="src" path=".link_to_grails_plugins/local-upload-3.0.3/src/groovy">
 		<attributes>
 			<attribute name="org.grails.ide.eclipse.core.SOURCE_FOLDER" value="true"/>
 		</attributes>
