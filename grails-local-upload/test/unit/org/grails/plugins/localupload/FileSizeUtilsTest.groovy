@@ -2,6 +2,7 @@ package org.grails.plugins.localupload
 
 import grails.test.mixin.*
 
+import org.junit.Test
 
 class FileSizeUtilsTest {
 
