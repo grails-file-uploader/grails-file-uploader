@@ -23,7 +23,7 @@ class LocalUploadTagLibTests {
 	}
 	
 	void testPrettySizeBytes(){
-		assert applyTemplate('<localUpload:prettysize size="850" />') == '850b'
+		assert applyTemplate('<localUpload:prettysize size="850" />') == '850 B'
 	}
 	
 	void testMinimalParamsForMinUpload(){

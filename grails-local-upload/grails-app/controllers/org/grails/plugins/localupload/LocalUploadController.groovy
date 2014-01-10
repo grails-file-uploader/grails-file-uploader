@@ -23,6 +23,11 @@ class LocalUploadController {
 	
 	ILocalUploadSupportService localUploadSupportService
 
+	/**
+	 * Used to turn uFile results into ajax expected by bootstrap-file-upload 
+	 * @param ufile
+	 * @return map properties expected by bootstrap-file-upload 
+	 */
 	private Map ufileToAjaxResult(UFile ufile){
 		return [
 			name: ufile.name,
@@ -34,6 +39,9 @@ class LocalUploadController {
 		]
 	}
 	
+	/**
+	 * Used to feed ajax to the bootstrap-file-upload plugin
+	 */
 	def ajaxUpload(){
 		def results = []
 		
@@ -89,7 +97,19 @@ class LocalUploadController {
 
 		render results as JSON
 	}
-	
+
+	/**
+	 * If you've already persisted your domain object, you can use this method 
+	 * via the taglib (or raw) to upload a file and attach it to your domain object 
+	 * 
+	 * @param bucket  name of local upload bucket to place the files
+	 * @param fileParam  name of request parameter containing file submissions
+	 * @param errorController  where to go if upload fails
+	 * @param errorAction  where to go if upload fails
+	 * @param successController  where to go if upload succeeds
+	 * @param successAction  where t go if upload succeeds
+	 * @param id  id of domain object for success or error actions
+	 */
 	def upload(){
 
 		String bucket = params.bucket
@@ -123,6 +143,17 @@ class LocalUploadController {
 		}
 	}
 	
+	/**
+	 * You should only use this method to access files, access to files is then
+	 * secured with your implementation of ILocalUploadSecurityService
+	 * 
+	 * @param id  id of ufile to download
+	 * @param errorController  where to go if upload fails
+	 * @param errorAction  where to go if upload fails
+	 * @param saveAssocId  id of domain object for error actions
+	 * 
+	 * @return
+	 */
 	def download() {
 		
 		UFile ufile
@@ -153,7 +184,7 @@ class LocalUploadController {
 			return
 		}
 		
-		log.debug "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
+		log.info "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
 		
 		response.setContentType("application/octet-stream")
 		response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")

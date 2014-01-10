@@ -7,6 +7,7 @@ import java.nio.channels.FileChannel
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.ObjectError
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 
@@ -60,18 +61,14 @@ class LocalUploadService {
 		/*********************
 		 check file size
 		 ********************* */
-		def fileSize
-		if(file instanceof File){
-			fileSize = file.size()
-		}else{
-			fileSize = file.size
-		}
+		def fileSize = file.size
 		
 		if (config.maxSize) { //if maxSize config exists	
 			def maxSizeInKb = ((int) (config.maxSize)) / 1024
 			if (fileSize > config.maxSize) { //if filesize is bigger than allowed
-				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb.  Size was ${fileSize}"
-				def msg = messageSource.getMessage("localupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
+				String prettySize = FileSizeUtils.prettySizeFromBytes(fileSize)
+				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb.  Size was ${prettySize}"
+				def msg = messageSource.getMessage("localupload.upload.fileBiggerThanAllowed", [maxSizeInKb, prettySize] as Object[], locale)
 				throw new LocalUploadServiceException(msg)
 			}
 		}
@@ -114,10 +111,7 @@ class LocalUploadService {
 		
 		//move file
 		log.debug "LocalUpload plugin received a file of size ${fileSize}. Moving to ${path}"
-		if(file instanceof File)
-			file.renameTo(new File(path))
-		else
-			file.transferTo(new File(path))
+		file.transferTo(new File(path))
 
 		//save it on the database
 		def ufile = new UFile()
@@ -127,7 +121,11 @@ class LocalUploadService {
 		ufile.dateUploaded = new Date()
 		ufile.path = path
 		ufile.downloads = 0
-		ufile.save()
+		
+		if(!ufile.save()){
+			log.error(errorsToString(ufile))
+		}
+		
 		return ufile
 	}
 
@@ -163,6 +161,10 @@ class LocalUploadService {
 		return borro;
 	}
 
+	/**
+	 * check if this folder is empty, if so, delete it
+	 * @param folder
+	 */
 	void manageFolder(File folder){
 		int numFilesInParentFolder = 0
 		folder.eachFile(FileType.FILES) {
@@ -217,53 +219,7 @@ class LocalUploadService {
 	}
 	
 	/**
-	 * Method to create a duplicate of an existing UFile
-	 * @param bucket
-	 * @param uFile
-	 * @param name
-	 * @param locale
-	 * @return
-	 * @throws LocalUploadServiceException
-	 * @throws IOException
-	 */
-	UFile cloneFile(String bucket, UFile uFile, String name, Locale locale)
-			throws LocalUploadServiceException, IOException {
-		
-		//Create temp directory
-		def tempDirectory = "./web-app${File.separator}temp${File.separator}${System.currentTimeMillis()}${File.separator}"
-		new File(tempDirectory).mkdirs()
-	
-		//create file
-		def tempFile = "${tempDirectory}${File.separator}${uFile.name}.${uFile.extension}"
-		def destFile = new File(tempFile)
-		def sourceFile = new File(uFile.path)
-		if(!destFile.exists()) {
-			destFile.createNewFile();
-		}
-
-		FileChannel source = null;
-		FileChannel destination = null;
-
-		try {
-			source = new FileInputStream(sourceFile).getChannel();
-			destination = new FileOutputStream(destFile).getChannel();
-			destination.transferFrom(source, 0, source.size());
-		} finally {
-			if(source) {
-				source.close();
-			}
-			if(destination) {
-				destination.close();
-			}
-
-			if(destFile.exists()) {
-				return this.saveFile(bucket, destFile,name, locale)
-			}
-		}
-	}
-	
-	/**
-	 * Helper method for Controllers to Look for new attachments, and add them 
+	 * Helper method for Controllers to look for new attachments, and add them 
 	 * to the domain object.  Passes a UFile object to the closure.  Iterates over
 	 * all files submitted, and runs the closure for each
 	 * @param closure
@@ -298,5 +254,23 @@ class LocalUploadService {
 		}
 		
 		return newAttachments
+	}
+
+	/** 
+	 * Simple helper to expose the errors on a domain object as a string
+	 */
+	private String errorsToString(obj){
+		
+		StringBuilder sb = new StringBuilder()
+		
+		obj.errors.allErrors.eachWithIndex {ObjectError error, Integer i ->
+				sb.append("Error ${i+1}: ")
+				
+				sb.append(messageSource.getMessage(error, Locale.default))
+				
+				sb.append("\n")
+			}
+		
+		return sb.toString()
 	}
 }

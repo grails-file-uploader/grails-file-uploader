@@ -5,8 +5,6 @@ target-eclipse
 #ignoro logs
 *.log
 
-web-app
-
 grails-local-upload-*.zip
 grails-local-upload-*.zip.sha1
 
