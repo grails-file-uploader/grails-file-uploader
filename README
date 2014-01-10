@@ -18,8 +18,7 @@ and in your view:
 <localUpload:download fileId="${f.id}">${f.name}</localUpload:download>
 </g:each>
 
-<g:hiddenField name="bucket" value="docs" />
-<input type="file" name="files" multiple="multiple" />
+<localUpload:minupload bucket="docs" name="attachments" multiple="true" />
 </span>
 
 Examples usages of this are in localUploadExample/grails-app/views/example/_form.gsp and localUploadExample/grails-app/controllers/com/bowerstudios/fileManager/ExampleController.groovy.  (Don't forget to switch form tag from g:form to g:uploadForm
