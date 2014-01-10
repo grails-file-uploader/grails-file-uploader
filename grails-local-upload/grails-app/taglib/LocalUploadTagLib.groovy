@@ -68,6 +68,7 @@ class LocalUploadTagLib {
 		def name = attrs.name ?: 'files'
 		
 		def tagBody = """<input type="hidden" name="bucket" value="${bucket}" />"""
+		tagBody += """<input type="hidden" name="fileParam" value="${name}"/>"""
 		tagBody += """<input type="file" name="${name}" """
 		
 		if(attrs.multiple){

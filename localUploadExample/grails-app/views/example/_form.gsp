@@ -22,14 +22,11 @@
 	</label>
 
 	<span>
-		<%-- I had a collision with my domain model's "files" attribute, so I used attachments here instead--%>
-		<g:hiddenField name="fileParam" value="attachments"/>
-	
 		<g:each in="${exampleInstance?.files}" var="f">
 			<localUpload:download fileId="${f.id}">${f.name}</localUpload:download>
 		</g:each>
 		
-		<g:hiddenField name="bucket" value="docs" />
-		<input type="file" name="attachments" multiple="multiple" />
+		<%-- I had a collision with my domain model's "files" attribute, so I used attachments here instead--%>
+		<localUpload:minupload bucket="docs" name="attachments" multiple="true"/>
 	</span>
 </div>

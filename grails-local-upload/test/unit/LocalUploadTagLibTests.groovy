@@ -28,12 +28,12 @@ class LocalUploadTagLibTests {
 	
 	void testMinimalParamsForMinUpload(){
 		assert applyTemplate('<localUpload:minupload bucket="docs"/>') ==
-			'''<input type="hidden" name="bucket" value="docs" /><input type="file" name="files" />'''
+			'''<input type="hidden" name="bucket" value="docs" /><input type="hidden" name="fileParam" value="files"/><input type="file" name="files" />'''
 	}
 	
 	void testMaxParamsForMinUpload(){
 		assert applyTemplate('<localUpload:minupload class="inSession" bucket="docs" name="bobs" multiple="true"/>') ==
-			'''<input type="hidden" name="bucket" value="docs" /><input type="file" name="bobs" multiple="multiple" class="inSession" />'''
+			'''<input type="hidden" name="bucket" value="docs" /><input type="hidden" name="fileParam" value="bobs"/><input type="file" name="bobs" multiple="multiple" class="inSession" />'''
 	}
 	
 	void testForm(){
