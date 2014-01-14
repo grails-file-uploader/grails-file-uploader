@@ -3,7 +3,7 @@ import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 
 class FileUploaderGrailsPlugin {
 
-    def version = "2.3.1"
+    def version = "2.4-SNAPSHOT"
     def grailsVersion = "2.1 > *"
     def groupId = "com.cc.plugins"
     def pluginExcludes = [
