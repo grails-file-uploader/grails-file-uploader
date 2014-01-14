@@ -6,13 +6,10 @@ class FileUploaderGrailsPlugin {
     def version = "2.3.1"
     def grailsVersion = "2.1 > *"
     def groupId = "com.cc.plugins"
-    def dependsOn = ["hibernate": "2.1 > *"]
     def pluginExcludes = [
         "grails-app/views/error.gsp",
         "src/templates"
     ]
-
-    def loadAfter = ['hibernate']
 
     def author = "Federico Hofman"
     def authorEmail = "fhofman@gmail.com"

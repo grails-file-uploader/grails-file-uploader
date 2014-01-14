@@ -21,9 +21,10 @@ grails.project.dependency.resolution = {
         compile "org.apache.jclouds:jclouds-core:1.7.0"
     }
     plugins {
-        runtime (":hibernate:$grailsVersion") {
+        // Make sure to comment while packaging to allow mongo db to install & hibernate to uninstall in parent app.
+        /*runtime (":hibernate:$grailsVersion") {
             export = false
-        }
+        }*/
         build(":tomcat:$grailsVersion", ":release:2.0.3", ":rest-client-builder:1.0.2") {
             export = false
         }
