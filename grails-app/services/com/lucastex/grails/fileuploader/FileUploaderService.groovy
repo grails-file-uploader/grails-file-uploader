@@ -31,6 +31,7 @@ class FileUploaderService {
     UFile saveFile(String group, def file, String customFileName = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
         boolean empty = true
+        long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
         String contentType, fileExtension, fileName, path, receivedFileName, fileFullName
@@ -94,12 +95,12 @@ class FileUploaderService {
 
             String containerName = groupConfig.container
             String userId = springSecurityService.currentUser?.id
-            String tempFilePath = "./web-app/temp/${System.currentTimeMillis()}-${fileName}.$fileExtension"
+            String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
 
             if(groupConfig.provider == CDNProvider.AMAZON) {
-                fileName = group + "-" + userId + "-" + System.currentTimeMillis() + "-" + fileName
+                fileName = group + "-" + userId + "-" + currentTimeMillis + "-" + fileName
             } else {
-                fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
+                fileName = group + "/" + userId + "/" + currentTimeMillis + "/" + fileName
             }
             
             String tempFileFullName = fileName + "." + fileExtension
@@ -137,8 +138,7 @@ class FileUploaderService {
                 Calendar cal = Calendar.getInstance()
                 path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
             } else {  //subdirectories by millisecond
-                long currentTime = System.currentTimeMillis()
-                path = path + currentTime + "/"
+                path = path + currentTimeMillis + "/"
             }
 
             // Make sure the directory exists
@@ -279,7 +279,7 @@ class FileUploaderService {
             return null
         }
         //Create temp directory
-        def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+        String tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
         new File(tempDirectory).mkdirs()
 
         //create file
