@@ -324,7 +324,7 @@ class FileUploaderService {
         List<BlobDetail> blobDetailList = []
 
         ufileInstanceList.each {
-            String newFileName = "${System.currentTimeMillis()}-${it.name}"
+            String newFileName = "${System.currentTimeMillis()}-${it.fullName}"
             blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
         }
         if(Environment.current != Environment.PRODUCTION) {
