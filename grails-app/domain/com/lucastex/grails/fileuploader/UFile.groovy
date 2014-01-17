@@ -54,7 +54,12 @@ class UFile {
 }
 
 enum UFileType {
-    CDN_PRIVATE, CDN_PUBLIC, LOCAL
+    CDN_PRIVATE(1), CDN_PUBLIC(2), LOCAL(3)
+
+    final int id
+    UFileType(int id) {
+        this.id = id
+    }
 }
 
 enum CDNProvider {

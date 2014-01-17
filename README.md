@@ -15,6 +15,10 @@
 
 ### Version 2.4-RC1
 
+### Database Changes
+
+1. **type** field will be now of type integer.
+
 ### Improvement
 
 1. Using StringBuilder for file name creation for CDN files.
