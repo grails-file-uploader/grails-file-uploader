@@ -43,8 +43,8 @@ class FileUploaderService {
             return null
         }
 
-        def config = grailsApplication.config.fileuploader[group]
-        if(config.isEmpty()) {
+        def groupConfig = grailsApplication.config.fileuploader[group]
+        if(groupConfig.isEmpty()) {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
         int extensionAt = fileName.lastIndexOf('.') + 1
@@ -52,9 +52,9 @@ class FileUploaderService {
             fileExtension = fileName.substring(extensionAt).toLowerCase()
         }
 
-        if (!config.allowedExtensions[0].equals("*") && !config.allowedExtensions.contains(fileExtension)) {
+        if (!groupConfig.allowedExtensions[0].equals("*") && !groupConfig.allowedExtensions.contains(fileExtension)) {
             def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension",
-                    [fileExtension, config.allowedExtensions] as Object[], locale)
+                    [fileExtension, groupConfig.allowedExtensions] as Object[], locale)
             log.debug msg
             throw new FileUploaderServiceException(msg)
         }
@@ -62,9 +62,9 @@ class FileUploaderService {
         /**
          * If maxSize config exists
          */
-        if (config.maxSize) {
-            def maxSizeInKb = ((int) (config.maxSize)) / 1024
-            if (fileSize > config.maxSize) { //if filesize is bigger than allowed
+        if (groupConfig.maxSize) {
+            def maxSizeInKb = ((int) (groupConfig.maxSize)) / 1024
+            if (fileSize > groupConfig.maxSize) { //if filesize is bigger than allowed
                 log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
                 def msg = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
                 throw new FileUploaderServiceException(msg)
@@ -75,14 +75,14 @@ class FileUploaderService {
         fileName = fileName.trim().replaceAll(" ", "-")
 
         // Setup storage path
-        def storageTypes = config.storageTypes
+        def storageTypes = groupConfig.storageTypes
 
         if(storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
-            String containerName = config.container
+            String containerName = groupConfig.container
             String userId = springSecurityService.currentUser?.id
             String tempFilePath = "./web-app/temp/${System.currentTimeMillis()}-${fileName}"
-            if(config.provider == CDNProvider.AMAZON) {
+            if(groupConfig.provider == CDNProvider.AMAZON) {
                 fileName = group + "-" + userId + "-" + System.currentTimeMillis() + "-" + fileName
             } else {
                 fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
@@ -98,7 +98,7 @@ class FileUploaderService {
                 containerName += "-" + Environment.current.name
             }
 
-            if(config.provider == CDNProvider.AMAZON) {
+            if(groupConfig.provider == CDNProvider.AMAZON) {
                 cdnProvider = CDNProvider.AMAZON
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
@@ -112,7 +112,7 @@ class FileUploaderService {
             }
         } else {
             // Base path to save file
-            path = config.path
+            path = groupConfig.path
             if(!path.endsWith('/')) path = path + "/";
 
             if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
