@@ -93,16 +93,24 @@ class FileUploaderService {
         if(storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
 
+            String fileNameSeparator = "-"
             String containerName = groupConfig.container
             String userId = springSecurityService.currentUser?.id
             String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
 
-            if(groupConfig.provider == CDNProvider.AMAZON) {
-                fileName = group + "-" + userId + "-" + currentTimeMillis + "-" + fileName
-            } else {
-                fileName = group + "/" + userId + "/" + currentTimeMillis + "/" + fileName
+            if(groupConfig.provider != CDNProvider.AMAZON) {
+                fileNameSeparator = "/"
             }
-            
+
+            fileName = new StringBuilder(group)
+                    .append(fileNameSeparator)
+                    .append(userId)
+                    .append(fileNameSeparator)
+                    .append(currentTimeMillis)
+                    .append(fileNameSeparator)
+                    .append(fileName)
+                    .toString()
+
             String tempFileFullName = fileName + "." + fileExtension
 
             if(file instanceof File)
