@@ -47,6 +47,10 @@ class UFile {
     String getContainer() {
         grailsApplication.config.fileuploader[fileGroup].container
     }
+
+    String getFullName() {
+        name + "." + extension
+    }
 }
 
 enum UFileType {
