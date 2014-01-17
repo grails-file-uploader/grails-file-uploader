@@ -122,12 +122,10 @@ class LocalUploadController {
 					continue
 				}
 				
-				UFile ufile
-				try{
-					ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
-					localUploadSupportService.associateUFile(ufile, params)
-				}catch(LocalUploadServiceException e){
-					flash.message = e.message
+				UFile ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
+				localUploadSupportService.associateUFile(ufile, params)
+				if(ufile.hasErrors()){
+					flash.message = message(code: "localupload.upload.persistenceError") + localUploadService.errorsToString(ufile, request.locale)
 					redirect controller: params.errorController, action: params.errorAction, id: params.id
 					return
 				}
@@ -186,8 +184,8 @@ class LocalUploadController {
 		
 		log.info "Serving file id=[${ufile.id}], downloaded for the ${ufile.downloads} time, to ${request.remoteAddr}"
 		
-		response.setContentType("application/octet-stream")
-		response.setHeader("Content-disposition", "${params.contentDisposition}; filename=${ufile.name}")
+		response.setContentType(ufile.mimeType?:"application/octet-stream")
+		response.setHeader("Content-Disposition", "${params.contentDisposition}; filename=${ufile.name}")
 		response.outputStream << file.readBytes()
 	
 		return

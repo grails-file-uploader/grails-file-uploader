@@ -12,6 +12,7 @@ class LocalUploadTagLib {
 	 * @attr saveAssocId The id of the domain object we're associating with, defaults to params.id
 	 * @attr errorController The controller to redirect to in case of an error, defaults to params.controller
 	 * @attr errorAction The action to redirect to in case of an error, defaults to params.action
+	 * @attr contentDisposition 
 	 */
 	def download = { attrs, body ->
 		
@@ -32,6 +33,8 @@ class LocalUploadTagLib {
 		
 		// grab the id of the domain object we're associating with
 		linkParams.saveAssocId = attrs.saveAssocId ?: (params?.id)
+		
+		linkParams.contentDisposition = attrs.contentDisposition ?: 'inline'
 		
 		// basic attributes to pass to the link builder
 		def linkAttribs = [controller: "localUpload", action: "download", params: linkParams, id: attrs.fileId]

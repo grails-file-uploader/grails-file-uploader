@@ -61,7 +61,7 @@ grails.project.dependency.resolution = {
 
 		compile ':cache:1.0.1'
 		
-		compile ":local-upload:3.0.5"
+		compile ":local-upload:3.0.8"
 		
 		//Attempt to use bootstrap-file-upload on frontend
 		//runtime ':twitter-bootstrap:3.0.3'

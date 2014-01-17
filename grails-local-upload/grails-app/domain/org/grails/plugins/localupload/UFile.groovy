@@ -1,5 +1,6 @@
 package org.grails.plugins.localupload
 
+
 /**
  * Stores metadata about the underlying file on the file system
  *
@@ -9,32 +10,37 @@ class UFile {
 	/**
 	 * Size of the file in bytes
 	 */
-    Long sizeInBytes
+	Long sizeInBytes
 	
 	/**
 	 * Full file system path to the file
 	 */
-    String path
+	String path
 	
 	/**
 	 * Filename and extension
 	 */
-    String name
+	String name
 	
 	/**
 	 * File extension which suggests the Mime Type
 	 */
-    String extension
+	String extension
+	
+	/**
+	 * MimeType that was detected on upload
+	 */
+	String mimeType
 	
 	/**
 	 * Date the file was uploaded to the file system
 	 */
-    Date dateUploaded
+	Date dateUploaded
 	
 	/**
 	 * Number of times the file has been pulled from the file system
 	 */
-    Integer downloads
+	Integer downloads
 	
 	/**
 	 * Full URL to the thumbnail of this file
@@ -45,15 +51,16 @@ class UFile {
 	 */
 	String pathToThumbnail
 	
-    static constraints = {
+	static constraints = {
         sizeInBytes(min:0L)
         path()
         name()
         extension()
+		mimeType nullable:true
         dateUploaded()
         downloads()
 		pathToThumbnail nullable:true
-    }
+	}
 
 	String toString(){
 		return path

@@ -17,7 +17,7 @@ class LocalUploadService {
 	MessageSource messageSource
 
 	GrailsApplication grailsApplication
-
+	
 	/**
 	 * Primary save method that will store a file to a bucket.  
 	 * 
@@ -25,25 +25,29 @@ class LocalUploadService {
 	 * @param file MultipartFile
 	 * @param name Desired name for the file, defaults to submitted file name
 	 * @param Locale Locale for the current request
-	 * @return UFile that was successfully saved
+	 * @return UFile that was created, may have validation errors
 	 */
 	UFile saveFile(String bucket, MultipartFile file, String name, Locale locale) throws LocalUploadServiceException {
 
 		//config handler
 		def config = grailsApplication.config.localUpload[bucket]
 		
+		UFile ufile = new UFile()
+		
 		//Check if file is empty
 		if(!file || file.isEmpty()){
-			def msg = messageSource.getMessage("localupload.upload.nofile", null, locale)
-			log.info msg
-			throw new LocalUploadServiceException(msg)
+			ufile.errors.rejectValue("localupload.upload.nofile", "No file attached, or file is Empty")
+			throw new LocalUploadServiceException(errorsToString(ufile, locale))
 		}
 
-		/** *********************
-		 check extensions
-		 *********************** */
+		/***********************
+		 * check extensions and mimeType
+		 ************************/
 		String fileExtension
 		String fileName = file.originalFilename
+		
+		ufile.name = (name ?: fileName)
+		ufile.path = buildPath(config, name, fileName)
 		
 		int extensionAt = fileName?.lastIndexOf('.') + 1
 		if(extensionAt >= 0){
@@ -52,28 +56,61 @@ class LocalUploadService {
 			fileExtension = ''
 		}
 		
-		if (!config.allowedExtensions[0].equals("*") && !config.allowedExtensions.contains(fileExtension)) {
-			def msg = messageSource.getMessage("localupload.upload.unauthorizedExtension", [fileExtension, config.allowedExtensions] as Object[], locale)
-			log.debug msg
-			throw new LocalUploadServiceException(msg)
+		// :TODO it would be a good idea to verify that the file extension matches
+		// the content type, so endpoints can't sneak banned content types into our bucket.
+		ufile.extension = fileExtension
+		
+		if (!config.allowedExtensions[0].equals("*") && 
+				!config.allowedExtensions.contains(fileExtension)) {
+			ufile.errors.rejectValue("extension","localupload.upload.unauthorizedExtension", 
+					[fileExtension, config.allowedExtensions] as Object[])
 		}
+		
+		ufile.mimeType = file.contentType
 
 		/*********************
 		 check file size
 		 ********************* */
-		def fileSize = file.size
-		
-		if (config.maxSize) { //if maxSize config exists	
-			def maxSizeInKb = ((int) (config.maxSize)) / 1024
-			if (fileSize > config.maxSize) { //if filesize is bigger than allowed
-				String prettySize = FileSizeUtils.prettySizeFromBytes(fileSize)
-				log.debug "LocalUpload plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb.  Size was ${prettySize}"
-				def msg = messageSource.getMessage("localupload.upload.fileBiggerThanAllowed", [maxSizeInKb, prettySize] as Object[], locale)
-				throw new LocalUploadServiceException(msg)
+		Long fileSize = file.size
+		Long maxSize = config.maxSize
+		if (maxSize) { //if maxSize config exists
+			if (fileSize > maxSize) { //if filesize is bigger than allowed
+				
+				String prettyFileSize = FileSizeUtils.prettySizeFromBytes(fileSize)
+				String prettyMaxSize = FileSizeUtils.prettySizeFromBytes(maxSize)
+				
+				ufile.errors.rejectValue("sizeInBytes", "localupload.upload.fileBiggerThanAllowed", 
+						[prettyMaxSize, prettyFileSize] as Object[])
 			}
 		}
-
-		//base path to save file
+		
+		ufile.sizeInBytes = fileSize 
+		
+		ufile.dateUploaded = new Date()
+		ufile.downloads = 0
+	
+		//Validate before we attempt to persist the file to disk
+		if(ufile.validate()){
+			log.debug "LocalUpload plugin received a file of size ${fileSize}. Moving to ${ufile.path}"
+			try{
+				file.transferTo(new File(ufile.path))
+			}catch(Exception e){
+				log.error("Failed to persist file to disk", e)
+				ufile.errors.rejectValue("path", 
+						"localupload.upload.persistenceError", "Failed to save file" )
+			}
+		}
+		
+		//save it on the database
+		if(!ufile.save()){
+			String msg = errorsToString(ufile, locale)
+			log.error(msg)
+		}
+		
+		return ufile
+	}
+	
+	protected String buildPath(config, name, fileName){
 		def path = config.path
 		if (!path.endsWith('/') || !path.endsWith(File.separator))
 			path = path + File.separator
@@ -92,43 +129,26 @@ class LocalUploadService {
 		//make sure the directory exists
 		if(! new File(path).exists() ){
 			if (new File(path).mkdirs()){
-				log.debug "Created LocalUpload plugin storage directory [${path}]"
+				log.info "Created LocalUpload plugin storage directory [${path}]"
 			}else{
 				log.error "LocalUpload plugin couldn't create directories: [${path}]"
+				//:TODO need to throw an exception here.
 			}
 		}
 		
 		if(storageTypes?.contains('plain')){
 			//note:  this type of storage is a bit of a security / data loss risk.
 			path = path + (name ?: fileName)
-		}else{  
-			/* Using uuids as filenames, this lends us slightly more security.  If 
-			 * two users upload a file with the same name, the files will not 
+		}else{
+			/* Using uuids as filenames, this lends us slightly more security.  If
+			 * two users upload a file with the same name, the files will not
 			 * overlap
 			 */
 			path = path + UUID.randomUUID().toString()
 		}
 		
-		//move file
-		log.debug "LocalUpload plugin received a file of size ${fileSize}. Moving to ${path}"
-		file.transferTo(new File(path))
-
-		//save it on the database
-		def ufile = new UFile()
-		ufile.name = (name ?: fileName)
-		ufile.sizeInBytes = fileSize 
-		ufile.extension = fileExtension
-		ufile.dateUploaded = new Date()
-		ufile.path = path
-		ufile.downloads = 0
-		
-		if(!ufile.save()){
-			log.error(errorsToString(ufile))
-		}
-		
-		return ufile
+		return path
 	}
-
 	
 	boolean deleteFile(UFile ufile) {
 		boolean borro = false;
@@ -149,7 +169,7 @@ class LocalUploadService {
 		
 		if(file.exists()) {
 			if (file.delete()) {
-				log.debug "file [${ufile.path}] deleted"
+				log.info "file [${ufile.path}] deleted"
 			}else {
 				log.error "could not delete file: ${file}"
 			}
@@ -259,14 +279,14 @@ class LocalUploadService {
 	/** 
 	 * Simple helper to expose the errors on a domain object as a string
 	 */
-	private String errorsToString(obj){
+	protected String errorsToString(obj, Locale locale){
 		
 		StringBuilder sb = new StringBuilder()
 		
 		obj.errors.allErrors.eachWithIndex {ObjectError error, Integer i ->
 				sb.append("Error ${i+1}: ")
 				
-				sb.append(messageSource.getMessage(error, Locale.default))
+				sb.append(messageSource.getMessage(error, locale?:Locale.default))
 				
 				sb.append("\n")
 			}
