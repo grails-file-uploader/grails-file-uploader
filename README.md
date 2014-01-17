@@ -1,4 +1,4 @@
-# File Uploader Plugin
+# File Uploader Plugin (Latest 2.4-RC1)
 
 #### Causecode Technologies Pvt. Ltd.
 
@@ -12,6 +12,17 @@
 ```
 
 ## ChangeLog
+
+### Version 2.4-RC1
+
+### Database Changes
+
+1. **type** field will be now of type integer.
+
+### Improvement
+
+1. Using StringBuilder for file name creation for CDN files.
+2. Removed file extension from file name. (#8).
 
 ### Version 2.4-SNAPSHOT
 

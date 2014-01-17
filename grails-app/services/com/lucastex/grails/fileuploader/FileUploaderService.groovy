@@ -6,6 +6,7 @@ import groovy.io.FileType
 import java.nio.channels.FileChannel
 
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
@@ -19,42 +20,55 @@ class FileUploaderService {
     def messageSource
     def springSecurityService
 
+    /**
+     * 
+     * @param group
+     * @param file
+     * @param customFileName Custom file name without extension.
+     * @return
+     */
     @Transactional
-    UFile saveFile(String group, def file, String name = "", Locale locale = null) throws FileUploaderServiceException {
+    UFile saveFile(String group, def file, String customFileName = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
         boolean empty = true
+        long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
-        String contentType, fileExtension, fileName, path
+        String contentType, fileExtension, fileName, path, receivedFileName, fileFullName
 
         if(file instanceof File) {
             contentType = ""
             empty = !file.exists()
-            fileName = file.name
+            receivedFileName = file.name
             fileSize = file.size()
-        } else {    // Means instance of Spring's CommonsMultipartFile.
-            contentType = file?.contentType
-            empty = file?.isEmpty()
-            fileName = file?.originalFilename
-            fileSize = file?.size
+        } else {    // Means instance is of Spring's CommonsMultipartFile.
+            CommonsMultipartFile uploaderFile = file
+            contentType = uploaderFile?.contentType
+            empty = uploaderFile?.isEmpty()
+            receivedFileName = uploaderFile?.originalFilename
+            fileSize = uploaderFile?.size
         }
         log.info "Received ${empty ? 'empty ' : ''}file [$fileName] of size [$fileSize] & content type [$contentType]."
         if(empty || !file) {
             return null
         }
 
-        def config = grailsApplication.config.fileuploader[group]
-        if(config.isEmpty()) {
+        def groupConfig = grailsApplication.config.fileuploader[group]
+        if(groupConfig.isEmpty()) {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
-        int extensionAt = fileName.lastIndexOf('.') + 1
-        if(extensionAt >= 0) {
-            fileExtension = fileName.substring(extensionAt).toLowerCase()
+
+        int extensionAt = fileName.lastIndexOf('.')
+        if(extensionAt > -1) {
+            fileName = customFileName ?: fileName.substring(0, extensionAt)
+            fileExtension = fileName.substring(extensionAt + 1).toLowerCase().trim()
+        } else {
+            fileName = customFileName ?: fileName
         }
 
-        if (!config.allowedExtensions[0].equals("*") && !config.allowedExtensions.contains(fileExtension)) {
+        if (!groupConfig.allowedExtensions[0].equals("*") && !groupConfig.allowedExtensions.contains(fileExtension)) {
             def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension",
-                    [fileExtension, config.allowedExtensions] as Object[], locale)
+                    [fileExtension, groupConfig.allowedExtensions] as Object[], locale)
             log.debug msg
             throw new FileUploaderServiceException(msg)
         }
@@ -62,65 +76,77 @@ class FileUploaderService {
         /**
          * If maxSize config exists
          */
-        if (config.maxSize) {
-            def maxSizeInKb = ((int) (config.maxSize)) / 1024
-            if (fileSize > config.maxSize) { //if filesize is bigger than allowed
+        if (groupConfig.maxSize) {
+            def maxSizeInKb = ((int) (groupConfig.maxSize)) / 1024
+            if (fileSize > groupConfig.maxSize) { //if filesize is bigger than allowed
                 log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
                 def msg = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
                 throw new FileUploaderServiceException(msg)
             }
         }
 
-        fileName = name ? (name + "." + fileExtension) : fileName
-        fileName = fileName.trim().replaceAll(" ", "-")
+        customFileName = customFileName.trim().replaceAll(" ", "-")
 
         // Setup storage path
-        def storageTypes = config.storageTypes
+        def storageTypes = groupConfig.storageTypes
 
         if(storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
-            String containerName = config.container
+
+            String fileNameSeparator = "-"
+            String containerName = groupConfig.container
             String userId = springSecurityService.currentUser?.id
-            String tempFilePath = "./web-app/temp/${System.currentTimeMillis()}-${fileName}"
-            if(config.provider == CDNProvider.AMAZON) {
-                fileName = group + "-" + userId + "-" + System.currentTimeMillis() + "-" + fileName
-            } else {
-                fileName = group + "/" + userId + "/" + System.currentTimeMillis() + "/" + fileName
+            String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
+
+            if(groupConfig.provider != CDNProvider.AMAZON) {
+                fileNameSeparator = "/"
             }
+
+            fileName = new StringBuilder(group)
+                    .append(fileNameSeparator)
+                    .append(userId)
+                    .append(fileNameSeparator)
+                    .append(currentTimeMillis)
+                    .append(fileNameSeparator)
+                    .append(fileName)
+                    .toString()
+
+            String tempFileFullName = fileName + "." + fileExtension
 
             if(file instanceof File)
                 file.renameTo(new File(tempFilePath))
             else
                 file.transferTo(new File(tempFilePath))
+
             File tempFile = new File(tempFilePath)
             tempFile.deleteOnExit()
+
             if(Environment.current != Environment.PRODUCTION) {
                 containerName += "-" + Environment.current.name
             }
 
-            if(config.provider == CDNProvider.AMAZON) {
+            if(groupConfig.provider == CDNProvider.AMAZON) {
                 cdnProvider = CDNProvider.AMAZON
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, fileName, true)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
                 amazonFileUploaderInstance.close()
-                path = amazonFileUploaderInstance.getURI(containerName, fileName)
+                path = amazonFileUploaderInstance.getURI(containerName, tempFileFullName)
             } else {
                 cdnProvider = CDNProvider.RACKSPACE
-                String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, fileName)
-                path = publicBaseURL + "/" + fileName
+                String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
+                path = publicBaseURL + "/" + tempFileFullName
             }
         } else {
             // Base path to save file
-            path = config.path
+            path = groupConfig.path
             if(!path.endsWith('/')) path = path + "/";
 
             if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
                 Calendar cal = Calendar.getInstance()
                 path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
             } else {  //subdirectories by millisecond
-                long currentTime = System.currentTimeMillis()
-                path = path + currentTime + "/"
+                path = path + currentTimeMillis + "/"
             }
 
             // Make sure the directory exists
@@ -134,7 +160,7 @@ class FileUploaderService {
             if(storageTypes?.contains('uuid')){
                 path = path + UUID.randomUUID().toString()
             } else {  //note:  this type of storage is a bit of a security / data loss risk.
-                path = path + fileName
+                path = path + fileName + "." + fileExtension
             }
 
             // Move file
@@ -184,10 +210,10 @@ class FileUploaderService {
             if(ufileInstance.provider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.name)
+                amazonFileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
                 amazonFileUploaderInstance.close()
             } else {
-                CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.name)
+                CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.fullName)
             }
             return true
         }
@@ -261,7 +287,7 @@ class FileUploaderService {
             return null
         }
         //Create temp directory
-        def tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+        String tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
         new File(tempDirectory).mkdirs()
 
         //create file
@@ -306,7 +332,7 @@ class FileUploaderService {
         List<BlobDetail> blobDetailList = []
 
         ufileInstanceList.each {
-            String newFileName = "${System.currentTimeMillis()}-${it.name}"
+            String newFileName = "${System.currentTimeMillis()}-${it.fullName}"
             blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
         }
         if(Environment.current != Environment.PRODUCTION) {
