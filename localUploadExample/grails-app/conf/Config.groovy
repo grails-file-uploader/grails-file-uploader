@@ -97,7 +97,7 @@ log4j = {
 
 localUpload {
 	docs {
-			maxSize = 1000 * 1024 * 20 //20 MB
+			maxSize = 1000 * 1024 * 2 //2 MB
 			allowedExtensions = ['*']
 			path = "C:\\oasis\\docs"
 			storageTypes = ['monthSubdirs', 'uuid']

@@ -123,9 +123,15 @@ class LocalUploadController {
 				}
 				
 				UFile ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
+				if(ufile.hasErrors()){
+					flash.message = message(code: "localupload.upload.persistenceError") + ' ' + localUploadService.errorsToString(ufile, request.locale)
+					redirect controller: params.errorController, action: params.errorAction, id: params.id
+					return
+				}
+
 				localUploadSupportService.associateUFile(ufile, params)
 				if(ufile.hasErrors()){
-					flash.message = message(code: "localupload.upload.persistenceError") + localUploadService.errorsToString(ufile, request.locale)
+					flash.message = message(code: "localupload.upload.linkToDomainError") + ' ' + localUploadService.errorsToString(ufile, request.locale)
 					redirect controller: params.errorController, action: params.errorAction, id: params.id
 					return
 				}

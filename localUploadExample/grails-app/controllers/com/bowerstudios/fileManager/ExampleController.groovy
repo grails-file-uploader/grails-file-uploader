@@ -31,18 +31,26 @@ class ExampleController {
 	 * @param example domain object
 	 */
 	private List<UFile> lookForNewAttachments(Example example){
-		return localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
+		List<UFile> invalidFiles = []
+		
+		localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
 			if(!example.files){
 				example.files = []
 			}
-			example.files << ufile
+			if(ufile.hasErrors()){
+				 invalidFiles << ufile
+			}else{
+				example.files << ufile
+			}
 		}
+		
+		return invalidFiles
 	}
 	
     def save() {
         def exampleInstance = new Example(params)
 		
-		lookForNewAttachments(exampleInstance)
+		List<UFile> invalidFiles = lookForNewAttachments(exampleInstance)
 		
         if (!exampleInstance.save(flush: true)) {
             render(view: "create", model: [exampleInstance: exampleInstance])
@@ -95,7 +103,7 @@ class ExampleController {
 
         exampleInstance.properties = params
 		
-		lookForNewAttachments(exampleInstance)
+		List<UFile> invalidFiles = lookForNewAttachments(exampleInstance)
 
         if (!exampleInstance.save(flush: true)) {
             render(view: "edit", model: [exampleInstance: exampleInstance])

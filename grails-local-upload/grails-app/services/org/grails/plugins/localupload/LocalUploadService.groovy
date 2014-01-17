@@ -63,7 +63,7 @@ class LocalUploadService {
 		if (!config.allowedExtensions[0].equals("*") && 
 				!config.allowedExtensions.contains(fileExtension)) {
 			ufile.errors.rejectValue("extension","localupload.upload.unauthorizedExtension", 
-					[fileExtension, config.allowedExtensions] as Object[])
+					[fileExtension, config.allowedExtensions] as Object[], "File type not permitted")
 		}
 		
 		ufile.mimeType = file.contentType
@@ -80,7 +80,7 @@ class LocalUploadService {
 				String prettyMaxSize = FileSizeUtils.prettySizeFromBytes(maxSize)
 				
 				ufile.errors.rejectValue("sizeInBytes", "localupload.upload.fileBiggerThanAllowed", 
-						[prettyMaxSize, prettyFileSize] as Object[])
+						[prettyMaxSize, prettyFileSize] as Object[], "File size too large.")
 			}
 		}
 		
@@ -89,8 +89,8 @@ class LocalUploadService {
 		ufile.dateUploaded = new Date()
 		ufile.downloads = 0
 	
-		//Validate before we attempt to persist the file to disk
-		if(ufile.validate()){
+		//Validate before we attempt to persist the file to disk:  WARNING, does not look at domain class constraints until save, because we haven't called validate()
+		if(!ufile.hasErrors()){
 			log.debug "LocalUpload plugin received a file of size ${fileSize}. Moving to ${ufile.path}"
 			try{
 				file.transferTo(new File(ufile.path))
@@ -99,12 +99,11 @@ class LocalUploadService {
 				ufile.errors.rejectValue("path", 
 						"localupload.upload.persistenceError", "Failed to save file" )
 			}
-		}
-		
-		//save it on the database
-		if(!ufile.save()){
-			String msg = errorsToString(ufile, locale)
-			log.error(msg)
+			
+			if(!ufile.hasErrors()){
+				//save it on the database
+				ufile.save()
+			}
 		}
 		
 		return ufile
@@ -201,7 +200,7 @@ class LocalUploadService {
 	 * Access the Ufile, returning the appropriate message if the UFile does not exist.
 	 */
 	@Transactional(readOnly = true)
-	UFile ufileById(Serializable idUfile, Locale locale){
+	UFile ufileById(Serializable idUfile, Locale locale) throws FileNotFoundException{
 		UFile ufile = UFile.get(idUfile)
 		
 		if(ufile){
@@ -212,14 +211,13 @@ class LocalUploadService {
 					"localupload.download.nofile",
 					[idUfile] as Object[], locale)
 			throw new FileNotFoundException(idUfile.toString())
-			
 		}
 	}
 	
 	/**
 	 * Access the file held by the UFile, incrementing the viewed number, and returning appropriate message if file does not exist.
 	 */
-	File fileForUFile(UFile ufile, Locale locale){
+	File fileForUFile(UFile ufile, Locale locale) throws IOException{
 		File file = new File(ufile.path)
 		
 		if(file.exists()){
