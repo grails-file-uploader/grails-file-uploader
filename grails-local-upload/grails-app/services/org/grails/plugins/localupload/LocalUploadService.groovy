@@ -281,8 +281,12 @@ class LocalUploadService {
 		
 		StringBuilder sb = new StringBuilder()
 		
+		boolean includeErrorId = (obj.errors.allErrors.size()>1)
+		
 		obj.errors.allErrors.eachWithIndex {ObjectError error, Integer i ->
-				sb.append("Error ${i+1}: ")
+				if(includeErrorId){
+					sb.append("Error ${i+1}: ")
+				}
 				
 				sb.append(messageSource.getMessage(error, locale?:Locale.default))
 				

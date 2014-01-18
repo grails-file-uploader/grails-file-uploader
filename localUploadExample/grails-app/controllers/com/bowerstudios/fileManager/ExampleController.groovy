@@ -58,8 +58,25 @@ class ExampleController {
         }
 
         flash.message = message(code: 'default.created.message', args: [message(code: 'example.label', default: 'Example'), exampleInstance.id])
+		
+		checkForInvalidFilesAfterSave(invalidFiles, flash)
+		
         redirect(action: "show", id: exampleInstance.id)
     }
+	
+	void checkForInvalidFilesAfterSave(invalidFiles, flash){
+		
+		if(invalidFiles){
+			StringBuilder sb = new StringBuilder()
+			sb.append("Saved example, but found errors with file attachment/s:  ")
+			invalidFiles.each{ UFile invalidFile ->
+				sb.append(invalidFile.name)
+				sb.append(' ')
+				sb.append(localUploadService.errorsToString(invalidFile, request.locale))
+			}
+			flash.message = sb.toString()
+		}
+	}
 
     def show(Long id) {
         def exampleInstance = Example.get(id)
@@ -111,7 +128,10 @@ class ExampleController {
         }
 
         flash.message = message(code: 'default.updated.message', args: [message(code: 'example.label', default: 'Example'), exampleInstance.id])
-        redirect(action: "show", id: exampleInstance.id)
+		
+		checkForInvalidFilesAfterSave(invalidFiles, flash)
+		
+		redirect(action: "show", id: exampleInstance.id)
     }
 
     def delete(Long id) {
