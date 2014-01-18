@@ -10,6 +10,7 @@ grails.project.source.level = 1.6
 //grails.project.fork = [
 //   run: [maxMemory:1024, minMemory:64, debug:false, maxPerm:256]
 //]
+grails.plugin.location.'local-upload' = "../grails-local-upload"
 
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
@@ -61,7 +62,11 @@ grails.project.dependency.resolution = {
 
 		compile ':cache:1.0.1'
 		
-		compile ":local-upload:3.0.13"
+		//If we were using the plugin for real, we would use the compile dependency
+		//as below.  Instead for the purposes of developing this plugin, we are
+		//"inlining" the plugin, adding its sources directly to the classpath with
+		// grails.plugin.location.'local-upload' = "../grails-local-upload"
+		//compile ":local-upload:3.0.13"
 		
 		//Attempt to use bootstrap-file-upload on frontend
 		//runtime ':twitter-bootstrap:3.0.3'

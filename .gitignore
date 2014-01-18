@@ -9,3 +9,5 @@ grails-local-upload-*.zip
 grails-local-upload-*.zip.sha1
 
 plugin.xml
+
+*.h2.db

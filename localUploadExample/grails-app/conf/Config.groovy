@@ -99,7 +99,8 @@ localUpload {
 	docs {
 			maxSize = 1000 * 1024 * 2 //2 MB
 			allowedExtensions = ['*']
-			path = "C:\\oasis\\docs"
+			//path = "C:\\oasis\\docs"
+			path = "/tmp/localUpload/"
 			storageTypes = ['monthSubdirs', 'uuid']
 	}
 }

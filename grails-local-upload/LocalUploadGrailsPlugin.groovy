@@ -35,6 +35,6 @@ with updates from visheshd, and lakshmanveti.
 		 * A no-op version of ILocalUploadSupport service that enables the 
 		 * plugin to run in a basic "no integration with my domain model" mode 
 		 */
-		localUploadSupportService(LocalUploadSupportService)
+		//localUploadSupportService(LocalUploadSupportService)
 	}
 }
