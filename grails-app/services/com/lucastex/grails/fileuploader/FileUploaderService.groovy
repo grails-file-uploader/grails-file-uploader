@@ -98,6 +98,11 @@ class FileUploaderService {
             String userId = springSecurityService.currentUser?.id
             String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
 
+            long expirationPeriod = 1 * 60 * 60 * 24 * 30   // Default to 30 Days
+            if(!groupConfig.expirationPeriod.isEmpty()) {
+                expirationPeriod = groupConfig.expirationPeriod
+            }
+
             if(groupConfig.provider != CDNProvider.AMAZON) {
                 fileNameSeparator = "/"
             }
@@ -130,8 +135,8 @@ class FileUploaderService {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
+                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
                 amazonFileUploaderInstance.close()
-                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName)
             } else {
                 cdnProvider = CDNProvider.RACKSPACE
                 String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
