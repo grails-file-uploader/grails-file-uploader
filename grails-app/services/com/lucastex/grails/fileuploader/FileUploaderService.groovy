@@ -183,7 +183,7 @@ class FileUploaderService {
         ufile.extension = fileExtension
         ufile.path = path
         ufile.type = type
-        ufile.expireOn = expireOn
+        ufile.expiresOn = expireOn
         ufile.fileGroup = group
         ufile.provider = cdnProvider
         ufile.save()
@@ -376,14 +376,14 @@ class FileUploaderService {
         UFile.withCriteria {
             eq("type", UFileType.CDN_PUBLIC)
             eq("provider", CDNProvider.AMAZON)
-            between("expireOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+            between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
         }.each {
             String containerName = it.container
             String fileFullName = it.fullName
             long expirationPeriod = getExpirationPeriod(it.fileGroup)
 
             it.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
-            it.expireOn = new Date(new Date().time + expirationPeriod * 1000)
+            it.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
             it.save()
         }
 
