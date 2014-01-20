@@ -34,7 +34,7 @@ class FileUploaderService {
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
-        String contentType, fileExtension, fileName, path, receivedFileName, fileFullName
+        String contentType, fileExtension, fileName, path, receivedFileName
 
         if(file instanceof File) {
             contentType = ""
@@ -58,12 +58,12 @@ class FileUploaderService {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
 
-        int extensionAt = fileName.lastIndexOf('.')
+        int extensionAt = receivedFileName.lastIndexOf('.')
         if(extensionAt > -1) {
-            fileName = customFileName ?: fileName.substring(0, extensionAt)
-            fileExtension = fileName.substring(extensionAt + 1).toLowerCase().trim()
+            fileName = customFileName ?: receivedFileName.substring(0, extensionAt)
+            fileExtension = receivedFileName.substring(extensionAt + 1).toLowerCase().trim()
         } else {
-            fileName = customFileName ?: fileName
+            fileName = customFileName ?: receivedFileName
         }
 
         if (!groupConfig.allowedExtensions[0].equals("*") && !groupConfig.allowedExtensions.contains(fileExtension)) {
