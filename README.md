@@ -13,6 +13,16 @@
 
 ## ChangeLog
 
+### Version 2.4-RC2
+
+#### New Features
+
+1. Added temporary URL feature for Amazon S3 file uploader.
+
+#### Database Changes
+
+1. Added **expireOn** field in UFile domain.
+
 ### Version 2.4-RC1
 
 ### Database Changes
@@ -83,6 +93,7 @@ fileuploader {
     AmazonKey = "somekey"	// For amazon S3
     AmazonSecret = "somesecret"
     defaultContainer = "anyConatainer"  // Container to move local files to cloud
+
     degreeApplication {			// Non CDN files, will be stored in local directory.
         maxSize = 1000 * 1024 //256 kbytes
         allowedExtensions = ["xls"]
@@ -101,6 +112,7 @@ fileuploader {
         storageTypes = "CDN"
         container = "anyContainerName"
         provider = CDNProvider.AMAZON
+        expirationPeriod = 60 * 60 * 24 * 2 // Two hours
     }
 }
 ```
@@ -109,4 +121,7 @@ To enable CDN to any group you must have a [rackspace](http://docs.rackspace.com
 This username & key needs to be passed in config as shown in above example. Authentication can be done using username
 & password pair but currently only key/username pair is supported.    
 
-To enable CDN uploading to any group just set **storageType** to **CDN** & provide a container name.
+1. To enable CDN uploading to any group just set **storageType** to **CDN** & provide a container name.
+
+2. By default path URL retrieved from Amazon S3 service is temporary URL, which will be valid for 30 days bydefault. Which
+can be overwritten for group level configuration by setting **expirationPeriod**. This period must be of long type in seconds.
