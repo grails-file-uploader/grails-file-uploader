@@ -57,6 +57,24 @@ public abstract class CDNFileUploader {
     public abstract void deleteFile(String containerName, String fileName);
 
     /**
+     * Used to get the permanent URL of the file stored on the cloud.
+     * @param containerName
+     * @param fileName
+     * @return
+     */
+    public abstract String getPermanentURL(String containerName, String fileName);
+
+    /**
+     * Used to get a temporary URL for particular object or file.
+     * For example: This is know as Pre-signed URL in amazon S3 service.
+     * @param containerName
+     * @param fileName
+     * @param expiration
+     * @return Temporary URL for specified file.
+     */
+    public abstract String getTemporaryURL(String containerName, String fileName, long expiration);
+
+    /**
      * Used to make a file public, so that any user create browse the file through the link.
      * @param containerName
      * @param fileName

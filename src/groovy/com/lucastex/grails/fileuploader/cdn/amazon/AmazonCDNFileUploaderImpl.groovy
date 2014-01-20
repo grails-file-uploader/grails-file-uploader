@@ -5,6 +5,7 @@ import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.blobstore.domain.Blob
+import org.jclouds.http.HttpRequest
 import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.CannedAccessPolicy
 import org.jclouds.s3.domain.S3Object
@@ -63,8 +64,23 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         client.getObject(containerName, fileName, null)
     }
 
-    String getURI(String containerName, String fileName) {
+    @Override
+    String getPermanentURL(String containerName, String fileName) {
         getObject(containerName, fileName).metadata.uri
+    }
+
+    /**
+     * @param containerName Name of the bucket
+     * @param fileName Name of the object in bucket
+     * @param expiration expiration time in seconds for pre-signed URl.
+     *        For example: 60 * 60 // For 1 hour.
+     *
+     * @see http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURLJavaSDK.html
+     */
+    @Override
+    String getTemporaryURL(String containerName, String fileName, long expiration) {
+        HttpRequest request = context.signer.signGetBlob(containerName, fileName, expiration)
+        request.endpoint.toString()
     }
 
     @Override

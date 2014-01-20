@@ -10,6 +10,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
+import com.lucastex.grails.fileuploader.util.Time
 
 class FileUploaderService {
 
@@ -30,6 +31,7 @@ class FileUploaderService {
     @Transactional
     UFile saveFile(String group, def file, String customFileName = "", Locale locale = null) throws FileUploaderServiceException {
         Long fileSize
+        Date expireOn
         boolean empty = true
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
@@ -98,6 +100,8 @@ class FileUploaderService {
             String userId = springSecurityService.currentUser?.id
             String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
 
+            long expirationPeriod = getExpirationPeriod(groupConfig)
+
             if(groupConfig.provider != CDNProvider.AMAZON) {
                 fileNameSeparator = "/"
             }
@@ -130,13 +134,15 @@ class FileUploaderService {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
+                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
                 amazonFileUploaderInstance.close()
-                path = amazonFileUploaderInstance.getURI(containerName, tempFileFullName)
             } else {
                 cdnProvider = CDNProvider.RACKSPACE
                 String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
                 path = publicBaseURL + "/" + tempFileFullName
             }
+
+            expireOn = new Date(new Date().time + expirationPeriod * 1000)
         } else {
             // Base path to save file
             path = groupConfig.path
@@ -177,6 +183,7 @@ class FileUploaderService {
         ufile.extension = fileExtension
         ufile.path = path
         ufile.type = type
+        ufile.expiresOn = expireOn
         ufile.fileGroup = group
         ufile.provider = cdnProvider
         ufile.save()
@@ -360,6 +367,41 @@ class FileUploaderService {
             }
         }
         return failedUFileIdList
+    }
+
+    void renewTemporaryURL() {
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+        amazonFileUploaderInstance.authenticate()
+
+        UFile.withCriteria {
+            eq("type", UFileType.CDN_PUBLIC)
+            eq("provider", CDNProvider.AMAZON)
+            between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+        }.each {
+            String containerName = it.container
+            String fileFullName = it.fullName
+            long expirationPeriod = getExpirationPeriod(it.fileGroup)
+
+            it.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
+            it.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+            it.save()
+        }
+
+        amazonFileUploaderInstance.close()
+    }
+
+    long getExpirationPeriod(String fileGroup) {
+        Map groupConfig = grailsApplication.config.fileuploader[fileGroup]
+        getExpirationPeriod(groupConfig)
+    }
+
+    long getExpirationPeriod(Map groupConfig) {
+        long expirationPeriod = Time.DAY * 30   // Default to 30 Days
+        if(!groupConfig.expirationPeriod.isEmpty()) {
+            expirationPeriod = groupConfig.expirationPeriod
+        }
+
+        expirationPeriod
     }
 
 }
