@@ -131,7 +131,7 @@ class FileUploaderService {
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
                 amazonFileUploaderInstance.close()
-                path = amazonFileUploaderInstance.getURI(containerName, tempFileFullName)
+                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName)
             } else {
                 cdnProvider = CDNProvider.RACKSPACE
                 String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
