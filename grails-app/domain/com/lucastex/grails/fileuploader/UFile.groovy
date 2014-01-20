@@ -10,6 +10,7 @@ class UFile {
     CDNProvider provider
 
     Date dateUploaded = new Date()
+    Date expireOn
 
     Long size
 
@@ -21,6 +22,7 @@ class UFile {
     UFileType type
 
     static constraints = {
+        expireOn nullable: true, min: new Date()
         size min: 0L
         path blank: false
         name blank: false
