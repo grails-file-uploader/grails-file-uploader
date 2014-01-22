@@ -5,11 +5,22 @@ This plugin adds local storage as an alternative to the Grails native way of sto
 
 FIRST METHOD: Use the LocalUploadService.lookForNewAttachments() closure to associate incoming file attachments with your domain model as UFile objects while you are editing that domain object.  In your controller, you would do:
 
-localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
+private List<UFile> lookForNewAttachments(Example example){
+  List<UFile> invalidFiles = []
+
+  localUploadService.lookForNewAttachments(request, params, flash){ UFile ufile ->
     if(!example.files){
-        example.files = []
+      example.files = []
     }
-    example.files << ufile
+
+    if(ufile.hasErrors()){
+      invalidFiles << ufile
+    }else{
+      example.files << ufile
+    }
+  }
+
+  return invalidFiles
 }
 
 and in your view:
@@ -69,7 +80,7 @@ Go to localUploadExample directory in this directory and run: grails run-app
 
 
 Installing:
-Add compile ":local-upload:3.0.5" to your BuildConfig.groovy in the plugins block
+Add compile ":local-upload:3.0.14" to your BuildConfig.groovy in the plugins block
 
 
 Example config block:
@@ -83,7 +94,7 @@ localUpload {
   }
 }
 
-In the storageTypes section, you can specify parameters for storage, the default stores files with a uuid name and no extension.  This should lend slightly more security.  If two users upload a file with the same name, the files will not overlap or be unintentionally revealed to an incorrect person.  You can store the file by the original filename by using 'plain'.  You can have the plugin create subdirectories by year and month with 'monthSubdirs'
+In the storageTypes section, you can specify parameters for storage, the default stores files with a uuid name and no extension.  This should lend slightly more security.  If two users upload a file with the same name, the files will not overlap or be unintentionally revealed to an incorrect person.  You can store the file by the original filename by using 'plain'.  You can have the plugin create subdirectories by year and month with 'monthSubdirs'.  By default subdirectories are created by the timestamp of the file.
 
 
 Security:

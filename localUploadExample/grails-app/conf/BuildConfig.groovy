@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
 		compile ':cache:1.0.1'
 		
 		//If we were using the plugin for real, we would use the compile dependency
-		//as below.  Instead for the purposes of developing this plugin, we are
+		//as below.  Instead, for the purposes of developing this plugin, we are
 		//"inlining" the plugin, adding its sources directly to the classpath with
 		// grails.plugin.location.'local-upload' = "../grails-local-upload"
 		//compile ":local-upload:3.0.13"
