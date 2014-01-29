@@ -150,18 +150,18 @@ class LocalUploadService {
 	}
 	
 	boolean deleteFile(UFile ufile) {
-		boolean borro = false;
+		boolean borro = false
 		
 		File file = new File(ufile.path)
 		File parent
 		
 		if(file.exists()){
-			parent = new File(file.parentFile)
+			parent = file.parentFile
 		}
 		
 		try{
 			ufile.delete()
-			borro=true;
+			borro = true
 		}catch(Exception e){
 			log.error("could not delete ufile: ${ufile.id}", e)
 		}
