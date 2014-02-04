@@ -17,6 +17,10 @@ class UFile {
 		dateUploaded()
 		downloads()
     }
+	
+	static mapping = {
+		size column: "`size`" /* needs to be escaped because it is a reserved word in the Oracle database */
+	}
 
 	def afterDelete() {
 		try {
