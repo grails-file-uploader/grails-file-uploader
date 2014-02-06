@@ -33,9 +33,9 @@ class LocalUploadController {
 			name: ufile.name,
 			size: ufile.sizeInBytes,
 			url: createLink(action:'download', id:ufile.id),
-			thumbnail_url: ufile.pathToThumbnail,
-			delete_url: createLink(action:'ajaxDeleteFile', id:ufile.id),
-			delete_type: "DELETE"
+			thumbnailUrl: ufile.pathToThumbnail,
+			deleteUrl: createLink(action:'ajaxDeleteFile', id:ufile.id),
+			deleteType: "DELETE"
 		]
 	}
 	
@@ -95,7 +95,7 @@ class LocalUploadController {
 				render status: HttpStatus.METHOD_NOT_ALLOWED.value()
 		}
 
-		render results as JSON
+		render (['files':results] as JSON)
 	}
 
 	/**

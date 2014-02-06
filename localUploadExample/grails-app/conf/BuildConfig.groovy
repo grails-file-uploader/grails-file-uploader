@@ -11,6 +11,7 @@ grails.project.source.level = 1.6
 //   run: [maxMemory:1024, minMemory:64, debug:false, maxPerm:256]
 //]
 grails.plugin.location.'local-upload' = "../grails-local-upload"
+grails.plugin.location.'bootstrap-file-upload' = "../../grails-bootstrap-file-upload"
 
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
@@ -46,11 +47,14 @@ grails.project.dependency.resolution = {
     }
 
 	plugins {
-		runtime ":hibernate:$grailsVersion"
+		runtime ":hibernate:$grailsVersion", ":resources:1.2"
 		
-		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3"
-		runtime ":resources:1.2"
-
+		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3", ':twitter-bootstrap:3.0.3' 
+		/*runtime(":jquery:1.7.1", ":twitter-bootstrap:2.0.2.25", ":jquery-ui:1.8.15"){
+			excludes "svn"
+		}*/
+		
+				
 		// Uncomment these (or add new ones) to enable additional resources capabilities
 		//runtime ":zipped-resources:1.0"
 		//runtime ":cached-resources:1.0"
@@ -67,10 +71,6 @@ grails.project.dependency.resolution = {
 		//"inlining" the plugin, adding its sources directly to the classpath with
 		// grails.plugin.location.'local-upload' = "../grails-local-upload"
 		//compile ":local-upload:3.0.13"
-		
-		//Attempt to use bootstrap-file-upload on frontend
-		//runtime ':twitter-bootstrap:3.0.3'
-		//runtime ':lesscss-resources:1.3.0.3'
-		//compile ":bootstrap-file-upload:2.1.2"
+		//compile ":bootstrap-file-upload:2.1.2" 
 	}
 }
