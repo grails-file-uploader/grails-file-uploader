@@ -11,6 +11,7 @@ grails.project.source.level = 1.6
 //   run: [maxMemory:1024, minMemory:64, debug:false, maxPerm:256]
 //]
 grails.plugin.location.'local-upload' = "../grails-local-upload"
+grails.plugin.location.'bootstrap-file-upload' = "../../grails-bootstrap-file-upload"
 
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
@@ -48,7 +49,9 @@ grails.project.dependency.resolution = {
 	plugins {
 		runtime ":hibernate:$grailsVersion"
 		
-		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3"
+		runtime(":jquery:1.7.1", ":twitter-bootstrap:2.0.2.25", ":jquery-ui:1.8.15"){
+			excludes 'svn'
+		}
 		runtime ":resources:1.2"
 
 		// Uncomment these (or add new ones) to enable additional resources capabilities

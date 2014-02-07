@@ -6,7 +6,7 @@
 		<g:set var="entityName" value="${message(code: 'example.label', default: 'Example')}" />
 		<title><g:message code="default.show.label" args="[entityName]" /></title>
 		
-<%--		<r:require modules="bootstrap-file-upload"/>--%>
+		<r:require modules="bootstrap-file-upload"/>
 	</head>
 	<body>
 		<a href="#show-example" class="skip" tabindex="-1"><g:message code="default.link.skip.label" default="Skip to content&hellip;"/></a>
@@ -91,15 +91,16 @@
 				
 				
 				
-<%--				<li class="fieldcontain">--%>
-<%--					<span id="files-ajax-form-label" class="property-label">--%>
-<%--					Displaying the file upload form using the ajax</span>--%>
-<%--					--%>
-<%--					<span class="property-value" aria-labelledby="files-ajax-form-label">--%>
-<%--						<bsfu:fileUpload action="ajaxUpload" controller="localUpload" --%>
-<%--							formData="${[id:exampleInstance.id, saveAssoc:'example'] }"/>--%>
-<%--					</span>--%>
-<%--				</li>--%>
+				<li class="fieldcontain">
+					<span id="files-ajax-form-label" class="property-label">
+					Displaying the file upload form using the ajax</span>
+					
+					<span class="property-value" aria-labelledby="files-ajax-form-label">
+						<bsfu:fileUpload action="ajaxUpload" controller="localUpload" 
+							formData="${[id:exampleInstance.id, saveAssoc:'example'] }"
+							/>
+					</span>
+				</li>
 			
 			</ol>
 			<g:form>
