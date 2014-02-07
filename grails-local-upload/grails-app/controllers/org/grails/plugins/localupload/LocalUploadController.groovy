@@ -45,8 +45,8 @@ class LocalUploadController {
 	def ajaxUpload(){
 		def results = []
 		
-		String bucket = params.bucket
-		String fileParam = params.fileParam ?: 'files'
+		String bucket = params.bucket ?: 'docs'  // need to go out and get the first bucket
+		String fileParam = params.fileParam ?: 'files[]'
 		
 		switch(request.method){
 			/* If we get a GET response, we'll just return back a list of ufiles
