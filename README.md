@@ -1,4 +1,4 @@
-# File Uploader Plugin (Latest 2.4-RC1)
+# File Uploader Plugin (Latest 2.4-RC2)
 
 #### Causecode Technologies Pvt. Ltd.
 

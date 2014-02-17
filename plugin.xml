@@ -1,4 +1,4 @@
-<plugin name='file-uploader' version='2.4-RC1' grailsVersion='2.1 &gt; *'>
+<plugin name='file-uploader' version='2.4-RC2' grailsVersion='2.1 &gt; *'>
   <author>Federico Hofman</author>
   <authorEmail>fhofman@gmail.com</authorEmail>
   <title>File Uploader Grails Plugin</title>
@@ -15,6 +15,7 @@ This plugin now supports uploading files to CDN for rackspace &amp; amazon.
     <resource>FileUploaderBootStrap</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
+    <resource>com.lucastex.grails.fileuploader.RenewTemporaryURLJob</resource>
     <resource>com.lucastex.grails.fileuploader.CDNFileUploaderService</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderService</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderTagLib</resource>
@@ -25,8 +26,8 @@ This plugin now supports uploading files to CDN for rackspace &amp; amazon.
   </repositories>
   <dependencies>
     <compile>
-      <dependency group='org.apache.jclouds.provider' name='aws-s3' version='1.7.0' />
       <dependency group='org.apache.jclouds' name='jclouds-core' version='1.7.0' />
+      <dependency group='org.apache.jclouds.provider' name='aws-s3' version='1.7.0' />
       <dependency group='org.apache.jclouds.provider' name='cloudfiles-us' version='1.7.0' />
       <dependency group='org.apache.jclouds' name='jclouds-compute' version='1.7.0' />
     </compile>
