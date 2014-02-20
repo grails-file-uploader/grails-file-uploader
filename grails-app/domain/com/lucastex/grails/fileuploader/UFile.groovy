@@ -27,7 +27,7 @@ class UFile {
 				log.error "could not delete file: ${file}"
 			}
 		} catch (Exception exp) {
-			log.error "Error deleting file: ${e.message}"
+			log.error "Error deleting file: ${exp.message}"
 			log.error exp
 		}
 	}
