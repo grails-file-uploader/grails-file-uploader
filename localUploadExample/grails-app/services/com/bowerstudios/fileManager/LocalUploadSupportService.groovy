@@ -1,7 +1,5 @@
 package com.bowerstudios.fileManager
 
-import java.util.Map;
-
 import org.grails.plugins.localupload.ILocalUploadSupportService
 import org.grails.plugins.localupload.UFile
 
@@ -24,28 +22,50 @@ class LocalUploadSupportService implements ILocalUploadSupportService {
 	}
 
 	@Override
-	void associateUFile(UFile ufile, Map params) {
+	void associateUFiles(List<UFile> ufiles, Map params) {
+	
+		if(!ufiles){
+			return
+		}
+
+		Example example
+
+		switch(params.saveAssoc){
+			case 'example':
+				example = Example.get(params.id)
+				break
+			default:
+				log.warn("Save Association ${params.saveAssoc} not handled in associateUFile")
+				return
+		}
+			
+		for(UFile ufile : ufiles){
+			example.addToFiles(ufile)
+		}
+
+		example.save(flush:true)
+	}
+	
+	@Override
+	void deassociateUFiles(List<UFile> ufiles){
 		
-		if(ufile){
-			switch(params.saveAssoc){
-				case 'example':
-					Example example = Example.load(params.id)
-				
-					if(example.files){
-						example.files.add(ufile)
-					}else{
-						example.files = [ufile]
-					}
-				
-					example.save(failOnError:true)
-		
-					break
-				default:
-					log.error("Save Association ${params.saveAssoc} not handled in associateUFile")
-					break
-			}
+		if(!ufiles){
+			return
 		}
 		
-		return
+		for(UFile ufile in ufiles){
+			def examples = Example.withCriteria {
+				files {
+					eq('id', ufile.id)
+				}
+			}
+
+			for(Example example in examples){
+				example.removeFromFiles(ufile)
+				example.save(flush:true)
+			}
+
+		}
+
 	}
 }

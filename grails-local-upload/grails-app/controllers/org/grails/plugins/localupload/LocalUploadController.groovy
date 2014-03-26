@@ -44,6 +44,7 @@ class LocalUploadController {
 	 */
 	def ajaxUpload(){
 		def results = []
+		List<String> errors = []
 		
 		String bucket = params.bucket ?: 'docs'  // need to go out and get the first bucket
 		String fileParam = params.fileParam ?: 'files[]'
@@ -66,6 +67,9 @@ class LocalUploadController {
 			// accept files
 			case "POST":
 				if (request instanceof MultipartHttpServletRequest){
+					
+					List<UFile> ufiles = []
+					
 					for(MultipartFile file in request.getFiles(fileParam)){
 						if(file.empty){
 							continue
@@ -74,15 +78,33 @@ class LocalUploadController {
 						UFile ufile
 						try{
 							ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
-							localUploadSupportService.associateUFile(ufile, params)
-							results << ufileToAjaxResult(ufile)
+							if(ufile.hasErrors()){
+								errors << message(code: "localupload.upload.persistenceError") + 
+										' ' + localUploadService.errorsToString(ufile, request.locale)
+								continue
+							}
+							ufiles << ufile
+
 						}catch(LocalUploadServiceException e){
 							log.error("Failed to save File", e)
-							render status: HttpStatus.INTERNAL_SERVER_ERROR.value()
-							return
+							errors << "Failed to save File ${file.originalFilename}"
+							continue
 						}
 					}
 					
+					//associate those ufiles with the domain object
+					localUploadSupportService.associateUFiles(ufiles, params)
+					for(UFile ufile in ufiles){
+						if(ufile.hasErrors()){
+							errors << message(code: "localupload.upload.linkToDomainError") +
+									' ' + localUploadService.errorsToString(ufile, request.locale)
+							continue
+						}
+						
+						//Only add the result if successfully attached
+						results << ufileToAjaxResult(ufile)
+					}
+
 				}else{
 					log.error("Received a post request that was not a MultipartHttpServletRequest")
 					render status: HttpStatus.BAD_REQUEST.value()
@@ -93,6 +115,7 @@ class LocalUploadController {
 			// If we didn't receive get or post, error out
 			default: 
 				render status: HttpStatus.METHOD_NOT_ALLOWED.value()
+				return
 		}
 
 		render (['files':results] as JSON)
@@ -115,6 +138,9 @@ class LocalUploadController {
 		String bucket = params.bucket
 		String fileParam = params.fileParam ?: 'files'
 
+		List<UFile> ufiles = []
+		List<String> errors = []
+
 		if (request instanceof MultipartHttpServletRequest){
 			MultipartHttpServletRequest req = request
 			for(MultipartFile file in req.getFiles(fileParam)){
@@ -124,21 +150,28 @@ class LocalUploadController {
 				
 				UFile ufile = localUploadService.saveFile(bucket, file, file.originalFilename, request.locale)
 				if(ufile.hasErrors()){
-					flash.message = message(code: "localupload.upload.persistenceError") + ' ' + localUploadService.errorsToString(ufile, request.locale)
-					redirect controller: params.errorController, action: params.errorAction, id: params.id
-					return
+					errors << message(code: "localupload.upload.persistenceError") + 
+							' ' + localUploadService.errorsToString(ufile, request.locale)
+					continue
 				}
-
-				localUploadSupportService.associateUFile(ufile, params)
+				ufiles << ufile
+			}
+			
+			localUploadSupportService.associateUFiles(ufiles, params)
+			for(UFile ufile in ufiles){
 				if(ufile.hasErrors()){
-					flash.message = message(code: "localupload.upload.linkToDomainError") + ' ' + localUploadService.errorsToString(ufile, request.locale)
-					redirect controller: params.errorController, action: params.errorAction, id: params.id
-					return
+					errors << message(code: "localupload.upload.linkToDomainError") + 
+							' ' + localUploadService.errorsToString(ufile, request.locale)
+					continue
 				}
 			}
 			
-			redirect controller: params.successController, action: params.successAction, params:[id: params.id,successParams:params.successParams]
-			
+			if(errors){
+				flash.message = errors.toString()
+				redirect controller: params.errorController, action: params.errorAction, id: params.id
+			}else{
+				redirect controller: params.successController, action: params.successAction, params:[id: params.id,successParams:params.successParams]
+			}
 		}else{
 			log.error("Received a post request that was not a MultipartHttpServletRequest")
 			flash.message = message(code: "localupload.upload.multipartExpected")
@@ -197,7 +230,7 @@ class LocalUploadController {
 		return
 	}
 	
-	def ajaxDelete() {
+	def ajaxDeleteFile() {
 		UFile ufile
 		
 		try{
@@ -210,13 +243,22 @@ class LocalUploadController {
 			}
 		}catch(Exception e){
 			log.error("Failed to find File", e)
-			render status: HttpStatus.INTERNAL_SERVER_ERROR.value()
+			render status: HttpStatus.NOT_FOUND.value()
 			return
 		}
 		
-		if(!localUploadService.deleteFile(ufile)){
-			log.error("Failed to delete $ufile")
+		localUploadSupportService.deassociateUFiles([ufile])
+		
+		try{
+			if(!localUploadService.deleteFile(ufile)){
+				log.error("Failed to delete $ufile")
+				render status: HttpStatus.INTERNAL_SERVER_ERROR.value()
+				return
+			}
+		}catch(Exception e){
+			log.error("Failed to delete $ufile",e)
 			render status: HttpStatus.INTERNAL_SERVER_ERROR.value()
+			return
 		}
 		
 		def result = [success: true]

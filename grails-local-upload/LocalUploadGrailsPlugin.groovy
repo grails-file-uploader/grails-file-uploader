@@ -1,6 +1,3 @@
-import org.grails.plugins.localupload.LocalUploadSupportService
-
-
 class LocalUploadGrailsPlugin {
     // the plugin version
     def version = "3.0.15"

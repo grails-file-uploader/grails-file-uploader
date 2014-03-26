@@ -1,7 +1,8 @@
 package org.grails.plugins.localupload
 
-import org.grails.plugins.localupload.UFile;
+import groovy.transform.CompileStatic
 
+@CompileStatic
 interface ILocalUploadSupportService {
 
 	/**
@@ -11,8 +12,15 @@ interface ILocalUploadSupportService {
 	
 	/**
 	 * After the LocalUpload call successfully persists the file and UFile 
-	 * domain object, it will call this method so that you may associate the
-	 * UFile object with your domain model.
+	 * domain objects, it will call this method so that you may associate the
+	 * UFile objects with your domain model.
 	 */
-	void associateUFile(UFile ufile, Map params)
+	void associateUFiles(List<UFile> ufiles, Map params)
+	
+	/**
+	 * Before the LocalUploader can remove a file, it will call this method so
+	 * that you may remove the association between the UFile objects and your
+	 * domain model
+	 */
+	void deassociateUFiles(List<UFile> ufiles)
 }

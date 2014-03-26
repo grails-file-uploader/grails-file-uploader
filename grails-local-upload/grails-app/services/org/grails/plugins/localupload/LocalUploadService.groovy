@@ -102,7 +102,7 @@ class LocalUploadService {
 			
 			if(!ufile.hasErrors()){
 				//save it on the database
-				ufile.save()
+				ufile.save(flush:true)
 			}
 		}
 		
