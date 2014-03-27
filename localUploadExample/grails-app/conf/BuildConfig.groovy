@@ -52,12 +52,6 @@ grails.project.dependency.resolution = {
 		
 		runtime ":jquery:1.10.2.2", ":jquery-ui:1.10.3", ':twitter-bootstrap:3.0.3' 
 
-		/*
-		runtime(":jquery:1.7.1", ":twitter-bootstrap:2.0.2.25", ":jquery-ui:1.8.15"){
-			excludes 'svn'
-		}
-		*/
-
 		runtime ":resources:1.2"
 
 		// Uncomment these (or add new ones) to enable additional resources capabilities
