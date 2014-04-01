@@ -1,6 +1,6 @@
 class LocalUploadGrailsPlugin {
     // the plugin version
-    def version = "3.1.3"
+    def version = "3.1.5"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.1 > *"
     // the other plugins this plugin depends on

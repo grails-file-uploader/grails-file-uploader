@@ -141,7 +141,17 @@ class LocalUploadTagLib {
 		
 		//optional parameters for success action
 		if(attrs.successParams) {
-			tagBody += """<input type="hidden" name="successParams" value="${attrs.successParams}" />"""
+			if(attrs.successParams instanceof Map){
+				attrs.successParams.each{k,v ->
+					tagBody += """<input type="hidden" name="successParams.${k}" value="${v}" />"""
+				}
+			}else if(attrs.successParams instanceof List){
+				attrs.successParams.eachWithIndex{v,k ->
+					tagBody += """<input type="hidden" name="successParams.${k}" value="${v}" />"""
+				}
+			}else{
+				tagBody += """<input type="hidden" name="successParams" value="${attrs.successParams}" />"""
+			}
 		}
 		
 		tagBody += """<input type="submit" name="submit" value="Submit" />"""

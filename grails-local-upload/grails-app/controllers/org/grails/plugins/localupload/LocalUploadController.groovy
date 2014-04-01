@@ -170,6 +170,7 @@ class LocalUploadController {
 				flash.message = errors.toString()
 				redirect controller: params.errorController, action: params.errorAction, id: params.id
 			}else{
+				def successParams = params.successParams
 				redirect controller: params.successController, action: params.successAction, id: params.id, 'params':params.successParams
 			}
 		}else{

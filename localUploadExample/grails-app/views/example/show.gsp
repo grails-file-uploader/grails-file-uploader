@@ -80,11 +80,16 @@
 					<span id="files-form-multiple-label" class="property-label">
 					Displaying the file upload form using gsp which redirects back
 					to the show action of this controller after it successfully
-					uploads the file (allows multiple file submission)</span>
+					uploads the file (allows multiple file submission).  
+					Additionally, this tag shows how to redirect to a success
+					controller and pass params</span>
+					
 					
 					<span class="property-value" aria-labelledby="files-form-multiple-label">
 						<localUpload:form bucket="docs" saveAssoc="example"
-							multiple="true" id="${exampleInstance.id}"/>
+							multiple="true" id="${exampleInstance.id}"
+							successController="example" successAction="show" 
+							successParams="${['bob':['dash', 'jack-jack', 'violet']]}"/>
 					</span>
 				</li>
 				
