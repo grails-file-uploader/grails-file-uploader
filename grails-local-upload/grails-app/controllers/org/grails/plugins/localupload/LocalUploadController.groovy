@@ -170,7 +170,7 @@ class LocalUploadController {
 				flash.message = errors.toString()
 				redirect controller: params.errorController, action: params.errorAction, id: params.id
 			}else{
-				redirect controller: params.successController, action: params.successAction, params:params.successParams
+				redirect controller: params.successController, action: params.successAction, id: params.id, 'params':params.successParams
 			}
 		}else{
 			log.error("Received a post request that was not a MultipartHttpServletRequest")
