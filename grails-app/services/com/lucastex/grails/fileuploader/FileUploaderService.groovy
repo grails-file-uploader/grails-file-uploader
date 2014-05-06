@@ -98,7 +98,8 @@ class FileUploaderService {
             String fileNameSeparator = "-"
             String containerName = groupConfig.container
             String userId = springSecurityService.currentUser?.id
-            String tempFilePath = "./web-app/temp/${currentTimeMillis}-${fileName}.$fileExtension"
+            String tempDirectory = grailsApplication.config.grails.tempDirectory
+            String tempFilePath = "$tempDirectory/${currentTimeMillis}-${fileName}.$fileExtension"
 
             long expirationPeriod = getExpirationPeriod(groupConfig)
 
@@ -214,16 +215,23 @@ class FileUploaderService {
 
     boolean deleteFileForUFile(UFile ufileInstance) {
         if(ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
+            String containerName = ufileInstance.container
+
+            if (Environment.current != Environment.PRODUCTION) {
+                containerName += "-" + Environment.current.name
+            }
+
             if(ufileInstance.provider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
+                amazonFileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
                 amazonFileUploaderInstance.close()
             } else {
-                CDNFileUploaderService.deleteFile(ufileInstance.container, ufileInstance.fullName)
+                CDNFileUploaderService.deleteFile(containerName, ufileInstance.fullName)
             }
             return true
         }
+
         File file = new File(ufileInstance.path)
         if(!file.exists()) {
             log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."

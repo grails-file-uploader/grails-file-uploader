@@ -1,4 +1,4 @@
-# File Uploader Plugin (Latest 2.4-RC2)
+# File Uploader Plugin (Latest 2.4.1)
 
 #### Causecode Technologies Pvt. Ltd.
 
@@ -13,11 +13,13 @@
 
 ## ChangeLog
 
-### Version 2.4-RC2
+### Version 2.4-RC2, 2.4.1
 
 #### New Features
 
-1. Added temporary URL feature for Amazon S3 file uploader.
+1. Added temporary URL feature for Amazon S3 file uploader,
+2. Fixed deleting cloud files when not using production environment,
+3. Temporary directory made configurable instead hard coded value to use. (Use **grails.tempDirectory**),
 
 #### Database Changes
 
@@ -86,6 +88,8 @@ To upload files to CDN (Only Supports Rackspace now) one must have some configur
 
 ```
 import com.lucastex.grails.fileuploader.CDNProvider
+
+grails.tempDirectory = ./temp-files     // Required to store files temporarily. Must not ends with "/"
 
 fileuploader {
     CDNUsername = "myusername"
