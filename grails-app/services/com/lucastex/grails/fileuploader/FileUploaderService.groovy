@@ -384,15 +384,22 @@ class FileUploaderService {
         UFile.withCriteria {
             eq("type", UFileType.CDN_PUBLIC)
             eq("provider", CDNProvider.AMAZON)
-            between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
-        }.each {
-            String containerName = it.container
-            String fileFullName = it.fullName
-            long expirationPeriod = getExpirationPeriod(it.fileGroup)
+            or {
+                lt("expiresOn", new Date())
+                between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+            }
+        }.each { ufileInstance ->
+            log.debug "Renewing URL for $ufileInstance"
 
-            it.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
-            it.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
-            it.save()
+            String containerName = ufileInstance.container
+            String fileFullName = ufileInstance.fullName
+            long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
+
+            ufileInstance.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
+            ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+            ufileInstance.save()
+
+            log.info "New URL for $ufileInstance is [$ufileInstance.path]"
         }
 
         amazonFileUploaderInstance.close()

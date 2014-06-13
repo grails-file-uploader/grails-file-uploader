@@ -53,6 +53,11 @@ class UFile {
     String getFullName() {
         name + "." + extension
     }
+
+    @Override
+    String toString() {
+        "UFile [$id][$fileGroup][$type]"
+    }
 }
 
 enum UFileType {
