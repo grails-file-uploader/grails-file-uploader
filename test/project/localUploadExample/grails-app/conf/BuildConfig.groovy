@@ -11,8 +11,8 @@ grails.project.source.level = 1.6
 //grails.project.fork = [
 //   run: [maxMemory:1024, minMemory:64, debug:false, maxPerm:256]
 //]
-grails.plugin.location.'local-upload' = "../grails-local-upload"
-grails.plugin.location.'bootstrap-file-upload' = "../../grails-bootstrap-file-upload"
+grails.plugin.location.'local-upload' = "../../../"
+grails.plugin.location.'bootstrap-file-upload' = "../../../../grails-bootstrap-file-upload"
 
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
