@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>grails-local-upload</name>
+	<name>fileUploaderExampleProject</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -26,7 +26,7 @@
 		<link>
 			<name>.link_to_grails_plugins</name>
 			<type>2</type>
-			<location>/code/infinum/workspace/grails-file-uploader/grails-local-upload/target/plugins</location>
+			<location>/var/local/code/infinum/workspace/grails-file-uploader/test/project/localUploadExample/target/plugins</location>
 		</link>
 	</linkedResources>
 </projectDescription>
