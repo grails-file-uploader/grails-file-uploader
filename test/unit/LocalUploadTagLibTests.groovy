@@ -13,13 +13,13 @@ class LocalUploadTagLibTests {
 	void testMinimalParamsForDownload(){
 		setBasics('example', 'show', [id:'1'])
 		assert applyTemplate('<localUpload:download fileId="30">my link</localUpload:download>') == 
-				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=example&amp;saveAssocId=1">my link</a>'
+				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=example&amp;saveAssocId=1&amp;contentDisposition=inline">my link</a>'
 	}
 	
 	void testMaxParamsForDownload(){
 		setBasics('example', 'show', [id:'1'])
 		assert applyTemplate('<localUpload:download class="btn btn-default" fileId="30" errorController="widgets" errorAction="show" saveAssocId="2"><i>myfile</i></localUpload:download>') == 
-				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=widgets&amp;saveAssocId=2" class="btn btn-default"><i>myfile</i></a>'
+				'<a href="/localUpload/download/30?errorAction=show&amp;errorController=widgets&amp;saveAssocId=2&amp;contentDisposition=inline" class="btn btn-default"><i>myfile</i></a>'
 	}
 	
 	void testPrettySizeBytes(){
