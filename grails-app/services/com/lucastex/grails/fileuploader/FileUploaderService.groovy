@@ -96,7 +96,7 @@ class FileUploaderService {
             type = UFileType.CDN_PUBLIC
 
             String fileNameSeparator = "-"
-            String containerName = groupConfig.container
+            String containerName = UFile.containerName(groupConfig.container)
             String userId = springSecurityService.currentUser?.id
             String tempDirectory = grailsApplication.config.grails.tempDirectory
             String tempFilePath = "$tempDirectory/${currentTimeMillis}-${fileName}.$fileExtension"
@@ -125,10 +125,6 @@ class FileUploaderService {
 
             File tempFile = new File(tempFilePath)
             tempFile.deleteOnExit()
-
-            if(Environment.current != Environment.PRODUCTION) {
-                containerName += "-" + Environment.current.name
-            }
 
             if(groupConfig.provider == CDNProvider.AMAZON) {
                 cdnProvider = CDNProvider.AMAZON
@@ -215,11 +211,7 @@ class FileUploaderService {
 
     boolean deleteFileForUFile(UFile ufileInstance) {
         if(ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
-            String containerName = ufileInstance.container
-
-            if (Environment.current != Environment.PRODUCTION) {
-                containerName += "-" + Environment.current.name
-            }
+            String containerName = UFile.containerName(ufileInstance.container)
 
             if(ufileInstance.provider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
@@ -350,9 +342,7 @@ class FileUploaderService {
             String newFileName = "${System.currentTimeMillis()}-${it.fullName}"
             blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
         }
-        if(Environment.current != Environment.PRODUCTION) {
-            containerName += "-" + Environment.current.name
-        }
+        containerName = UFile.containerName(containerName)
 
         CDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
         String baseURL = CDNFileUploaderService.cdnEnableContainer(containerName)
