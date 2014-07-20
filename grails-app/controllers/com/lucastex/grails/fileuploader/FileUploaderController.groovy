@@ -21,8 +21,17 @@ class FileUploaderController {
 		
 		//base path to save file
 		def path = config.path
-		if (!path.endsWith('/'))
+		if (path) {
+          if (!path.endsWith('/'))
 			path = path+"/"
+        } else {
+          def msg = messageSource.getMessage("fileupload.upload.nopath", null, request.locale)
+          log.debug msg
+          flash.message = msg
+          redirect controller: params.errorController, action: params.errorAction, id: params.id
+          return
+
+        }
 		
 		/**************************
 			check if file exists
