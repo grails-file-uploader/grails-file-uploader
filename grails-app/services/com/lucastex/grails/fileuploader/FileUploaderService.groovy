@@ -388,6 +388,9 @@ class FileUploaderService {
             ufileInstance.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
             ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
             ufileInstance.save()
+            if (ufileInstance.hasErrors()) {
+                log.warn "Error saving new URL for $ufileInstance"
+            }
 
             log.info "New URL for $ufileInstance is [$ufileInstance.path]"
         }
