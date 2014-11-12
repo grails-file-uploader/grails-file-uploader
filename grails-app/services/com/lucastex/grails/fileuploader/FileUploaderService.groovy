@@ -1,6 +1,5 @@
 package com.lucastex.grails.fileuploader
 
-import grails.util.Environment
 import groovy.io.FileType
 
 import java.nio.channels.FileChannel
@@ -14,12 +13,13 @@ import com.lucastex.grails.fileuploader.util.Time
 
 class FileUploaderService {
 
+    private static final String FILE_NAME_SEPARATOR = "-"
+
     static transactional = false
 
     def CDNFileUploaderService
     def grailsApplication
     def messageSource
-    def springSecurityService
 
     /**
      * 
@@ -29,7 +29,9 @@ class FileUploaderService {
      * @return
      */
     @Transactional
-    UFile saveFile(String group, def file, String customFileName = "", Locale locale = null) throws FileUploaderServiceException {
+    UFile saveFile(String group, def file, String customFileName = "", Object userInstance = null,
+            Locale locale = null) throws FileUploaderServiceException {
+
         Long fileSize
         Date expireOn
         boolean empty = true
@@ -38,7 +40,7 @@ class FileUploaderService {
         UFileType type = UFileType.LOCAL
         String contentType, fileExtension, fileName, path, receivedFileName
 
-        if(file instanceof File) {
+        if (file instanceof File) {
             contentType = ""
             empty = !file.exists()
             receivedFileName = file.name
@@ -50,18 +52,21 @@ class FileUploaderService {
             receivedFileName = uploaderFile?.originalFilename
             fileSize = uploaderFile?.size
         }
+
         log.info "Received ${empty ? 'empty ' : ''}file [$fileName] of size [$fileSize] & content type [$contentType]."
-        if(empty || !file) {
+        if (empty || !file) {
             return null
         }
 
-        def groupConfig = grailsApplication.config.fileuploader[group]
-        if(groupConfig.isEmpty()) {
+        ConfigObject config = grailsApplication.config.fileuploader
+        ConfigObject groupConfig = config[group]
+
+        if (groupConfig.isEmpty()) {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
 
-        int extensionAt = receivedFileName.lastIndexOf('.')
-        if(extensionAt > -1) {
+        int extensionAt = receivedFileName.lastIndexOf(".")
+        if (extensionAt > -1) {
             fileName = customFileName ?: receivedFileName.substring(0, extensionAt)
             fileExtension = receivedFileName.substring(extensionAt + 1).toLowerCase().trim()
         } else {
@@ -69,7 +74,7 @@ class FileUploaderService {
         }
 
         if (!groupConfig.allowedExtensions[0].equals("*") && !groupConfig.allowedExtensions.contains(fileExtension)) {
-            def msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension",
+            String msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension",
                     [fileExtension, groupConfig.allowedExtensions] as Object[], locale)
             log.debug msg
             throw new FileUploaderServiceException(msg)
@@ -87,54 +92,96 @@ class FileUploaderService {
             }
         }
 
-        customFileName = customFileName.trim().replaceAll(" ", "-")
+        /**
+         * Convert all white space to underscore and hyphens to underscore to differentiate
+         * different data on filename created below.
+         */
+        customFileName = customFileName.trim().replaceAll(" ", "_").replaceAll("-", "_")
 
         // Setup storage path
-        def storageTypes = groupConfig.storageTypes
+        def storageTypes
 
-        if(storageTypes == "CDN") {
+        // If group specific storage type is not defined
+        if (groupConfig.storageTypes instanceof ConfigObject) {
+            // Then use the common storage type
+            storageTypes = config.storageTypes
+        } else {
+            // Otherwise use the group specific storage type
+            storageTypes = groupConfig.storageTypes
+        }
+
+        if (storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
+            String containerName
 
-            String fileNameSeparator = "-"
-            String containerName = UFile.containerName(groupConfig.container)
-            String userId = springSecurityService.currentUser?.id
-            String tempDirectory = grailsApplication.config.grails.tempDirectory
-            String tempFilePath = "$tempDirectory/${currentTimeMillis}-${fileName}.$fileExtension"
+            // If group specific container is not defined
+            if (groupConfig.container instanceof ConfigObject) {
+                // Then use the common container name
+                containerName = UFile.containerName(config.container)
+            } else {
+                // Otherwise use the group specific container
+                containerName = UFile.containerName(groupConfig.container)
+            }
 
             long expirationPeriod = getExpirationPeriod(groupConfig)
 
-            if(groupConfig.provider != CDNProvider.AMAZON) {
-                fileNameSeparator = "/"
+            StringBuilder fileNameBuilder = new StringBuilder(group)
+                    .append(FILE_NAME_SEPARATOR)
+
+            if (userInstance && userInstance.id) {
+                fileName.append(userInstance.id.toString())
+                fileName.append(FILE_NAME_SEPARATOR)
             }
 
-            fileName = new StringBuilder(group)
-                    .append(fileNameSeparator)
-                    .append(userId)
-                    .append(fileNameSeparator)
-                    .append(currentTimeMillis)
-                    .append(fileNameSeparator)
+            fileNameBuilder.append(currentTimeMillis)
+                    .append(FILE_NAME_SEPARATOR)
                     .append(fileName)
-                    .toString()
+
+            /**
+             * Generating file names like:
+             * 
+             * @example When userInstance available:
+             * avatar-14-1415804444014-myavatar.png
+             * 
+             * @example When userInstance is not available:
+             * logo-1415804444014-organizationlogo.png
+             *  
+             */
+            fileName = fileNameBuilder.toString()
 
             String tempFileFullName = fileName + "." + fileExtension
 
-            if(file instanceof File)
-                file.renameTo(new File(tempFilePath))
-            else
-                file.transferTo(new File(tempFilePath))
+            File tempFile
 
-            File tempFile = new File(tempFilePath)
+            if (file instanceof File) {
+                // No need to transfer a file of type File since its already in a temporary location.
+                // (Saves resource utilization)
+                tempFile = file
+            } else {
+                String tempDirectory = grailsApplication.config.grails.tempDirectory
+                String tempFilePath = "$tempDirectory/${currentTimeMillis}-${fileName}.$fileExtension"
+
+                tempFile = new File(tempFilePath)
+
+                file.transferTo(tempFile)
+            }
+
+            // Delete the temporary file when JVM exited since the base file is not required after upload
             tempFile.deleteOnExit()
 
-            if(groupConfig.provider == CDNProvider.AMAZON) {
-                cdnProvider = CDNProvider.AMAZON
+            if (groupConfig.provider instanceof ConfigObject) {
+                cdnProvider = config.provider
+            } else {
+                cdnProvider = groupConfig.provider
+            }
+
+            if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
                 path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
                 amazonFileUploaderInstance.close()
             } else {
-                cdnProvider = CDNProvider.RACKSPACE
                 String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
                 path = publicBaseURL + "/" + tempFileFullName
             }
@@ -143,9 +190,9 @@ class FileUploaderService {
         } else {
             // Base path to save file
             path = groupConfig.path
-            if(!path.endsWith('/')) path = path + "/";
+            if (!path.endsWith('/')) path = path + "/";
 
-            if(storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
+            if (storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
                 Calendar cal = Calendar.getInstance()
                 path = path + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
             } else {  //subdirectories by millisecond
@@ -153,14 +200,14 @@ class FileUploaderService {
             }
 
             // Make sure the directory exists
-            if(! new File(path).exists() ){
+            if (! new File(path).exists()) {
                 if (!new File(path).mkdirs()) {
                     log.error "FileUploader plugin couldn't create directories: [${path}]"
                 }
             }
 
             // If using the uuid storage type
-            if(storageTypes?.contains('uuid')){
+            if (storageTypes?.contains('uuid')) {
                 path = path + UUID.randomUUID().toString()
             } else {  //note:  this type of storage is a bit of a security / data loss risk.
                 path = path + fileName + "." + fileExtension
@@ -168,7 +215,7 @@ class FileUploaderService {
 
             // Move file
             log.debug "Moving [$fileName] to [${path}]."
-            if(file instanceof File)
+            if (file instanceof File)
                 file.renameTo(new File(path))
             else
                 file.transferTo(new File(path))
@@ -184,7 +231,7 @@ class FileUploaderService {
         ufile.fileGroup = group
         ufile.provider = cdnProvider
         ufile.save()
-        if(ufile.hasErrors()) {
+        if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
         }
         return ufile
@@ -210,10 +257,10 @@ class FileUploaderService {
     }
 
     boolean deleteFileForUFile(UFile ufileInstance) {
-        if(ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
+        if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
             String containerName = UFile.containerName(ufileInstance.container)
 
-            if(ufileInstance.provider == CDNProvider.AMAZON) {
+            if (ufileInstance.provider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
@@ -225,7 +272,7 @@ class FileUploaderService {
         }
 
         File file = new File(ufileInstance.path)
-        if(!file.exists()) {
+        if (!file.exists()) {
             log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
             return false
         }
@@ -238,7 +285,7 @@ class FileUploaderService {
             timestampFolder.eachFile(FileType.FILES) {
                 numFilesInParentFolder ++
             }
-            if(numFilesInParentFolder == 0) {
+            if (numFilesInParentFolder == 0) {
                 timestampFolder.delete()
             } else {
                 log.debug "Not deleting ${timestampFolder} as it contains files"
@@ -251,10 +298,10 @@ class FileUploaderService {
     /**
      * Access the Ufile, returning the appropriate message if the UFile does not exist.
      */
-    UFile ufileById(Serializable idUfile, Locale locale){
+    UFile ufileById(Serializable idUfile, Locale locale) {
         UFile ufile = UFile.get(idUfile)
 
-        if(ufile) {
+        if (ufile) {
             return ufile
         }
         String msg = messageSource.getMessage("fileupload.download.nofile", [idUfile] as Object[], locale)
@@ -264,10 +311,10 @@ class FileUploaderService {
     /**
      * Access the file held by the UFile, incrementing the viewed number, and returning appropriate message if file does not exist.
      */
-    File fileForUFile(UFile ufile, Locale locale){
+    File fileForUFile(UFile ufile, Locale locale) {
         File file = new File(ufile.path)
 
-        if(file.exists()){
+        if (file.exists()) {
             //increment the viewed number
             ufile.downloads ++
             ufile.save()
@@ -289,7 +336,7 @@ class FileUploaderService {
     @Transactional
     UFile cloneFile(String group, UFile ufileInstance, String name = "", Locale locale = null) throws FileUploaderServiceException, IOException {
         log.info "Cloning ufile [${ufileInstance?.id}][${ufileInstance?.name}]"
-        if(!ufileInstance) {
+        if (!ufileInstance) {
             log.warn "Invalid/null ufileInstance received."
             return null
         }
@@ -301,7 +348,7 @@ class FileUploaderService {
         def tempFile = "${tempDirectory}/${ufileInstance.name}" // No need to append extension. name field already have that.
         def destFile = new File(tempFile)
         def sourceFile = new File(ufileInstance.path)
-        if(!destFile.exists()) {
+        if (!destFile.exists()) {
             destFile.createNewFile()
         }
 
@@ -316,20 +363,20 @@ class FileUploaderService {
             source?.close()
             destination?.close()
 
-            if(destFile.exists()) {
+            if (destFile.exists()) {
                 return this.saveFile(group, destFile, name, locale)
             }
         }
     }
 
     String resolvePath(UFile ufileInstance) {
-        if(!ufileInstance) {
+        if (!ufileInstance) {
             log.error "No Ufile instance found to resolve path."
             return ""
         }
-        if(ufileInstance.type == UFileType.LOCAL) {
+        if (ufileInstance.type == UFileType.LOCAL) {
             return "/fileUploader/show/$ufileInstance.id"
-        } else if(ufileInstance.type == UFileType.CDN_PUBLIC) {
+        } else if (ufileInstance.type == UFileType.CDN_PUBLIC) {
             return ufileInstance.path
         }
     }
@@ -351,8 +398,8 @@ class FileUploaderService {
             UFile uploadUFileInstance = ufileInstanceList.find { ufileInstance ->
                 it.ufileId == ufileInstance.id
             }
-            if(uploadUFileInstance) {
-                if(it.eTag) {
+            if (uploadUFileInstance) {
+                if (it.eTag) {
                     uploadUFileInstance.name = it.remoteBlobName
                     uploadUFileInstance.path = baseURL + "/" + it.remoteBlobName
                     uploadUFileInstance.type = UFileType.CDN_PUBLIC
@@ -405,11 +452,10 @@ class FileUploaderService {
 
     long getExpirationPeriod(Map groupConfig) {
         long expirationPeriod = Time.DAY * 30   // Default to 30 Days
-        if(!groupConfig.expirationPeriod.isEmpty()) {
+        if (!groupConfig.expirationPeriod.isEmpty()) {
             expirationPeriod = groupConfig.expirationPeriod
         }
 
         expirationPeriod
     }
-
 }
