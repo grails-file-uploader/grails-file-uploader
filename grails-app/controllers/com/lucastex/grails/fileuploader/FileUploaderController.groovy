@@ -113,7 +113,7 @@ class FileUploaderController {
     }
 
     def moveToCloud() {
-        String container = grailsApplication.config.fileuploader.defaultContainer
+        String container = grailsApplication.config.fileuploader.container
         List<Long> ufileIdList = params.list('ufileId')
         Set<UFile> validUFilesToMoveToCloud = []
 
