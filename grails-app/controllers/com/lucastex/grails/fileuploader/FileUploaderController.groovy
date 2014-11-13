@@ -66,7 +66,8 @@ class FileUploaderController {
         return
     }
 
-    def show(Long id) {
+    def show() {
+        def id = params.id  // Support both Long Id or mongo's ObjectId
         uFileInstance = UFile.get(id)
         if (!uFileInstance) {
             response.sendError(404)
@@ -112,7 +113,7 @@ class FileUploaderController {
     }
 
     def moveToCloud() {
-        String container = grailsApplication.config.fileuploader.defaultContainer
+        String container = grailsApplication.config.fileuploader.container
         List<Long> ufileIdList = params.list('ufileId')
         Set<UFile> validUFilesToMoveToCloud = []
 

@@ -1,5 +1,7 @@
 package com.lucastex.grails.fileuploader
 
+import grails.util.Environment;
+
 class UFile {
 
     transient fileUploaderService
@@ -47,11 +49,23 @@ class UFile {
     }
 
     String getContainer() {
-        grailsApplication.config.fileuploader[fileGroup].container
+        containerName(grailsApplication.config.fileuploader[fileGroup].container)
     }
 
     String getFullName() {
         name + "." + extension
+    }
+
+    @Override
+    String toString() {
+        "UFile [$id][$fileGroup][$type]"
+    }
+
+    static String containerName(String containerName) {
+        if (Environment.current != Environment.PRODUCTION) {
+            return containerName + "-" + Environment.current.name
+        }
+        return containerName
     }
 }
 

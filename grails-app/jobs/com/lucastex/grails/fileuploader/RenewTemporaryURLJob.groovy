@@ -4,8 +4,9 @@ import grails.util.Environment
 
 class RenewTemporaryURLJob {
 
-    def startDelay = 3600000    // Wait for 1 hrs after application startup
-    def cronExpression = "0 0 2 * * ? *"  // Once every twenty four hours at 2am
+    static triggers = {
+        cron name: "RenewTempURLTrigger", cronExpression: "0 0 2 * * ? *"   // Once every twenty four hours at 2am
+    }
 
     def fileUploaderService
 

@@ -91,7 +91,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     }
 
     @Override
-    boolean uploadFile(String containerName, File file, String fileName, boolean makePublic = false) {
+    boolean uploadFile(String containerName, File file, String fileName, boolean makePublic) {
         String eTag
 
         if(makePublic) {

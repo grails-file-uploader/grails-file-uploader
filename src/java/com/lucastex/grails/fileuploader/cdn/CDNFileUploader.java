@@ -89,6 +89,6 @@ public abstract class CDNFileUploader {
      * @param fileName: A fileName to used as key
      * @return
      */
-    public abstract boolean uploadFile(String containerName, File file, String fileName);
+    public abstract boolean uploadFile(String containerName, File file, String fileName, boolean makePublic);
 
 }
