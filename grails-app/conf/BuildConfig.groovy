@@ -18,14 +18,14 @@ grails.project.dependency.resolution = {
                 "org.apache.jclouds.provider:aws-s3:1.7.2") {
                     excludes "jclouds-core"
                 }
-        compile "org.apache.jclouds:jclouds-core:1.7.2"
+        //compile "org.apache.jclouds:jclouds-core:1.7.2"
     }
     plugins {
         // Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent app.
         /*runtime (":hibernate:3.6.10.7") {
             export = false
         }*/
-        build(":tomcat:7.0.50", ":release:3.0.1", ":rest-client-builder:1.0.3") {
+        build(":tomcat:7.0.50", ":release:3.0.1", ":rest-client-builder:2.0.1") {
             export = false
         }
     }
