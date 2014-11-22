@@ -4,7 +4,7 @@ class FileUploaderGrailsPlugin {
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.2-M1 > *"
     // the other plugins this plugin depends on
-    def dependsOn = ["hibernate":"1.1 > *"]
+	def dependsOn = ["hibernate4":"4.3 > *"]
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
     ]

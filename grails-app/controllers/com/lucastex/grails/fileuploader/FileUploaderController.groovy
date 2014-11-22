@@ -92,7 +92,7 @@ class FileUploaderController {
     
     def show={
 			def ufile = UFile.get(params.int("id"))
-            println "aaa--------------------------------------------------------"+ufile
+            //println "aaa--------------------------------------------------------"+ufile
 	        if (!ufile) {
 	          response.sendError(404)
 	          return;
