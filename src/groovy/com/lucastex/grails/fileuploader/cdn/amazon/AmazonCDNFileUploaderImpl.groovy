@@ -94,7 +94,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     boolean uploadFile(String containerName, File file, String fileName, boolean makePublic) {
         String eTag
 
-        if(makePublic) {
+        if (makePublic) {
             AWSS3PutObjectOptions fileOptions = new AWSS3PutObjectOptions()
             fileOptions.withAcl(CannedAccessPolicy.PUBLIC_READ)
 

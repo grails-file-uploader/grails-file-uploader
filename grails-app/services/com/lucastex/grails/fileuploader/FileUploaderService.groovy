@@ -7,9 +7,11 @@ import java.nio.channels.FileChannel
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
+import com.lucastex.grails.fileuploader.UFileType
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
+import org.apache.commons.validator.UrlValidator
 
 class FileUploaderService {
 
@@ -53,7 +55,7 @@ class FileUploaderService {
             fileSize = uploaderFile?.size
         }
 
-        log.info "Received ${empty ? 'empty ' : ''}file [$fileName] of size [$fileSize] & content type [$contentType]."
+        log.info "Received ${empty ? 'empty ' : ''}file [$receivedFileName] of size [$fileSize] & content type [$contentType]."
         if (empty || !file) {
             return null
         }
@@ -311,16 +313,23 @@ class FileUploaderService {
     /**
      * Access the file held by the UFile, incrementing the viewed number, and returning appropriate message if file does not exist.
      */
-    File fileForUFile(UFile ufile, Locale locale) {
-        File file = new File(ufile.path)
+    File fileForUFile(UFile ufileInstance, Locale locale) {
+        File file
+
+        if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
+            file = getFileFromURL(ufileInstance.path, ufileInstance.fullName)
+        } else {
+            file = new File(ufileInstance.path)
+        }
 
         if (file.exists()) {
-            //increment the viewed number
-            ufile.downloads ++
-            ufile.save()
+            // Increment the viewed number
+            ufileInstance.downloads ++
+            ufileInstance.save()
             return file
         }
-        String msg = messageSource.getMessage("fileupload.download.filenotfound", [ufile.name] as Object[], locale)
+
+        String msg = messageSource.getMessage("fileupload.download.filenotfound", [ufileInstance.name] as Object[], locale)
         throw new IOException(msg)
     }
 
@@ -340,40 +349,59 @@ class FileUploaderService {
             log.warn "Invalid/null ufileInstance received."
             return null
         }
-        //Create temp directory
-        String tempDirectory = "./web-app/temp/${System.currentTimeMillis()}/"
+
+        // Create temporary directory
+        String tempDirectory = "./temp/${System.currentTimeMillis()}/"
         new File(tempDirectory).mkdirs()
 
-        //create file
-        def tempFile = "${tempDirectory}/${ufileInstance.name}" // No need to append extension. name field already have that.
-        def destFile = new File(tempFile)
-        def sourceFile = new File(ufileInstance.path)
+        String tempFile = "${tempDirectory}${ufileInstance.name}" // No need to append extension. name field already have that.
+
+        if (tempFile.lastIndexOf(".") >= 0) {
+            name = ufileInstance.name + "." + ufileInstance.extension
+            tempFile = tempFile + "." + ufileInstance.extension
+        }
+
+        File destFile = new File(tempFile)
         if (!destFile.exists()) {
             destFile.createNewFile()
         }
 
-        FileChannel source = null
-        FileChannel destination = null
+        String sourceFilePath = ufileInstance.path
+        UrlValidator urlValidator = new UrlValidator()
 
-        try {
-            source = new FileInputStream(sourceFile).getChannel()
-            destination = new FileOutputStream(destFile).getChannel()
-            destination.transferFrom(source, 0, source.size())
-        } finally {
-            source?.close()
-            destination?.close()
+        if (urlValidator.isValid(sourceFilePath) && ufileInstance.type != UFileType.LOCAL) {
+            FileOutputStream fos = null
 
-            if (destFile.exists()) {
-                return this.saveFile(group, destFile, name, locale)
+            try {
+                fos = new FileOutputStream(destFile)
+                fos.write(new URL(sourceFilePath).getBytes())
+            } finally {
+                fos.close()
+            }
+        } else {
+            File sourceFile = new File(sourceFilePath)
+            FileChannel source = null
+            FileChannel destination = null
+
+            try {
+                source = new FileInputStream(sourceFile).getChannel()
+                destination = new FileOutputStream(destFile).getChannel()
+                destination.transferFrom(source, 0, source.size())
+            } finally {
+                source?.close()
+                destination?.close()
             }
         }
+
+        return this.saveFile(group, destFile, name, null, locale)
     }
 
     String resolvePath(UFile ufileInstance) {
         if (!ufileInstance) {
-            log.error "No Ufile instance found to resolve path."
+            log.error "No UFile instance found to resolve path"
             return ""
         }
+
         if (ufileInstance.type == UFileType.LOCAL) {
             return "/fileUploader/show/$ufileInstance.id"
         } else if (ufileInstance.type == UFileType.CDN_PUBLIC) {
@@ -386,8 +414,10 @@ class FileUploaderService {
         List<BlobDetail> blobDetailList = []
 
         ufileInstanceList.each {
-            String newFileName = "${it.fileGroup}-${System.currentTimeMillis()}-${it.fullName}"
+            String fullName = it.fullName.trim().replaceAll(" ", "_").replaceAll("-", "_")
+            String newFileName = "${it.fileGroup}-${System.currentTimeMillis()}-${fullName}"
             blobDetailList << new BlobDetail(newFileName, new File(it.path), it.id)
+            Thread.sleep(2)
         }
         containerName = UFile.containerName(containerName)
 
@@ -403,7 +433,7 @@ class FileUploaderService {
                     uploadUFileInstance.name = it.remoteBlobName
                     uploadUFileInstance.path = baseURL + "/" + it.remoteBlobName
                     uploadUFileInstance.type = UFileType.CDN_PUBLIC
-                    uploadUFileInstance.save()
+                    uploadUFileInstance.save(flush: true)
                 } else {
                     failedUFileIdList << it.ufileId
                 }
@@ -457,5 +487,32 @@ class FileUploaderService {
         }
 
         expirationPeriod
+    }
+
+    /**
+     * Retrieves content of the given url and stores it in the
+     * temporary directory
+     * @param url The url to be retrieved
+     * @param filename Name of the file
+     */
+    @Transactional
+    File getFileFromURL(String url, String filename) {
+        String path = grailsApplication.config.grails.tempDirectory
+        if (!path.endsWith("/")) {
+            path = path + "/"
+        }
+
+        path += System.currentTimeMillis() + "/"
+        new File(path).mkdirs()
+
+        File file = new File(path + filename)
+        FileOutputStream fos = new FileOutputStream(file)
+        fos.write(new URL(url).getBytes())
+        fos.close()
+
+        // Delete the temporary file when JVM exited since the base file is not required after upload
+        file.deleteOnExit()
+
+        return file
     }
 }
