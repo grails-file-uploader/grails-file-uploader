@@ -1,5 +1,9 @@
 package com.lucastex.grails.fileuploader.cdn.amazon
 
+import grails.util.Holders
+
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.jclouds.ContextBuilder
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
@@ -17,11 +21,24 @@ import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 
 class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
+    private static Log log = LogFactory.getLog(this)
+
     AWSS3Client client
 
     AmazonCDNFileUploaderImpl(String accessKey, String accessSecret) {
         this.accessKey = accessKey
         this.accessSecret = accessSecret
+    }
+
+    static AmazonCDNFileUploaderImpl getInstance() {
+        String key = Holders.getFlatConfig()["fileuploader.AmazonKey"]
+        String secret = Holders.getFlatConfig()["fileuploader.AmazonSecret"]
+
+        if (!key || !secret) {
+            log.warn "No username or key configured for Rackspace CDN service"
+        }
+
+        return new AmazonCDNFileUploaderImpl(key, secret)
     }
 
     @Override

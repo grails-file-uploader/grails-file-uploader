@@ -90,5 +90,4 @@ public abstract class CDNFileUploader {
      * @return
      */
     public abstract boolean uploadFile(String containerName, File file, String fileName, boolean makePublic);
-
 }

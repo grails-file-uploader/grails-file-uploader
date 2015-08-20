@@ -2,6 +2,7 @@ package com.lucastex.grails.fileuploader
 
 import static com.google.common.base.Preconditions.checkArgument
 import static java.util.concurrent.Executors.newFixedThreadPool
+import grails.util.Holders
 
 import java.util.concurrent.Callable
 
@@ -24,7 +25,7 @@ import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 
-class CDNFileUploaderService {
+class RackspaceCDNFileUploaderService {
 
     static transactional = false
 
@@ -62,7 +63,7 @@ class CDNFileUploaderService {
             BlobDetail blobInstance = blobDetails.find { blobDetailInstance ->
                 blobDetailInstance.ufileId == it.ufileId
             }
-            if(it) {
+            if (it) {
                 blobInstance.eTag = it.eTag
                 log.info "UFile [$blobInstance.ufileId] eTag: [$it.eTag] uploaded successfully."
             } else {
@@ -73,7 +74,7 @@ class CDNFileUploaderService {
 
     boolean checkIfContainerExist(String containerName) {
         for(container in containers) {
-            if(container.name == name) {
+            if (container.name == name) {
                 return true
                 break
             }
@@ -94,17 +95,18 @@ class CDNFileUploaderService {
 
     String cdnEnableContainer(String containerName) {
         URI cdnURI = cloudFilesClient.enableCDN(containerName)
-        if(grailsApplication.config.grails.serverURL.contains("https")) {
+        if (grailsApplication.config.grails.serverURL.contains("https")) {
             cdnURI = cloudFilesClient.getCDNMetadata(containerName).getCDNSslUri()
         }
         cdnURI.toString()
     }
 
     boolean authenticate() {
-        def key = grailsApplication.config.fileuploader.CDNKey
-        def username = grailsApplication.config.fileuploader.CDNUsername
-        if(key instanceof ConfigObject || username instanceof ConfigObject) {
-            log.info "No username or key configured for file uploader CDN service."
+        String key = Holders.getFlatConfig()["fileuploader.RackspaceKey"]
+        String username = Holders.getFlatConfig()["fileuploader.RackspaceUsername"]
+
+        if (!key || !username) {
+            log.info "No username or key configured for Rackspace CDN service"
             return false
         }
 
@@ -148,7 +150,5 @@ class CDNFileUploaderService {
 
             return uploadedBlobDetail
         }
-
     }
-
 }

@@ -1,11 +1,9 @@
 package com.lucastex.grails.fileuploader
 
-import grails.util.Environment;
+import grails.util.Environment
+import grails.util.Holders
 
-class UFile {
-
-    transient fileUploaderService
-    transient grailsApplication
+class UFile implements Serializable {
 
     int downloads
 
@@ -24,7 +22,7 @@ class UFile {
     UFileType type
 
     static constraints = {
-        expiresOn nullable: true, min: new Date()
+        expiresOn nullable: true
         size min: 0L
         path blank: false
         name blank: false
@@ -33,11 +31,15 @@ class UFile {
     }
 
     def afterDelete() {
-        fileUploaderService.deleteFileForUFile(this)
+        /*
+         * Using Holder class to get service instead of injecting it as dependency injection with transient modifier.
+         * This prevents problem when we deserialize any instance of this class and the injected beans gets null value.
+         */
+        Holders.getApplicationContext()["fileUploaderService"].deleteFileForUFile(this)
     }
 
     String searchLink() {
-        fileUploaderService.resolvePath(this)
+        Holders.getApplicationContext()["fileUploaderService"].resolvePath(this)
     }
 
     boolean canMoveToCDN() {
@@ -49,7 +51,7 @@ class UFile {
     }
 
     String getContainer() {
-        containerName(grailsApplication.config.fileuploader[fileGroup].container)
+        containerName(Holders.getFlatConfig()["fileuploader.${fileGroup}.container"])
     }
 
     String getFullName() {
@@ -61,16 +63,28 @@ class UFile {
         "UFile [$id][$fileGroup][$type]"
     }
 
+    /**
+     * A small helper method which returns the passed container name where the current environment name will be
+     * appended if the current environment is not the Production environment. This is used to keep the containers
+     * separate for all environment.
+     * 
+     * @param containerName Name of the Amazon file container or Rackspace bucket.
+     * @return Modified container name as described above.
+     */
     static String containerName(String containerName) {
         if (Environment.current != Environment.PRODUCTION) {
             return containerName + "-" + Environment.current.name
         }
+
         return containerName
     }
 }
 
 enum UFileType {
-    CDN_PRIVATE(1), CDN_PUBLIC(2), LOCAL(3)
+
+    CDN_PRIVATE(1),
+    CDN_PUBLIC(2),
+    LOCAL(3)
 
     final int id
     UFileType(int id) {

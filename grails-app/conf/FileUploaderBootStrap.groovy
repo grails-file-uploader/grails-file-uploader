@@ -1,25 +1,22 @@
-import com.lucastex.grails.fileuploader.CDNFileUploaderService
-import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl;
+import com.lucastex.grails.fileuploader.RackspaceCDNFileUploaderService
 
 class FileUploaderBootStrap {
 
     def fileUploaderService
-    def grailsApplication
 
-    CDNFileUploaderService CDNFileUploaderService
+    RackspaceCDNFileUploaderService rackspaceCDNFileUploaderService
 
     def init = { servletContext ->
         log.debug "Fileuploader bootstap started executing."
-        if(CDNFileUploaderService.authenticate()) {
-            CDNFileUploaderService.listContainers()
+        if(rackspaceCDNFileUploaderService.authenticate()) {
+            rackspaceCDNFileUploaderService.listContainers()
         }
 
         log.debug "Fileuploader bootstap finished executing."
     }
 
     def destroy = {
-        CDNFileUploaderService.close()
+        rackspaceCDNFileUploaderService.close()
         log.info "Fileuploader Bootstrap destroyed."
     }
-
 }

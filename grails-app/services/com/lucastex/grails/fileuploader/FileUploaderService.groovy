@@ -1,30 +1,57 @@
 package com.lucastex.grails.fileuploader
 
+import grails.util.Holders
 import groovy.io.FileType
 
 import java.nio.channels.FileChannel
 
+import javax.annotation.PostConstruct
+
+import org.apache.commons.validator.UrlValidator
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
-import com.lucastex.grails.fileuploader.UFileType
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
-import org.apache.commons.validator.UrlValidator
 
 class FileUploaderService {
 
     private static final String FILE_NAME_SEPARATOR = "-"
+    private static String baseTemporaryDirectoryPath
 
     static transactional = false
 
-    def CDNFileUploaderService
-    def grailsApplication
     def messageSource
+    def rackspaceCDNFileUploaderService
+
+    @PostConstruct
+    void postConstruct() {
+        baseTemporaryDirectoryPath = Holders.getFlatConfig()["grails.tempDirectory"] ?: "./temp"
+
+        if (!baseTemporaryDirectoryPath.endsWith("/")) {
+            baseTemporaryDirectoryPath += "/"
+        }
+
+        // Make sure directory exists
+        File tempDirectory = new File(baseTemporaryDirectoryPath)
+        tempDirectory.mkdirs()
+
+        log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}"
+    }
+
+    String getNewTemporaryDirectoryPath() {
+        String tempDirectoryPath = baseTemporaryDirectoryPath + UUID.randomUUID().toString() + "/"
+        File tempDirectory = new File(tempDirectoryPath)
+        tempDirectory.mkdirs()
+
+        // Delete the temporary directory when JVM exited
+        tempDirectory.deleteOnExit()
+
+        return tempDirectoryPath
+    }
 
     /**
-     * 
      * @param group
      * @param file
      * @param customFileName Custom file name without extension.
@@ -60,12 +87,13 @@ class FileUploaderService {
             return null
         }
 
-        ConfigObject config = grailsApplication.config.fileuploader
-        ConfigObject groupConfig = config[group]
+        Map config = Holders.getFlatConfig()["fileuploader"]
 
-        if (groupConfig.isEmpty()) {
+        if (!config || !config[group]) {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
+
+        ConfigObject groupConfig = config[group]
 
         int extensionAt = receivedFileName.lastIndexOf(".")
         if (extensionAt > -1) {
@@ -100,17 +128,8 @@ class FileUploaderService {
          */
         customFileName = customFileName.trim().replaceAll(" ", "_").replaceAll("-", "_")
 
-        // Setup storage path
-        def storageTypes
-
-        // If group specific storage type is not defined
-        if (groupConfig.storageTypes instanceof ConfigObject) {
-            // Then use the common storage type
-            storageTypes = config.storageTypes
-        } else {
-            // Otherwise use the group specific storage type
-            storageTypes = groupConfig.storageTypes
-        }
+        // If group specific storage type is not defined then use the common storage type
+        String storageTypes = groupConfig.storageTypes ?: config.storageTypes
 
         if (storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
@@ -160,10 +179,7 @@ class FileUploaderService {
                 // (Saves resource utilization)
                 tempFile = file
             } else {
-                String tempDirectory = grailsApplication.config.grails.tempDirectory
-                String tempFilePath = "$tempDirectory/${currentTimeMillis}-${fileName}.$fileExtension"
-
-                tempFile = new File(tempFilePath)
+                tempFile = new File(getNewTemporaryDirectoryPath() + "${fileName}.${fileExtension}")
 
                 file.transferTo(tempFile)
             }
@@ -178,13 +194,13 @@ class FileUploaderService {
             }
 
             if (cdnProvider == CDNProvider.AMAZON) {
-                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
                 path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
                 amazonFileUploaderInstance.close()
             } else {
-                String publicBaseURL = CDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
+                String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
                 path = publicBaseURL + "/" + tempFileFullName
             }
 
@@ -259,16 +275,18 @@ class FileUploaderService {
     }
 
     boolean deleteFileForUFile(UFile ufileInstance) {
+        log.debug "Deleting file for $ufileInstance"
+
         if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
-            String containerName = UFile.containerName(ufileInstance.container)
+            String containerName = ufileInstance.container
 
             if (ufileInstance.provider == CDNProvider.AMAZON) {
-                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
                 amazonFileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
                 amazonFileUploaderInstance.close()
             } else {
-                CDNFileUploaderService.deleteFile(containerName, ufileInstance.fullName)
+                rackspaceCDNFileUploaderService.deleteFile(containerName, ufileInstance.fullName)
             }
             return true
         }
@@ -350,11 +368,7 @@ class FileUploaderService {
             return null
         }
 
-        // Create temporary directory
-        String tempDirectory = "./temp/${System.currentTimeMillis()}/"
-        new File(tempDirectory).mkdirs()
-
-        String tempFile = "${tempDirectory}${ufileInstance.name}" // No need to append extension. name field already have that.
+        String tempFile = getNewTemporaryDirectoryPath() + ufileInstance.name // No need to append extension. name field already have that.
 
         if (tempFile.lastIndexOf(".") >= 0) {
             name = ufileInstance.name + "." + ufileInstance.extension
@@ -421,8 +435,8 @@ class FileUploaderService {
         }
         containerName = UFile.containerName(containerName)
 
-        CDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
-        String baseURL = CDNFileUploaderService.cdnEnableContainer(containerName)
+        rackspaceCDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
+        String baseURL = rackspaceCDNFileUploaderService.cdnEnableContainer(containerName)
 
         blobDetailList.each {
             UFile uploadUFileInstance = ufileInstanceList.find { ufileInstance ->
@@ -445,7 +459,7 @@ class FileUploaderService {
     }
 
     void renewTemporaryURL() {
-        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = getAmazonFileUploaderInstance()
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
         amazonFileUploaderInstance.authenticate()
 
         UFile.withCriteria {
@@ -455,7 +469,7 @@ class FileUploaderService {
                 lt("expiresOn", new Date())
                 between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
             }
-        }.each { ufileInstance ->
+        }.each { UFile ufileInstance ->
             log.debug "Renewing URL for $ufileInstance"
 
             String containerName = ufileInstance.container
@@ -464,46 +478,35 @@ class FileUploaderService {
 
             ufileInstance.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
             ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
-            ufileInstance.save()
+            ufileInstance.save(flush: true)
             if (ufileInstance.hasErrors()) {
                 log.warn "Error saving new URL for $ufileInstance"
             }
 
-            log.info "New URL for $ufileInstance is [$ufileInstance.path]"
+            log.info "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
         }
 
         amazonFileUploaderInstance.close()
     }
 
     long getExpirationPeriod(String fileGroup) {
-        Map groupConfig = grailsApplication.config.fileuploader[fileGroup]
+        Map groupConfig = Holders.getFlatConfig()["fileuploader.${fileGroup}"]
         getExpirationPeriod(groupConfig)
     }
 
     long getExpirationPeriod(Map groupConfig) {
-        long expirationPeriod = Time.DAY * 30   // Default to 30 Days
-        if (!groupConfig.expirationPeriod.isEmpty()) {
-            expirationPeriod = groupConfig.expirationPeriod
-        }
-
-        expirationPeriod
+        return groupConfig.expirationPeriod ?: (Time.DAY * 30)      // Default to 30 Days
     }
 
     /**
-     * Retrieves content of the given url and stores it in the
-     * temporary directory
-     * @param url The url to be retrieved
+     * Retrieves content of the given url and stores it in the temporary directory.
+     * 
+     * @param url The URL from which file to be retrieved
      * @param filename Name of the file
      */
     @Transactional
     File getFileFromURL(String url, String filename) {
-        String path = grailsApplication.config.grails.tempDirectory
-        if (!path.endsWith("/")) {
-            path = path + "/"
-        }
-
-        path += System.currentTimeMillis() + "/"
-        new File(path).mkdirs()
+        String path = getNewTemporaryDirectoryPath()
 
         File file = new File(path + filename)
         FileOutputStream fos = new FileOutputStream(file)
