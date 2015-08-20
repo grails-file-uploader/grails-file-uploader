@@ -87,13 +87,12 @@ class FileUploaderService {
             return null
         }
 
-        Map config = Holders.getFlatConfig()["fileuploader"]
+        ConfigObject config = Holders.getConfig().fileuploader
+        ConfigObject groupConfig = config[group]
 
-        if (!config || !config[group]) {
+        if (config[group].isEmpty()) {
             throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
         }
-
-        ConfigObject groupConfig = config[group]
 
         int extensionAt = receivedFileName.lastIndexOf(".")
         if (extensionAt > -1) {
@@ -144,7 +143,7 @@ class FileUploaderService {
                 containerName = UFile.containerName(groupConfig.container)
             }
 
-            long expirationPeriod = getExpirationPeriod(groupConfig)
+            long expirationPeriod = getExpirationPeriod(group)
 
             StringBuilder fileNameBuilder = new StringBuilder(group)
                     .append(FILE_NAME_SEPARATOR)
@@ -368,12 +367,7 @@ class FileUploaderService {
             return null
         }
 
-        String tempFile = getNewTemporaryDirectoryPath() + ufileInstance.name // No need to append extension. name field already have that.
-
-        if (tempFile.lastIndexOf(".") >= 0) {
-            name = ufileInstance.name + "." + ufileInstance.extension
-            tempFile = tempFile + "." + ufileInstance.extension
-        }
+        String tempFile = getNewTemporaryDirectoryPath() + (name ?: ufileInstance.getFullName())
 
         File destFile = new File(tempFile)
         if (!destFile.exists()) {
@@ -490,12 +484,7 @@ class FileUploaderService {
     }
 
     long getExpirationPeriod(String fileGroup) {
-        Map groupConfig = Holders.getFlatConfig()["fileuploader.${fileGroup}"]
-        getExpirationPeriod(groupConfig)
-    }
-
-    long getExpirationPeriod(Map groupConfig) {
-        return groupConfig.expirationPeriod ?: (Time.DAY * 30)      // Default to 30 Days
+        return Holders.getFlatConfig()["fileuploader.${fileGroup}.expirationPeriod"] ?: (Time.DAY * 30)      // Default to 30 Days
     }
 
     /**

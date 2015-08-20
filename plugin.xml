@@ -1,14 +1,12 @@
-<plugin name='file-uploader' version='2.4.1' grailsVersion='2.1 &gt; *'>
+<plugin name='file-uploader' version='2.4.2-RC1' grailsVersion='2.1 &gt; *'>
   <author>Federico Hofman</author>
   <authorEmail>fhofman@gmail.com</authorEmail>
   <title>File Uploader Grails Plugin</title>
-  <description>
-This plugin provides easy integration with your grails application
-to handle file uploading with multiple configuration.
-
-This is a heavily modified version with updates from visheshd, danieldbower, SAgrawal14"
-This plugin now supports uploading files to CDN for rackspace &amp; amazon.
-</description>
+  <description>This plugin provides easy integration with your Grails application
+            to handle file uploading with multiple configuration.
+            
+            This is a heavily modified version with updates from visheshd, danieldbower, SAgrawal14"
+            This plugin also supports uploading files to CDN for Rackspace &amp; Amazon</description>
   <documentation>https://github.com/causecode/grails-file-uploader</documentation>
   <type>FileUploaderGrailsPlugin</type>
   <resources>
@@ -16,8 +14,8 @@ This plugin now supports uploading files to CDN for rackspace &amp; amazon.
     <resource>com.lucastex.grails.fileuploader.FileUploaderController</resource>
     <resource>com.lucastex.grails.fileuploader.UFile</resource>
     <resource>com.lucastex.grails.fileuploader.RenewTemporaryURLJob</resource>
-    <resource>com.lucastex.grails.fileuploader.CDNFileUploaderService</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderService</resource>
+    <resource>com.lucastex.grails.fileuploader.RackspaceCDNFileUploaderService</resource>
     <resource>com.lucastex.grails.fileuploader.FileUploaderTagLib</resource>
   </resources>
 </plugin>
