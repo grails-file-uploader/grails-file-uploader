@@ -2,6 +2,8 @@ package com.lucastex.grails.fileuploader
 
 import grails.util.Holders
 import groovy.io.FileType
+import groovy.time.TimeCategory
+import groovy.time.TimeDuration
 
 import java.nio.channels.FileChannel
 
@@ -47,6 +49,8 @@ class FileUploaderService {
 
         // Delete the temporary directory when JVM exited
         tempDirectory.deleteOnExit()
+        
+        println "<<<tempDirectoryPath: $tempDirectoryPath"
 
         return tempDirectoryPath
     }
@@ -63,6 +67,7 @@ class FileUploaderService {
 
         Long fileSize
         Date expireOn
+        String permanentURL
         boolean empty = true
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
@@ -192,18 +197,21 @@ class FileUploaderService {
                 cdnProvider = groupConfig.provider
             }
 
+            expireOn = new Date(new Date().time + expirationPeriod * 1000)
+
             if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
+                long maxAge = getMaxAge(expireOn)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true, maxAge)
                 path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                permanentURL =  amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
+                
                 amazonFileUploaderInstance.close()
             } else {
                 String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
                 path = publicBaseURL + "/" + tempFileFullName
             }
-
-            expireOn = new Date(new Date().time + expirationPeriod * 1000)
         } else {
             // Base path to save file
             path = groupConfig.path
@@ -247,6 +255,11 @@ class FileUploaderService {
         ufile.expiresOn = expireOn
         ufile.fileGroup = group
         ufile.provider = cdnProvider
+        
+        
+        ufile.permanentURL = permanentURL
+//        ufile.permanentURL = ufile.generatePermanentURL()
+        println "<><><><> permanentURL: ${permanentURL}"
         ufile.save()
         if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -506,5 +519,40 @@ class FileUploaderService {
         file.deleteOnExit()
 
         return file
+    }
+
+    /**
+     *  Time difference (in seconds) from provided date to current date. Since the "Cache-Control" header accepts
+     *  max-age in delta seconds, so we need to convert expiratation date to seconds from current date.
+     * 
+     * @param expirationDate Date from which max-age needs to be retrived
+     * @returns long Time difference (in seconds) from provided date to current date
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9
+     */
+    long getMaxAge(Date expirationDate) {
+        TimeDuration timeDifference = TimeCategory.minus(expirationDate, new Date())
+        return timeDifference.days * 86400 +  timeDifference.hours * 3600 + timeDifference.minutes * 60 + timeDifference.seconds
+    }
+    
+    void updateUFilesCacheHeader() {
+        ConfigObject config = Holders.getConfig().fileuploader
+
+        List uFileList = UFile.list()
+        uFileList.each { UFile uFileInstance ->
+
+            String containerName = uFileInstance.getContainer()
+            CDNProvider cdnProvider = uFileInstance.provider
+            if (cdnProvider == CDNProvider.AMAZON
+                    && (uFileInstance.expiresOn == null || uFileInstance.expiresOn > new Date())) {
+
+                println uFileInstance.name + "\n" + uFileInstance.path
+                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+                amazonFileUploaderInstance.authenticate()
+
+                long maxAge = getMaxAge(uFileInstance.expiresOn)
+                amazonFileUploaderInstance.updateS3ObjectMetaData(containerName, uFileInstance.getFullName(), maxAge)
+                amazonFileUploaderInstance.close()
+            }
+        }
     }
 }
