@@ -18,7 +18,6 @@ class UFile implements Serializable {
     String fileGroup
     String name
     String path
-    String permanentURL
 
     UFileType type
 

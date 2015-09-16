@@ -8,7 +8,6 @@ import org.jclouds.ContextBuilder
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
 import org.jclouds.blobstore.BlobStoreContext
-import org.jclouds.blobstore.domain.Blob
 import org.jclouds.http.HttpRequest
 import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.CannedAccessPolicy
@@ -16,7 +15,6 @@ import org.jclouds.s3.domain.S3Object
 import org.jclouds.s3.domain.AccessControlList.Permission
 import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
-import org.jclouds.openstack.swift.v1.*
 
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 
@@ -82,14 +80,6 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         client.getObject(containerName, fileName, null)
     }
 
-    @Override
-    String getPermanentURL(String containerName, String fileName) {
-//        getObject(containerName, fileName).metadata.uri
-//        HttpRequest request = context.signer.signGetBlob(containerName, fileName, 100L)
-        HttpRequest request = context.signer.signGetBlob(containerName, fileName)
-        request.endpoint.toString()
-    }
-
     /**
      * @param containerName Name of the bucket
      * @param fileName Name of the object in bucket
@@ -100,8 +90,8 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
      */
     @Override
     String getTemporaryURL(String containerName, String fileName, long expiration) {
-        // GMT: Sun, 13 Sep 2020 12:26:40 GMT expiration date
-        HttpRequest request = context.signer.signGetBlob(containerName, fileName, 1600000000)
+        HttpRequest request = context.signer.signGetBlob(containerName, fileName, expiration)
+        //HttpRequest request = context.signer.signGetBlob(containerName, fileName, 1600000000)
         request.endpoint.toString()
     }
 
@@ -114,25 +104,15 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
     @Override
     boolean uploadFile(String containerName, File file, String fileName, boolean makePublic, long maxAge) {
-        if (makePublic) {
-            updateS3ObjectMetaData(containerName, fileName, maxAge, file)
-        } else {
-            Blob newFileToUpload = blobStore.blobBuilder(fileName)
-                    .payload(file)
-                    .build()
-            blobStore.putBlob(containerName, newFileToUpload)
-        }
 
-        return true
-    }
+        CannedAccessPolicy cannedAccessPolicy = makePublic ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
 
-    void updateS3ObjectMetaData(String containerName, String fileName, long maxAge, File newFile = null) {
         AWSS3PutObjectOptions fileOptions = new AWSS3PutObjectOptions()
-        fileOptions.withAcl(CannedAccessPolicy.AUTHENTICATED_READ)
+        fileOptions.withAcl(cannedAccessPolicy)
 
         MutableObjectMetadataImpl mutableObjectMetadata
 
-        if (newFile) {
+        if (file) {
             mutableObjectMetadata = new MutableObjectMetadataImpl()
             mutableObjectMetadata.setKey(fileName)
         } else {
@@ -142,22 +122,23 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
         if (!mutableObjectMetadata) {
             log.info("No meta data found for $fileName")
-            println "No meta data found for $fileName"
             return
         }
-        
+
         mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
         log.info("Setting cache control in $fileName with max age $maxAge")
-        println("Setting cache control in $fileName with max age $maxAge")
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
-        if (newFile) {
-            s3ObjectToUpdate.setPayload(newFile)
+        if (file) {
+            s3ObjectToUpdate.setPayload(file)
         } else {
-            s3ObjectToUpdate.setPayload(fileName)
+
+            s3ObjectToUpdate.setPayload(file)
+            //s3ObjectToUpdate.setPayload(fileName)
             return
         }
         client.putObject(containerName, s3ObjectToUpdate, fileOptions)
+        return true
     }
 }

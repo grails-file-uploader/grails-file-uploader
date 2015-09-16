@@ -49,8 +49,6 @@ class FileUploaderService {
 
         // Delete the temporary directory when JVM exited
         tempDirectory.deleteOnExit()
-        
-        println "<<<tempDirectoryPath: $tempDirectoryPath"
 
         return tempDirectoryPath
     }
@@ -67,8 +65,6 @@ class FileUploaderService {
 
         Long fileSize
         Date expireOn
-        String permanentURL
-        boolean empty = true
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
@@ -197,16 +193,25 @@ class FileUploaderService {
                 cdnProvider = groupConfig.provider
             }
 
+            Boolean isPublicACL
+
+            if (groupConfig.provider instanceof ConfigObject) {
+                isPublicACL = config.isPublicACL
+            } else {
+                isPublicACL = groupConfig.isPublicACL
+            }
+
             expireOn = new Date(new Date().time + expirationPeriod * 1000)
 
             if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
                 long maxAge = getMaxAge(expireOn)
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true, maxAge)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, isPublicACL, maxAge)
+                //amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, false, maxAge)
+
                 path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
-                permanentURL =  amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
-                
+
                 amazonFileUploaderInstance.close()
             } else {
                 String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
@@ -255,11 +260,7 @@ class FileUploaderService {
         ufile.expiresOn = expireOn
         ufile.fileGroup = group
         ufile.provider = cdnProvider
-        
-        
-        ufile.permanentURL = permanentURL
-//        ufile.permanentURL = ufile.generatePermanentURL()
-        println "<><><><> permanentURL: ${permanentURL}"
+
         ufile.save()
         if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -472,6 +473,12 @@ class FileUploaderService {
         UFile.withCriteria {
             eq("type", UFileType.CDN_PUBLIC)
             eq("provider", CDNProvider.AMAZON)
+
+            if (Holders.getFlatConfig()["fileuploader.persistence.provider"] == "mongodb") {
+                eq("expiresOn", [$exists: true])
+            } else {
+                isNotNull("expiresOn")
+            }
             or {
                 lt("expiresOn", new Date())
                 between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
@@ -533,8 +540,8 @@ class FileUploaderService {
         TimeDuration timeDifference = TimeCategory.minus(expirationDate, new Date())
         return timeDifference.days * 86400 +  timeDifference.hours * 3600 + timeDifference.minutes * 60 + timeDifference.seconds
     }
-    
-    void updateUFilesCacheHeader() {
+
+    void updateUFilesCacheHeader(Locale locale) {
         ConfigObject config = Holders.getConfig().fileuploader
 
         List uFileList = UFile.list()
@@ -542,16 +549,18 @@ class FileUploaderService {
 
             String containerName = uFileInstance.getContainer()
             CDNProvider cdnProvider = uFileInstance.provider
-            if (cdnProvider == CDNProvider.AMAZON
+            if (containerName == "billaway-1-development" && cdnProvider == CDNProvider.AMAZON
                     && (uFileInstance.expiresOn == null || uFileInstance.expiresOn > new Date())) {
 
-                println uFileInstance.name + "\n" + uFileInstance.path
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
 
                 long maxAge = getMaxAge(uFileInstance.expiresOn)
-                amazonFileUploaderInstance.updateS3ObjectMetaData(containerName, uFileInstance.getFullName(), maxAge)
+
+                File tempFile = fileForUFile(uFileInstance, locale)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, uFileInstance.getFullName(), true, maxAge)
                 amazonFileUploaderInstance.close()
+                tempFile.delete()
             }
         }
     }
