@@ -1,6 +1,5 @@
 package com.lucastex.grails.fileuploader
 
-import static com.google.common.base.Preconditions.checkArgument
 import static java.util.concurrent.Executors.newFixedThreadPool
 import grails.util.Holders
 
@@ -31,7 +30,7 @@ class RackspaceCDNFileUploaderService {
 
     def grailsApplication
 
-    private static int THREADS = Integer.getInteger("upload.threadpool.size", 10)
+    private static int THREADS = System.getProperty("upload.threadpool.size")?: 10
 
     private BlobStore blobStore
     private CloudFilesClient cloudFilesClient
@@ -74,9 +73,8 @@ class RackspaceCDNFileUploaderService {
 
     boolean checkIfContainerExist(String containerName) {
         for(container in containers) {
-            if (container.name == name) {
+            if (container.name == containerName) {
                 return true
-                break
             }
             return false
         }

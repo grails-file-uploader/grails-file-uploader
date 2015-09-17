@@ -1,7 +1,6 @@
 package com.lucastex.grails.fileuploader
 
-import grails.test.*
-import grails.test.mixin.*
+import grails.test.mixin.TestFor
 
 @TestFor(FileUploaderTagLib)
 class FileUploaderTagLibTests {

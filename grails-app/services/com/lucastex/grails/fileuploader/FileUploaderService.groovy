@@ -65,6 +65,7 @@ class FileUploaderService {
 
         Long fileSize
         Date expireOn
+        boolean empty = true
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
@@ -195,7 +196,7 @@ class FileUploaderService {
 
             Boolean isPublicACL
 
-            if (groupConfig.provider instanceof ConfigObject) {
+            if (groupConfig.isPublicACL instanceof ConfigObject) {
                 isPublicACL = config.isPublicACL
             } else {
                 isPublicACL = groupConfig.isPublicACL
@@ -208,9 +209,12 @@ class FileUploaderService {
                 amazonFileUploaderInstance.authenticate()
                 long maxAge = getMaxAge(expireOn)
                 amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, isPublicACL, maxAge)
-                //amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, false, maxAge)
 
-                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                if (isPublicACL) {
+                    path = amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
+                } else {
+                    path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                }
 
                 amazonFileUploaderInstance.close()
             } else {
@@ -268,6 +272,7 @@ class FileUploaderService {
         return ufile
     }
 
+    @SuppressWarnings(["CatchException", "UnusedObject"])
     @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
@@ -275,7 +280,6 @@ class FileUploaderService {
             log.error "No UFile found with id: [$idUfile]"
             return false
         }
-        File file = new File(ufile.path)
 
         try {
             ufile.delete()
@@ -541,26 +545,34 @@ class FileUploaderService {
         return timeDifference.days * 86400 +  timeDifference.hours * 3600 + timeDifference.minutes * 60 + timeDifference.seconds
     }
 
-    void updateUFilesCacheHeader(Locale locale) {
+    /**
+     * This method is used to update meta data of all the previously uploaded files to the Amazon bucket.
+     *
+     * @since 2.4.3
+     * @author Priyanshu Chauhan
+     */
+    void updateUFilesCacheHeader() {
         ConfigObject config = Holders.getConfig().fileuploader
 
-        List uFileList = UFile.list()
-        uFileList.each { UFile uFileInstance ->
-
+        UFile.list().each { UFile uFileInstance ->
             String containerName = uFileInstance.getContainer()
             CDNProvider cdnProvider = uFileInstance.provider
-            if (containerName == "billaway-1-development" && cdnProvider == CDNProvider.AMAZON
-                    && (uFileInstance.expiresOn == null || uFileInstance.expiresOn > new Date())) {
+            ConfigObject groupConfig = config[uFileInstance.fileGroup]
+            boolean isPublicACL
 
+            if (groupConfig.isPublicACL instanceof ConfigObject) {
+                isPublicACL = config.isPublicACL
+            } else {
+                isPublicACL = groupConfig.isPublicACL
+            }
+
+            if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
 
                 long maxAge = getMaxAge(uFileInstance.expiresOn)
-
-                File tempFile = fileForUFile(uFileInstance, locale)
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, uFileInstance.getFullName(), true, maxAge)
+                amazonFileUploaderInstance.updatePreviousFileMetaData(containerName, uFileInstance.getFullName(), isPublicACL, maxAge)
                 amazonFileUploaderInstance.close()
-                tempFile.delete()
             }
         }
     }

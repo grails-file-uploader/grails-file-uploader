@@ -1,7 +1,7 @@
 package com.lucastex.grails.fileuploader.cdn.amazon
 
+import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.util.Holders
-
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.jclouds.ContextBuilder
@@ -10,13 +10,12 @@ import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.http.HttpRequest
 import org.jclouds.s3.domain.AccessControlList
+import org.jclouds.s3.domain.AccessControlList.Permission
 import org.jclouds.s3.domain.CannedAccessPolicy
 import org.jclouds.s3.domain.S3Object
-import org.jclouds.s3.domain.AccessControlList.Permission
 import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
-
-import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
+import org.jclouds.s3.options.CopyObjectOptions
 
 class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
@@ -91,8 +90,12 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     @Override
     String getTemporaryURL(String containerName, String fileName, long expiration) {
         HttpRequest request = context.signer.signGetBlob(containerName, fileName, expiration)
-        //HttpRequest request = context.signer.signGetBlob(containerName, fileName, 1600000000)
         request.endpoint.toString()
+    }
+
+    //@Override
+    String getPermanentURL(String containerName, String fileName) {
+        getObject(containerName, fileName).metadata.uri
     }
 
     @Override
@@ -112,33 +115,45 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
         MutableObjectMetadataImpl mutableObjectMetadata
 
-        if (file) {
-            mutableObjectMetadata = new MutableObjectMetadataImpl()
-            mutableObjectMetadata.setKey(fileName)
-        } else {
-            S3ObjectImpl s3Object = getObject(containerName, fileName)
-            mutableObjectMetadata = s3Object?.getMetadata()
-        }
-
-        if (!mutableObjectMetadata) {
-            log.info("No meta data found for $fileName")
-            return
-        }
+        mutableObjectMetadata = new MutableObjectMetadataImpl()
+        mutableObjectMetadata.setKey(fileName)
 
         mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
         log.info("Setting cache control in $fileName with max age $maxAge")
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
-        if (file) {
+        if (s3ObjectToUpdate) {
             s3ObjectToUpdate.setPayload(file)
-        } else {
-
-            s3ObjectToUpdate.setPayload(file)
-            //s3ObjectToUpdate.setPayload(fileName)
-            return
+            client.putObject(containerName, s3ObjectToUpdate, fileOptions)
         }
-        client.putObject(containerName, s3ObjectToUpdate, fileOptions)
         return true
+    }
+
+    /**
+     * This method is used to update meta data of previously uploaded file. Amazon doesn't allow to update the metadata
+     * of already existing file. Hence, updating the metadata by copying the file with new metadata with cache control.
+     *
+     * @param containerName String the name of the bucket
+     * @param fileName String the name of the file to update metadata
+     * @param maxAge long cache header's max age in seconds
+     * @since 2.4.3
+     * @author Priyanshu Chauhan
+     */
+    def updatePreviousFileMetaData(String containerName, String fileName, boolean isPublicACL, long maxAge) {
+        Map metaData = [:]
+        // GString doesn't work directly in metadata, hence creating a string type
+        String cacheControl = "max-age=$maxAge, public, must-revalidate, proxy-revalidate"
+        metaData["Cache-Control"] = cacheControl
+        metaData["Content-Type"] = "application/unknown"
+
+        CopyObjectOptions copyObjectOptions = new CopyObjectOptions()
+        copyObjectOptions.overrideMetadataWith(metaData)
+
+        CannedAccessPolicy cannedAccessPolicy = isPublicACL ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
+        copyObjectOptions.overrideAcl(cannedAccessPolicy)
+
+        client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
+        return
     }
 }

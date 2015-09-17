@@ -3,6 +3,7 @@ package com.lucastex.grails.fileuploader
 import grails.util.Environment
 import grails.util.Holders
 
+@SuppressWarnings(["GrailsDomainReservedSqlKeywordName"])
 class UFile implements Serializable {
 
     int downloads
@@ -90,6 +91,11 @@ enum UFileType {
     UFileType(int id) {
         this.id = id
     }
+
+    @Override
+    String toString() {
+        "[$id] [${this.name()}]"
+    }
 }
 
 enum CDNProvider {
@@ -100,5 +106,10 @@ enum CDNProvider {
     final int id
     CDNProvider(int id) {
         this.id = id
+    }
+
+    @Override
+    String toString() {
+        "[$id] [${this.name()}]"
     }
 }
