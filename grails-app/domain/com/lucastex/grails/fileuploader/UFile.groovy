@@ -94,7 +94,7 @@ enum UFileType {
 
     @Override
     String toString() {
-        "[$id] [${this.name()}]"
+        "${this.name()}($id)"
     }
 }
 
@@ -110,6 +110,6 @@ enum CDNProvider {
 
     @Override
     String toString() {
-        "[$id] [${this.name()}]"
+        "${this.name()}($id)"
     }
 }

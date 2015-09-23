@@ -79,6 +79,11 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         client.getObject(containerName, fileName, null)
     }
 
+    @Override
+    String getPermanentURL(String containerName, String fileName) {
+        getObject(containerName, fileName).metadata.uri
+    }
+
     /**
      * @param containerName Name of the bucket
      * @param fileName Name of the object in bucket
@@ -91,11 +96,6 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     String getTemporaryURL(String containerName, String fileName, long expiration) {
         HttpRequest request = context.signer.signGetBlob(containerName, fileName, expiration)
         request.endpoint.toString()
-    }
-
-    //@Override
-    String getPermanentURL(String containerName, String fileName) {
-        getObject(containerName, fileName).metadata.uri
     }
 
     @Override
@@ -113,9 +113,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         AWSS3PutObjectOptions fileOptions = new AWSS3PutObjectOptions()
         fileOptions.withAcl(cannedAccessPolicy)
 
-        MutableObjectMetadataImpl mutableObjectMetadata
-
-        mutableObjectMetadata = new MutableObjectMetadataImpl()
+        MutableObjectMetadataImpl mutableObjectMetadata = new MutableObjectMetadataImpl()
         mutableObjectMetadata.setKey(fileName)
 
         mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
@@ -123,10 +121,8 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
-        if (s3ObjectToUpdate) {
-            s3ObjectToUpdate.setPayload(file)
-            client.putObject(containerName, s3ObjectToUpdate, fileOptions)
-        }
+        s3ObjectToUpdate.setPayload(file)
+        client.putObject(containerName, s3ObjectToUpdate, fileOptions)
         return true
     }
 
@@ -140,9 +136,8 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
      * @since 2.4.3
      * @author Priyanshu Chauhan
      */
-    def updatePreviousFileMetaData(String containerName, String fileName, boolean isPublicACL, long maxAge) {
+    void updatePreviousFileMetaData(String containerName, String fileName, boolean makePublic, long maxAge) {
         Map metaData = [:]
-        // GString doesn't work directly in metadata, hence creating a string type
         String cacheControl = "max-age=$maxAge, public, must-revalidate, proxy-revalidate"
         metaData["Cache-Control"] = cacheControl
         metaData["Content-Type"] = "application/unknown"
@@ -150,10 +145,9 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         CopyObjectOptions copyObjectOptions = new CopyObjectOptions()
         copyObjectOptions.overrideMetadataWith(metaData)
 
-        CannedAccessPolicy cannedAccessPolicy = isPublicACL ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
+        CannedAccessPolicy cannedAccessPolicy = makePublic ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
         copyObjectOptions.overrideAcl(cannedAccessPolicy)
 
         client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
-        return
     }
 }

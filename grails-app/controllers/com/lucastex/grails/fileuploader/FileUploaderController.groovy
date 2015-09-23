@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+@SuppressWarnings("ReturnNullFromCatchBlock")
 class FileUploaderController {
 
     def fileUploaderService
@@ -15,12 +16,12 @@ class FileUploaderController {
             log.debug fnfe.message
             flash.message = fnfe.message
             redirect controller: params.errorController, action: params.errorAction
-            return true
+            return
         } catch(IOException ioe) {
             log.error ioe.message
             flash.message = ioe.message
             redirect controller: params.errorController, action: params.errorAction
-            return true
+            return
         }
 
         log.debug "Serving file id=[${uFileInstance.id}], downloaded for the ${uFileInstance.downloads} time, to ${request.remoteAddr}"

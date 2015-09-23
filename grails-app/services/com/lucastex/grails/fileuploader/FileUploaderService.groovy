@@ -194,12 +194,12 @@ class FileUploaderService {
                 cdnProvider = groupConfig.provider
             }
 
-            Boolean isPublicACL
+            Boolean makePublic
 
-            if (groupConfig.isPublicACL instanceof ConfigObject) {
-                isPublicACL = config.isPublicACL
+            if (groupConfig.makePublic instanceof ConfigObject) {
+                makePublic = config.makePublic
             } else {
-                isPublicACL = groupConfig.isPublicACL
+                makePublic = groupConfig.makePublic
             }
 
             expireOn = new Date(new Date().time + expirationPeriod * 1000)
@@ -207,11 +207,11 @@ class FileUploaderService {
             if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
-                long maxAge = getMaxAge(expireOn)
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, isPublicACL, maxAge)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, makePublic, expirationPeriod)
 
-                if (isPublicACL) {
+                if (makePublic) {
                     path = amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
+                    expireOn = null
                 } else {
                     path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
                 }
@@ -272,7 +272,7 @@ class FileUploaderService {
         return ufile
     }
 
-    @SuppressWarnings(["CatchException", "UnusedObject"])
+    @SuppressWarnings("CatchException")
     @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
@@ -533,19 +533,6 @@ class FileUploaderService {
     }
 
     /**
-     *  Time difference (in seconds) from provided date to current date. Since the "Cache-Control" header accepts
-     *  max-age in delta seconds, so we need to convert expiratation date to seconds from current date.
-     * 
-     * @param expirationDate Date from which max-age needs to be retrived
-     * @returns long Time difference (in seconds) from provided date to current date
-     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9
-     */
-    long getMaxAge(Date expirationDate) {
-        TimeDuration timeDifference = TimeCategory.minus(expirationDate, new Date())
-        return timeDifference.days * 86400 +  timeDifference.hours * 3600 + timeDifference.minutes * 60 + timeDifference.seconds
-    }
-
-    /**
      * This method is used to update meta data of all the previously uploaded files to the Amazon bucket.
      *
      * @since 2.4.3
@@ -553,27 +540,26 @@ class FileUploaderService {
      */
     void updateUFilesCacheHeader() {
         ConfigObject config = Holders.getConfig().fileuploader
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+        amazonFileUploaderInstance.authenticate()
 
-        UFile.list().each { UFile uFileInstance ->
-            String containerName = uFileInstance.getContainer()
-            CDNProvider cdnProvider = uFileInstance.provider
+        UFile.withCriteria {
+            eq("type", UFileType.CDN_PUBLIC)
+            eq("provider", CDNProvider.AMAZON)
+        }.each { UFile uFileInstance ->
             ConfigObject groupConfig = config[uFileInstance.fileGroup]
-            boolean isPublicACL
+            boolean makePublic
 
-            if (groupConfig.isPublicACL instanceof ConfigObject) {
-                isPublicACL = config.isPublicACL
+            if (groupConfig.makePublic instanceof ConfigObject) {
+                makePublic = config.makePublic
             } else {
-                isPublicACL = groupConfig.isPublicACL
+                makePublic = groupConfig.makePublic
             }
+            long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
 
-            if (cdnProvider == CDNProvider.AMAZON) {
-                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
-                amazonFileUploaderInstance.authenticate()
-
-                long maxAge = getMaxAge(uFileInstance.expiresOn)
-                amazonFileUploaderInstance.updatePreviousFileMetaData(containerName, uFileInstance.getFullName(), isPublicACL, maxAge)
-                amazonFileUploaderInstance.close()
-            }
+            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.getContainer(),
+                    uFileInstance.getFullName(), makePublic, expirationPeriod)
         }
+        amazonFileUploaderInstance.close()
     }
 }

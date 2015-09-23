@@ -30,7 +30,7 @@ class RackspaceCDNFileUploaderService {
 
     def grailsApplication
 
-    private static int THREADS = System.getProperty("upload.threadpool.size")?: 10
+    private static int THREADS = System.getProperty("upload.threadpool.size") ?: 10
 
     private BlobStore blobStore
     private CloudFilesClient cloudFilesClient
