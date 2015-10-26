@@ -2,8 +2,6 @@ package com.lucastex.grails.fileuploader
 
 import grails.util.Holders
 import groovy.io.FileType
-import groovy.time.TimeCategory
-import groovy.time.TimeDuration
 
 import java.nio.channels.FileChannel
 
@@ -194,14 +192,7 @@ class FileUploaderService {
                 cdnProvider = groupConfig.provider
             }
 
-            Boolean makePublic
-
-            if (groupConfig.makePublic instanceof ConfigObject) {
-                makePublic = config.makePublic
-            } else {
-                makePublic = groupConfig.makePublic
-            }
-
+            Boolean makePublic = isPublicGroup(group)
             expireOn = new Date(new Date().time + expirationPeriod * 1000)
 
             if (cdnProvider == CDNProvider.AMAZON) {
@@ -533,33 +524,43 @@ class FileUploaderService {
     }
 
     /**
-     * This method is used to update meta data of all the previously uploaded files to the Amazon bucket.
-     *
+     * This method is used to update meta data of all the previously uploaded files to the
+     * {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider} bucket. Currently only Amazon is supported.
+     * @param {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider}
      * @since 2.4.3
      * @author Priyanshu Chauhan
      */
-    void updateUFilesCacheHeader() {
-        ConfigObject config = Holders.getConfig().fileuploader
+    void updateAllUFileCacheHeader(CDNProvider cdnProvider = CDNProvider.AMAZON) {
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
         amazonFileUploaderInstance.authenticate()
 
+        // TODO: Add support for Rackspace
+        if (cdnProvider != CDNProvider.AMAZON) {
+            log.warn "Only AMAZON is allowed for updating cache header not $cdnProvider"
+            return
+        }
+
         UFile.withCriteria {
             eq("type", UFileType.CDN_PUBLIC)
-            eq("provider", CDNProvider.AMAZON)
+            eq("provider", cdnProvider)
         }.each { UFile uFileInstance ->
-            ConfigObject groupConfig = config[uFileInstance.fileGroup]
-            boolean makePublic
-
-            if (groupConfig.makePublic instanceof ConfigObject) {
-                makePublic = config.makePublic
-            } else {
-                makePublic = groupConfig.makePublic
-            }
+            Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
             long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
 
             amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.getContainer(),
                     uFileInstance.getFullName(), makePublic, expirationPeriod)
         }
         amazonFileUploaderInstance.close()
+    }
+
+    /**
+     * This method is used to check whether the provided group is of public type or not.
+     * @param fileGroup
+     * @return Boolean result
+     * @since 2.4.3
+     * @author Priyanshu Chauhan
+     */
+    Boolean isPublicGroup(String fileGroup) {
+        return Holders.getFlatConfig()["fileuploader.$fileGroup"] ? true : false
     }
 }

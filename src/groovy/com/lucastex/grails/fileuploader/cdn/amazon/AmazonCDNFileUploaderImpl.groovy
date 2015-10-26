@@ -16,6 +16,7 @@ import org.jclouds.s3.domain.S3Object
 import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import org.jclouds.s3.options.CopyObjectOptions
+import javax.activation.MimetypesFileTypeMap
 
 class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
@@ -116,8 +117,18 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         MutableObjectMetadataImpl mutableObjectMetadata = new MutableObjectMetadataImpl()
         mutableObjectMetadata.setKey(fileName)
 
-        mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
         log.info("Setting cache control in $fileName with max age $maxAge")
+        mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
+
+        // Getting the content type of file from the file name
+        String contentType = new MimetypesFileTypeMap().getContentType(fileName)
+
+        /*
+         * MutableObjectMetadata successfully set content type locally but it's not reflected on Amazon server
+         * whereas blobStore can easily set content-type but lacks other options. Even tested on jclouds 1.9.1.
+         * TODO: Needs to be revisited.
+         */
+        mutableObjectMetadata.getContentMetadata().setContentType(contentType)
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
@@ -132,15 +143,17 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
      *
      * @param containerName String the name of the bucket
      * @param fileName String the name of the file to update metadata
+     * @param makePublic Boolean whether to make file public
      * @param maxAge long cache header's max age in seconds
      * @since 2.4.3
      * @author Priyanshu Chauhan
      */
-    void updatePreviousFileMetaData(String containerName, String fileName, boolean makePublic, long maxAge) {
+    void updatePreviousFileMetaData(String containerName, String fileName, Boolean makePublic, long maxAge) {
         Map metaData = [:]
         String cacheControl = "max-age=$maxAge, public, must-revalidate, proxy-revalidate"
         metaData["Cache-Control"] = cacheControl
-        metaData["Content-Type"] = "application/unknown"
+
+        metaData["Content-Type"] = new MimetypesFileTypeMap().getContentType(fileName)
 
         CopyObjectOptions copyObjectOptions = new CopyObjectOptions()
         copyObjectOptions.overrideMetadataWith(metaData)
@@ -148,6 +161,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         CannedAccessPolicy cannedAccessPolicy = makePublic ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
         copyObjectOptions.overrideAcl(cannedAccessPolicy)
 
+        // Copying the same file with the same name to the location so that we can override the previous file with new meta data.
         client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
     }
 }
