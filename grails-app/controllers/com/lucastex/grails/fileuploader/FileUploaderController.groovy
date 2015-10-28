@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+@SuppressWarnings("ReturnNullFromCatchBlock")
 class FileUploaderController {
 
     def fileUploaderService

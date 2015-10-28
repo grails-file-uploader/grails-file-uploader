@@ -192,18 +192,26 @@ class FileUploaderService {
                 cdnProvider = groupConfig.provider
             }
 
+            Boolean makePublic = isPublicGroup(group)
+            expireOn = new Date(new Date().time + expirationPeriod * 1000)
+
             if (cdnProvider == CDNProvider.AMAZON) {
                 AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                 amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, true)
-                path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, makePublic, expirationPeriod)
+
+                if (makePublic) {
+                    path = amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
+                    expireOn = null
+                } else {
+                    path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                }
+
                 amazonFileUploaderInstance.close()
             } else {
                 String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
                 path = publicBaseURL + "/" + tempFileFullName
             }
-
-            expireOn = new Date(new Date().time + expirationPeriod * 1000)
         } else {
             // Base path to save file
             path = groupConfig.path
@@ -247,6 +255,7 @@ class FileUploaderService {
         ufile.expiresOn = expireOn
         ufile.fileGroup = group
         ufile.provider = cdnProvider
+
         ufile.save()
         if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -254,6 +263,7 @@ class FileUploaderService {
         return ufile
     }
 
+    @SuppressWarnings("CatchException")
     @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
@@ -261,7 +271,6 @@ class FileUploaderService {
             log.error "No UFile found with id: [$idUfile]"
             return false
         }
-        File file = new File(ufile.path)
 
         try {
             ufile.delete()
@@ -459,6 +468,12 @@ class FileUploaderService {
         UFile.withCriteria {
             eq("type", UFileType.CDN_PUBLIC)
             eq("provider", CDNProvider.AMAZON)
+
+            if (Holders.getFlatConfig()["fileuploader.persistence.provider"] == "mongodb") {
+                eq("expiresOn", [$exists: true])
+            } else {
+                isNotNull("expiresOn")
+            }
             or {
                 lt("expiresOn", new Date())
                 between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
@@ -506,5 +521,46 @@ class FileUploaderService {
         file.deleteOnExit()
 
         return file
+    }
+
+    /**
+     * This method is used to update meta data of all the previously uploaded files to the
+     * {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider} bucket. Currently only Amazon is supported.
+     * @param {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider}
+     * @since 2.4.3
+     * @author Priyanshu Chauhan
+     */
+    void updateAllUFileCacheHeader(CDNProvider cdnProvider = CDNProvider.AMAZON) {
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+        amazonFileUploaderInstance.authenticate()
+
+        // TODO: Add support for Rackspace
+        if (cdnProvider != CDNProvider.AMAZON) {
+            log.warn "Only AMAZON is allowed for updating cache header not $cdnProvider"
+            return
+        }
+
+        UFile.withCriteria {
+            eq("type", UFileType.CDN_PUBLIC)
+            eq("provider", cdnProvider)
+        }.each { UFile uFileInstance ->
+            Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
+            long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
+
+            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.getContainer(),
+                    uFileInstance.getFullName(), makePublic, expirationPeriod)
+        }
+        amazonFileUploaderInstance.close()
+    }
+
+    /**
+     * This method is used to check whether the provided group is of public type or not.
+     * @param fileGroup
+     * @return Boolean result
+     * @since 2.4.3
+     * @author Priyanshu Chauhan
+     */
+    Boolean isPublicGroup(String fileGroup) {
+        return Holders.getFlatConfig()["fileuploader.$fileGroup"] ? true : false
     }
 }

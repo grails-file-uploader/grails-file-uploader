@@ -11,7 +11,7 @@
 
 ## Uploading files to CDN
 
-To upload files to CDN (Only Supports Rackspace now) one must have some configuration like given below:
+To upload files to CDN (Supports both Rackspace and Amazon) one must have some configuration like given below:
 
 ```
 import com.lucastex.grails.fileuploader.CDNProvider

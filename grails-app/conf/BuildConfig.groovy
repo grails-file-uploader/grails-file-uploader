@@ -1,8 +1,15 @@
+import grails.util.Environment
+
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir  = "target/test-reports"
 grails.project.work.dir = "target/work"
 grails.project.dependency.resolver = "maven"
+
+if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
+    codenarc.propertiesFile = "grails-app/conf/codenarc.properties"
+}
+
 grails.project.dependency.resolution = {
 
     inherits("global")
@@ -28,8 +35,15 @@ grails.project.dependency.resolution = {
             export = false
         }*/
 
-        build(":tomcat:7.0.52.1", ":release:3.0.1", ":rest-client-builder:2.0.1") {
+        build(":tomcat:7.0.52.1", ":release:3.0.1", ":rest-client-builder:2.0.1", ":codenarc:0.22") {
             export = false
         }
+    }
+}
+
+codenarc.reports = {
+    FileUploaderCodenarcHtmlReport('html') {
+        outputFile = 'target/codenarc/file-uploader-codenarc-report.html'
+        title = 'File Uploader Test Report'
     }
 }
