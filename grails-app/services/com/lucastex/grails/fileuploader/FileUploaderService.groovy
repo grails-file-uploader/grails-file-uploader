@@ -561,6 +561,6 @@ class FileUploaderService {
      * @author Priyanshu Chauhan
      */
     Boolean isPublicGroup(String fileGroup) {
-        return Holders.getFlatConfig()["fileuploader.$fileGroup"] ? true : false
+        return Holders.getFlatConfig()["fileuploader.${fileGroup}.makePublic"] ? true : false
     }
 }
