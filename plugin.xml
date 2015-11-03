@@ -1,4 +1,4 @@
-<plugin name='file-uploader' version='2.4.2-RC1' grailsVersion='2.1 &gt; *'>
+<plugin name='file-uploader' version='2.4.3' grailsVersion='2.1 &gt; *'>
   <author>Federico Hofman</author>
   <authorEmail>fhofman@gmail.com</authorEmail>
   <title>File Uploader Grails Plugin</title>

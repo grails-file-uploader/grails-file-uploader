@@ -26,7 +26,11 @@ grails.project.dependency.resolution = {
                 "org.apache.jclouds.provider:aws-s3:1.7.2") {
                     excludes "jclouds-core"
                 }
-        compile "org.apache.jclouds:jclouds-core:1.7.2"
+        compile("org.apache.jclouds:jclouds-core:1.7.2") {
+            if (Environment.current != Environment.TEST) {
+                excludes "guice"
+            }
+        }
     }
 
     plugins {

@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 2.4.3
+
+1. Added support for configurable public URL for Amazon S3
+2. Adding cache header to all files being uploaded (if configured)
+3. One time method to update cache header for all existing files in the Amazon S3 bucket
+4. Added codenarc for fixing code errors
+
 ## Version 2.4.2-RC1
 
 1. Various code cleanup
