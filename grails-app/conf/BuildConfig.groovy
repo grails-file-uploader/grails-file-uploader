@@ -24,12 +24,10 @@ grails.project.dependency.resolution = {
     dependencies {
         compile ("org.apache.jclouds.provider:cloudfiles-us:1.7.2", "org.apache.jclouds:jclouds-compute:1.7.2",
                 "org.apache.jclouds.provider:aws-s3:1.7.2") {
-                    excludes "jclouds-core"
+                    excludes "jclouds-core", "guice"
                 }
         compile("org.apache.jclouds:jclouds-core:1.7.2") {
-            if (Environment.current != Environment.TEST) {
-                excludes "guice"
-            }
+            excludes "guice"
         }
     }
 
