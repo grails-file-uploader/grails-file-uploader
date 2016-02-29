@@ -161,7 +161,11 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         CannedAccessPolicy cannedAccessPolicy = makePublic ? CannedAccessPolicy.PUBLIC_READ : CannedAccessPolicy.PRIVATE
         copyObjectOptions.overrideAcl(cannedAccessPolicy)
 
-        // Copying the same file with the same name to the location so that we can override the previous file with new meta data.
-        client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
+        try {
+            // Copying the same file with the same name to the location so that we can override the previous file with new meta data.
+            client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
+        } catch(KeyNotFoundException) {
+            log.info("Blob cannot be located in the container for file $fileName.")
+        }
     }
 }
