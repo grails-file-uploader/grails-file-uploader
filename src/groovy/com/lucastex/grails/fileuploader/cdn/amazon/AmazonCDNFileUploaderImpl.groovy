@@ -8,6 +8,7 @@ import org.jclouds.ContextBuilder
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
 import org.jclouds.blobstore.BlobStoreContext
+import org.jclouds.blobstore.KeyNotFoundException
 import org.jclouds.http.HttpRequest
 import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.AccessControlList.Permission
@@ -16,6 +17,7 @@ import org.jclouds.s3.domain.S3Object
 import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import org.jclouds.s3.options.CopyObjectOptions
+
 import javax.activation.MimetypesFileTypeMap
 
 class AmazonCDNFileUploaderImpl extends CDNFileUploader {
@@ -164,8 +166,8 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         try {
             // Copying the same file with the same name to the location so that we can override the previous file with new meta data.
             client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
-        } catch(KeyNotFoundException) {
-            log.info("Blob cannot be located in the container for file $fileName.")
+        } catch(KeyNotFoundException e) {
+            log.info("Blob cannot be located in the container for file $fileName")
         }
     }
 }
