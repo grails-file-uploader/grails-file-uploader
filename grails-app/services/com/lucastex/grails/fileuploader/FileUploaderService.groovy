@@ -563,4 +563,55 @@ class FileUploaderService {
     Boolean isPublicGroup(String fileGroup) {
         return Holders.getFlatConfig()["fileuploader.${fileGroup}.makePublic"] ? true : false
     }
+    		
+    /**		
+     * Moves file from CDN provider to other, updates ufile path		
+     * 		
+     * @param String fileGroup		
+     * @param boolean makePublic		
+     * @param {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider} 		
+     * @param containerName CDNProvider bucket/container3 name		
+     * @return Boolean result		
+     * @author Rohit Pal		
+     */		
+    @Transactional		
+    void moveToNewCDN(String fileGroup, boolean makePublic, CDNProvider toCDNProvider, String containerName) {		
+        def ufileCriteria  = UFile.createCriteria()		
+            def uFileList = UFile.withCriteria {		
+                eq("fileGroup", fileGroup)		
+            }		
+            uFileList.each { uFile ->		
+                String path = getNewTemporaryDirectoryPath()		
+                String filename = uFile.name		
+                if(filename && filename.contains("/")) {		
+                    filename = filename.substring(filename.lastIndexOf("/") + 1)		
+                }		
+                File downloadedFile = new File(path + filename)		
+                FileOutputStream fos = new FileOutputStream(downloadedFile)		
+                try {		
+                    fos.write(new URL(uFile.path).getBytes()) 		
+                } catch(FileNotFoundException e) {		
+                    log.info "UFile path not found!"		
+                    return		
+                }		
+                fos.close()		
+                downloadedFile.deleteOnExit()		
+                if (toCDNProvider == CDNProvider.AMAZON) {		
+                    AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()		
+                    amazonFileUploaderInstance.authenticate()		
+                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())		
+                    if (makePublic) {		
+                        path = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)		
+                    } else {		
+                        path = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())		
+                    }		
+                    amazonFileUploaderInstance.close()		
+                } else {		
+                    String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)		
+                    path = publicBaseURL + "/" + uFile.name		
+                }		
+                uFile.path = path		
+                uFile.save()		
+            }		
+    }
 }

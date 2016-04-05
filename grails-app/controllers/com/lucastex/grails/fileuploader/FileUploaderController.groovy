@@ -1,5 +1,9 @@
 package com.lucastex.grails.fileuploader
 
+import grails.util.Environment
+
+import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
+
 @SuppressWarnings("ReturnNullFromCatchBlock")
 class FileUploaderController {
 
@@ -91,5 +95,23 @@ class FileUploaderController {
         flash.message = message
 
         render true
+    }
+    
+    def moveBetweenCDN() {
+        CDNProvider toCDNProvider = CDNProvider.AMAZON
+        String[] fileGroupList = ["blogImg", "avatar"]
+        String containerName
+
+        if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
+            containerName = "causecode-dev"
+        } else {
+            containerName = "causecode"
+        }
+        
+        fileGroupList.eachWithIndex { value, index ->
+            fileUploaderService.moveToNewCDN(fileGroupList[index], true, toCDNProvider, containerName)
+        }
+
+        respond([success: true])
     }
 }
