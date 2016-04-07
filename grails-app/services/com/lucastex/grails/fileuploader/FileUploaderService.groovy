@@ -589,10 +589,10 @@ class FileUploaderService {
 
         fileGroupList.each { fileGroup ->
             def criteria = UFile.createCriteria()
-            List<UFile> uFileList = criteria.list {        
+            List<UFile> uFileList = criteria.list {
                 eq("fileGroup", fileGroup)
             }       
-            uFileList.each { uFile -> 
+            uFileList.each { uFile ->
                 if (uFile.provider == toCDNProvider)
                     return
 
@@ -603,25 +603,25 @@ class FileUploaderService {
 
                 downloadedFile =  getFileFromURL(uFile.path, filename)
                 
-                if(!downloadedFile.exists())
+                if (!downloadedFile.exists())
                     return
 
-                if (toCDNProvider == CDNProvider.AMAZON) {      
-                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())     
+                if (toCDNProvider == CDNProvider.AMAZON) {
+                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
                     if (makePublic)
-                        path = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)        
+                        path = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
                     else
-                        path = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())     
-                    amazonFileUploaderInstance.close()      
+                        path = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
+                    amazonFileUploaderInstance.close()
                 } else {        
-                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)       
-                    path = publicBaseURL + "/" + uFile.name     
+                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
+                    path = publicBaseURL + "/" + uFile.name
                 }
 
                 uFile.path = path
                 uFile.save()
             }
         }
-            	
+
     }
 }
