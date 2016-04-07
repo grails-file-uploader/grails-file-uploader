@@ -1,6 +1,5 @@
 package com.lucastex.grails.fileuploader
 
-import grails.util.Environment
 import grails.converters.JSON
 
 @SuppressWarnings("ReturnNullFromCatchBlock")
@@ -101,6 +100,5 @@ class FileUploaderController {
         render text: ([success: true] as JSON)
         return
     }
-
     
 }
