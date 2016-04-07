@@ -1,8 +1,7 @@
 package com.lucastex.grails.fileuploader
 
 import grails.util.Environment
-
-import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
+import grails.converters.JSON
 
 @SuppressWarnings("ReturnNullFromCatchBlock")
 class FileUploaderController {
@@ -96,22 +95,12 @@ class FileUploaderController {
 
         render true
     }
-    
-    def moveBetweenCDN() {
-        CDNProvider toCDNProvider = CDNProvider.AMAZON
-        String[] fileGroupList = ["blogImg", "avatar"]
-        String containerName
 
-        if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
-            containerName = "causecode-dev"
-        } else {
-            containerName = "causecode"
-        }
-        
-        fileGroupList.eachWithIndex { value, index ->
-            fileUploaderService.moveToNewCDN(fileGroupList[index], true, toCDNProvider, containerName)
-        }
-
-        respond([success: true])
+    def moveToNewCDN() {
+        fileUploaderService.moveToNewCDN()
+        render text: ([success: true] as JSON)
+        return
     }
+
+    
 }
