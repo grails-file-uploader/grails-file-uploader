@@ -576,7 +576,7 @@ class FileUploaderService {
     void moveToNewCDN() {
         CDNProvider toCDNProvider = CDNProvider.AMAZON
         String[] fileGroupList = ["blogImg", "avatar"]
-        String containerName = "causecode-dev"
+        String containerName = "causecode"
         boolean makePublic = true
         
         String filename
