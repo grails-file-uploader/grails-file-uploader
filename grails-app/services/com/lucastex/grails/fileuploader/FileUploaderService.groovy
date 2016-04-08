@@ -576,9 +576,9 @@ class FileUploaderService {
      * @author Rohit Pal		
      */
     @Transactional
-    Map moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
+    boolean moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
         if (!toCDNProvider || !containerName) {
-            return ["error" : "Incorrect parameters"]
+            return false
         }
         
         String filename
