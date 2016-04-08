@@ -1,7 +1,5 @@
 package com.lucastex.grails.fileuploader
 
-import grails.converters.JSON
-
 @SuppressWarnings("ReturnNullFromCatchBlock")
 class FileUploaderController {
 
@@ -94,5 +92,4 @@ class FileUploaderController {
 
         render true
     }
-
 }
