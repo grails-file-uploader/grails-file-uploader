@@ -569,7 +569,10 @@ class FileUploaderService {
     }
     		
     /**		
-     * Moves file from CDN provider to other, updates ufile path. Needs to be excecuted only once.	
+     * Moves file from CDN provider to other, updates ufile path. Needs to be excecuted only once.
+     * @param CDNProvider target CDN Provider enum
+     * @param String CDN Container name
+     * @param boolean make target public or private
      * @author Rohit Pal		
      */
     @Transactional
