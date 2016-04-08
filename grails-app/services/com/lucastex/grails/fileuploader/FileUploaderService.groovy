@@ -586,8 +586,12 @@ class FileUploaderService {
         String publicBaseURL
         File downloadedFile
 
-        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance
         amazonFileUploaderInstance.authenticate()
+        if(toCDNProvider == CDNProvider.AMAZON) {
+            amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+            amazonFileUploaderInstance.authenticate()
+        }
 
         def criteria = UFile.createCriteria()
         List<UFile> uFileList = criteria.list {
