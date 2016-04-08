@@ -573,11 +573,10 @@ class FileUploaderService {
      * @author Rohit Pal		
      */
     @Transactional
-    void moveToNewCDN() {
-        CDNProvider toCDNProvider = CDNProvider.AMAZON
-        String[] fileGroupList = ["blogImg", "avatar"]
-        String containerName = "causecode"
-        boolean makePublic = true
+    Map moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
+        if(!toCDNProvider || !containerName || containerName?.isEmpty()) {
+            return ["error" : "Incorrect parameters"]
+        }
         
         String filename
         String path
@@ -587,41 +586,46 @@ class FileUploaderService {
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
         amazonFileUploaderInstance.authenticate()
 
-        fileGroupList.each { fileGroup ->
-            def criteria = UFile.createCriteria()
-            List<UFile> uFileList = criteria.list {
-                eq("fileGroup", fileGroup)
-            }       
-            uFileList.each { uFile ->
-                if (uFile.provider == toCDNProvider)
-                    return
-
-                filename = uFile.name
-
-                if (filename && filename.contains("/"))     
-                    filename = filename.substring(filename.lastIndexOf("/") + 1)
-
-                downloadedFile =  getFileFromURL(uFile.path, filename)
-                
-                if (!downloadedFile.exists())
-                    return
-
-                if (toCDNProvider == CDNProvider.AMAZON) {
-                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
-                    if (makePublic)
-                        path = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
-                    else
-                        path = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
-                    amazonFileUploaderInstance.close()
-                } else {        
-                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
-                    path = publicBaseURL + "/" + uFile.name
-                }
-
-                uFile.path = path
-                uFile.save()
+        def criteria = UFile.createCriteria()
+        List<UFile> uFileList = criteria.list {
+            or {
+                eq("type", UFileType.CDN_PUBLIC)
+                eq("type", UFileType.CDN_PRIVATE)
             }
         }
+        uFileList.each { uFile ->
+            if (uFile.provider == toCDNProvider)
+                return
 
+            filename = uFile.name
+
+            if (filename && filename.contains("/"))
+                filename = filename.substring(filename.lastIndexOf("/") + 1)
+
+            downloadedFile =  getFileFromURL(uFile.path, filename)
+            
+            if (!downloadedFile.exists())
+                return
+
+            if (toCDNProvider == CDNProvider.AMAZON) {
+                amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
+                if (makePublic)
+                    path = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
+                else
+                    path = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
+                amazonFileUploaderInstance.close()
+            } else {
+                publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
+                path = publicBaseURL + "/" + uFile.name
+            }
+
+            log.info "File moved ${uFile.name}"
+            uFile.path = path
+            uFile.provider = toCDNProvider
+            if(makePublic)
+                uFile.type = UFileType.CDN_PUBLIC
+            uFile.save()
+        }
+        return [:]
     }
 }

@@ -95,10 +95,4 @@ class FileUploaderController {
         render true
     }
 
-    def moveToNewCDN() {
-        fileUploaderService.moveToNewCDN()
-        render text: ([success: true] as JSON)
-        return
-    }
-    
 }
