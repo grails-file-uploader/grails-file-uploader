@@ -629,6 +629,6 @@ class FileUploaderService {
                 uFile.type = UFileType.CDN_PUBLIC
             uFile.save()
         }
-        return [:]
+        return true
     }
 }
