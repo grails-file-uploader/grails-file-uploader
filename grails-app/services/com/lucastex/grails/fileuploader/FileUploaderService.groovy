@@ -574,7 +574,7 @@ class FileUploaderService {
      */
     @Transactional
     Map moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
-        if (!toCDNProvider || !containerName || containerName?.isEmpty()) {
+        if (!toCDNProvider || !containerName) {
             return ["error" : "Incorrect parameters"]
         }
         
