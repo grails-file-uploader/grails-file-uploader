@@ -587,7 +587,6 @@ class FileUploaderService {
         File downloadedFile
 
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance
-        amazonFileUploaderInstance.authenticate()
         if(toCDNProvider == CDNProvider.AMAZON) {
             amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
             amazonFileUploaderInstance.authenticate()
