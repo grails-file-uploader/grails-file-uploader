@@ -567,23 +567,21 @@ class FileUploaderService {
     Boolean isPublicGroup(String fileGroup) {
         return Holders.getFlatConfig()["fileuploader.${fileGroup}.makePublic"] ? true : false
     }
-    		
-    /**		
-     * Moves file from CDN provider to other, updates ufile path. Needs to be excecuted only once.
+
+    /**
+     * Moves file from CDN provider to other, updates UFile path. Needs to be executed only once.
      * @param CDNProvider target CDN Provider enum
      * @param String CDN Container name
      * @param boolean true or false if move was successful
-     * @author Rohit Pal		
+     * @author Rohit Pal
      */
     @Transactional
     boolean moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
         if (!toCDNProvider || !containerName) {
             return false
         }
-        
-        String filename
-        String savedUrlPath
-        String publicBaseURL
+
+        String filename, savedUrlPath, publicBaseURL
         File downloadedFile
 
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance
@@ -601,15 +599,12 @@ class FileUploaderService {
             }
 
             filename = uFile.name
-
-            if (filename && filename.contains("/")) {
-                filename = filename.substring(filename.lastIndexOf("/") + 1)
-            }
+            filename = filename.conatins("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
 
             downloadedFile =  getFileFromURL(uFile.path, filename)
             
-            if (!downloadedFile.exists()) {
-                log.info "Downloaded file not exsist on disk."
+            if (downloadedFile.exists() == false) {
+                log.info "Downloaded file doesn't not exist."
                 return
             }
 
@@ -623,7 +618,7 @@ class FileUploaderService {
                 amazonFileUploaderInstance.close()
             } else {
                 publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
-                savedUrlPath = publicBaseURL + "/" + uFile.name
+                savedUrlPath = "$publicBaseURL/${uFile.name}"
             }
 
             log.info "File moved ${uFile.name}"
