@@ -16,6 +16,7 @@ import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
 import org.jclouds.http.HttpResponseException
 import com.lucastex.grails.fileuploader.MoveStatus
+import com.cc.util.NucleusUtils
 
 class FileUploaderService {
 
@@ -595,18 +596,19 @@ class FileUploaderService {
      */
     @Transactional
     void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false, List<UFile> uFileList) {
-        String filename, savedUrlPath, publicBaseURL, message
+        String filename, savedUrlPath, publicBaseURL, message = "Moved successfully"
         File downloadedFile
         boolean isSuccess = true
 
-        uFileList.each { uFile ->
+        uFileList
+        .findAll { it.provider != toCDNProvider }
+        .each { uFile ->
 
             filename = uFile.name
             filename = filename.contains("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
             downloadedFile =  getFileFromURL(uFile.path, filename)
 
             UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-            log.info "uFileHistory : ${uFileHistory}"
 
             if (downloadedFile.exists() == false) {
                 log.info "Downloaded file doesn't not exist."
@@ -661,14 +663,12 @@ class FileUploaderService {
                 if (makePublic) {
                     uFile.type = UFileType.CDN_PUBLIC
                 }
-                uFile.save()
+                NucleusUtils.save(uFile, true, log)
             } else {
                 log.warn "Error in moving file: ${filename}"
                 uFileHistory.status = MoveStatus.FAILURE
             }
-            
-            uFileHistory.save()
-            log.info "File history saved"
+            NucleusUtils.save(uFileHistory, true, log)
         }
 
         // Re-submitting UFile for failed files
