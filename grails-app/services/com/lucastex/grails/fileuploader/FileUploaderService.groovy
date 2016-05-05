@@ -14,6 +14,9 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
+import org.jclouds.http.HttpResponseException
+import com.lucastex.grails.fileuploader.MoveStatus
+import com.cc.util.NucleusUtils
 
 class FileUploaderService {
 
@@ -514,7 +517,11 @@ class FileUploaderService {
 
         File file = new File(path + filename)
         FileOutputStream fos = new FileOutputStream(file)
-        fos.write(new URL(url).getBytes())
+        try {
+            fos.write(new URL(url).getBytes()) 
+        } catch(FileNotFoundException e) {
+            log.info "URL ${url} not found"
+        }
         fos.close()
 
         // Delete the temporary file when JVM exited since the base file is not required after upload
@@ -562,5 +569,122 @@ class FileUploaderService {
      */
     Boolean isPublicGroup(String fileGroup) {
         return Holders.getFlatConfig()["fileuploader.${fileGroup}.makePublic"] ? true : false
+    }
+
+    /**
+     * Moves file from CDN provider to other, updates UFile path. Needs to be executed only once.
+     * @param CDNProvider target CDN Provider enum
+     * @param String CDN Container name
+     * @param boolean true or false if move was successful
+     * @author Rohit Pal
+     */
+    boolean moveToNewCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false) {
+        if (!toCDNProvider || !containerName) {
+            return false
+        }
+        moveFilesToCDN(toCDNProvider, containerName, makePublic, UFile.findAllByTypeNotEqual(UFileType.LOCAL))
+        return true
+    }
+
+    /**
+     * Moves file from CDN provider to other, updates UFile path. Needs to be executed only once.
+     * @param CDNProvider target CDN Provider enum
+     * @param String CDN Container name
+     * @param boolean true or false if move was successful
+     * @param List UFile list. File to be moved
+     * @author Rohit Pal
+     */
+    @Transactional
+    void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false, List<UFile> uFileList) {
+        String filename, savedUrlPath, publicBaseURL, message = "Moved successfully"
+        File downloadedFile
+        boolean isSuccess = true
+
+        uFileList
+        .findAll { it.provider != toCDNProvider }
+        .each { uFile ->
+
+            filename = uFile.name
+            filename = filename.contains("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
+            downloadedFile =  getFileFromURL(uFile.path, filename)
+
+            UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
+
+            if (downloadedFile.exists() == false) {
+                log.info "Downloaded file doesn't not exist."
+                return
+            }
+
+            try {
+                if (toCDNProvider == CDNProvider.AMAZON) {
+                    AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+                    amazonFileUploaderInstance.authenticate()
+                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
+                    
+                    if (makePublic) {
+                        savedUrlPath = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
+                    } else {
+                        savedUrlPath = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
+                    }
+                    
+                    amazonFileUploaderInstance.close()
+
+                    if (!savedUrlPath.contains("amazonaws")) {
+                        throw new Exception("Saved path incorrect for Amazon")
+                    }
+
+                } else {
+                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
+                    savedUrlPath = "$publicBaseURL/${uFile.name}"
+
+                    if (!savedUrlPath.contains("rackcdn")) {
+                        throw new Exception("Saved path incorrect for Rackspace")
+                    }
+                }
+            } catch (Exception e) {
+                isSuccess = false
+                message = e.getMessage()
+            }
+
+            uFileHistory.moveCount++
+            uFileHistory.lastUpdated = new Date()
+            uFileHistory.toCDN = toCDNProvider
+            uFileHistory.fromCDN = uFile.provider
+            uFileHistory.details = message
+
+            if (isSuccess) {
+                log.info "File moved: ${filename}"
+
+                uFileHistory.status = MoveStatus.SUCCESS
+
+                uFile.path = savedUrlPath
+                uFile.provider = toCDNProvider
+
+                if (makePublic) {
+                    uFile.type = UFileType.CDN_PUBLIC
+                }
+                NucleusUtils.save(uFile, true, log)
+            } else {
+                log.warn "Error in moving file: ${filename}"
+                uFileHistory.status = MoveStatus.FAILURE
+            }
+            NucleusUtils.save(uFileHistory, true, log)
+        }
+
+        // Re-submitting UFile for failed files
+        List<UFile> failureFileList = UFileMoveHistory.withCriteria {
+            and {
+                eq("status", MoveStatus.FAILURE)
+                le("moveCount", 3)
+            }
+            projections {
+                property("ufile")
+            }
+        }
+
+        if (failureFileList.size() > 0) {
+            moveFilesToCDN(toCDNProvider, containerName, makePublic, failureFileList)
+        }
+        
     }
 }
