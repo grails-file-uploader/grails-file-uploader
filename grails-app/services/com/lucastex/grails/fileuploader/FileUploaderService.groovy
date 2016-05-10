@@ -8,22 +8,16 @@ import java.nio.channels.FileChannel
 import javax.annotation.PostConstruct
 
 import org.apache.commons.validator.UrlValidator
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
-import org.jclouds.http.HttpResponseException
 import com.lucastex.grails.fileuploader.MoveStatus
-import com.cc.util.NucleusUtils
 
 class FileUploaderService {
 
     private static final String FILE_NAME_SEPARATOR = "-"
     private static String baseTemporaryDirectoryPath
-
-    static transactional = false
 
     def messageSource
     def rackspaceCDNFileUploaderService
@@ -60,9 +54,8 @@ class FileUploaderService {
      * @param customFileName Custom file name without extension.
      * @return
      */
-    @Transactional
     UFile saveFile(String group, def file, String customFileName = "", Object userInstance = null,
-            Locale locale = null) throws FileUploaderServiceException {
+                   Locale locale = null) throws FileUploaderServiceException {
 
         Long fileSize
         Date expireOn
@@ -78,7 +71,8 @@ class FileUploaderService {
             receivedFileName = file.name
             fileSize = file.size()
         } else {    // Means instance is of Spring's CommonsMultipartFile.
-            CommonsMultipartFile uploaderFile = file
+            //CommonsMultipartFile uploaderFile = file
+            def uploaderFile = file
             contentType = uploaderFile?.contentType
             empty = uploaderFile?.isEmpty()
             receivedFileName = uploaderFile?.originalFilename
@@ -162,13 +156,13 @@ class FileUploaderService {
 
             /**
              * Generating file names like:
-             * 
+             *
              * @example When userInstance available:
              * avatar-14-1415804444014-myavatar.png
-             * 
+             *
              * @example When userInstance is not available:
              * logo-1415804444014-organizationlogo.png
-             *  
+             *
              */
             fileName = fileNameBuilder.toString()
 
@@ -267,7 +261,6 @@ class FileUploaderService {
     }
 
     @SuppressWarnings("CatchException")
-    @Transactional
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
         if (!ufile) {
@@ -371,7 +364,6 @@ class FileUploaderService {
      * @throws FileUploaderServiceException
      * @throws IOException
      */
-    @Transactional
     UFile cloneFile(String group, UFile ufileInstance, String name = "", Locale locale = null) throws FileUploaderServiceException, IOException {
         log.info "Cloning ufile [${ufileInstance?.id}][${ufileInstance?.name}]"
         if (!ufileInstance) {
@@ -507,18 +499,17 @@ class FileUploaderService {
 
     /**
      * Retrieves content of the given url and stores it in the temporary directory.
-     * 
+     *
      * @param url The URL from which file to be retrieved
      * @param filename Name of the file
      */
-    @Transactional
     File getFileFromURL(String url, String filename) {
         String path = getNewTemporaryDirectoryPath()
 
         File file = new File(path + filename)
         FileOutputStream fos = new FileOutputStream(file)
         try {
-            fos.write(new URL(url).getBytes()) 
+            fos.write(new URL(url).getBytes())
         } catch(FileNotFoundException e) {
             log.info "URL ${url} not found"
         }
@@ -594,15 +585,14 @@ class FileUploaderService {
      * @param List UFile list. File to be moved
      * @author Rohit Pal
      */
-    @Transactional
     void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false, List<UFile> uFileList) {
         String filename, savedUrlPath, publicBaseURL, message = "Moved successfully"
         File downloadedFile
         boolean isSuccess = true
 
         uFileList
-        .findAll { it.provider != toCDNProvider }
-        .each { uFile ->
+                .findAll { it.provider != toCDNProvider }
+                .each { uFile ->
 
             filename = uFile.name
             filename = filename.contains("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
@@ -620,13 +610,13 @@ class FileUploaderService {
                     AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
                     amazonFileUploaderInstance.authenticate()
                     amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
-                    
+
                     if (makePublic) {
                         savedUrlPath = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
                     } else {
                         savedUrlPath = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
                     }
-                    
+
                     amazonFileUploaderInstance.close()
 
                     if (!savedUrlPath.contains("amazonaws")) {
@@ -663,12 +653,20 @@ class FileUploaderService {
                 if (makePublic) {
                     uFile.type = UFileType.CDN_PUBLIC
                 }
-                NucleusUtils.save(uFile, true, log)
+
+                ufile.save(flush: true)
+                if (ufile.hasErrors()) {
+                    log.warn "Error saving UFile instance: $ufile.errors"
+                }
             } else {
                 log.warn "Error in moving file: ${filename}"
                 uFileHistory.status = MoveStatus.FAILURE
             }
-            NucleusUtils.save(uFileHistory, true, log)
+
+            ufile.save(flush: true)
+            if (ufile.hasErrors()) {
+                log.warn "Error saving UFile instance: $ufile.errors"
+            }
         }
 
         // Re-submitting UFile for failed files
@@ -685,6 +683,6 @@ class FileUploaderService {
         if (failureFileList.size() > 0) {
             moveFilesToCDN(toCDNProvider, containerName, makePublic, failureFileList)
         }
-        
+
     }
 }
