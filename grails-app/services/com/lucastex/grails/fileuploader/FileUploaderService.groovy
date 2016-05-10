@@ -12,6 +12,7 @@ import org.apache.commons.validator.UrlValidator
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
+import org.jclouds.http.HttpResponseException
 import com.lucastex.grails.fileuploader.MoveStatus
 
 class FileUploaderService {
@@ -55,7 +56,7 @@ class FileUploaderService {
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = "", Object userInstance = null,
-                   Locale locale = null) throws FileUploaderServiceException {
+            Locale locale = null) throws FileUploaderServiceException {
 
         Long fileSize
         Date expireOn
@@ -71,7 +72,6 @@ class FileUploaderService {
             receivedFileName = file.name
             fileSize = file.size()
         } else {    // Means instance is of Spring's CommonsMultipartFile.
-            //CommonsMultipartFile uploaderFile = file
             def uploaderFile = file
             contentType = uploaderFile?.contentType
             empty = uploaderFile?.isEmpty()
@@ -591,8 +591,8 @@ class FileUploaderService {
         boolean isSuccess = true
 
         uFileList
-                .findAll { it.provider != toCDNProvider }
-                .each { uFile ->
+        .findAll { it.provider != toCDNProvider }
+        .each { uFile ->
 
             filename = uFile.name
             filename = filename.contains("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
@@ -653,20 +653,13 @@ class FileUploaderService {
                 if (makePublic) {
                     uFile.type = UFileType.CDN_PUBLIC
                 }
-
-                ufile.save(flush: true)
-                if (ufile.hasErrors()) {
-                    log.warn "Error saving UFile instance: $ufile.errors"
-                }
+                uFile.save(flush: true)
             } else {
                 log.warn "Error in moving file: ${filename}"
                 uFileHistory.status = MoveStatus.FAILURE
             }
-
-            ufile.save(flush: true)
-            if (ufile.hasErrors()) {
-                log.warn "Error saving UFile instance: $ufile.errors"
-            }
+            uFile.save(flush: true)
+            uFileHistory.save(flush: true)
         }
 
         // Re-submitting UFile for failed files
