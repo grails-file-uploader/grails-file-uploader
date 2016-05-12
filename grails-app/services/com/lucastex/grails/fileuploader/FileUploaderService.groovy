@@ -12,7 +12,7 @@ import org.apache.commons.validator.UrlValidator
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
-import org.jclouds.http.HttpResponseException
+import com.lucastex.grails.fileuploader.UFileType
 import com.lucastex.grails.fileuploader.MoveStatus
 
 class FileUploaderService {
