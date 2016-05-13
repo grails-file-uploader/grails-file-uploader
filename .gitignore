@@ -1,4 +1,4 @@
-.* # Ignore all dotfiles...
+# Ignore all dot files...
 .classpath
 .project
 !.gitignore # except for .gitignore
@@ -6,18 +6,26 @@
 
 *.tmproj
 
-#ignoro la carpeta target
+#Ingore Build Files
 target/*
 target-eclipse/*
+build/**
+build.gradle.save
 
-#ignoro archivos de intellij idea
+#Gradle files
+.gradle/*
+
+#Ignore IntelliJ files
 *.iml
 *.ipr
 *.iws
 .idea/*
 .idea/**/*
 
-#ignoro logs
+#Ignore Eclipse files
+plugin.xml
+
+#Ignore logs
 *.log
 
 grails-file-uploader-*.zip

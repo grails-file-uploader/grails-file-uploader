@@ -9,6 +9,29 @@
 import com.lucastex.grails.fileuploader.CDNProvider
 import com.lucastex.grails.fileuploader.util.Time
 
+grails{
+    profile = 'web-plugin'
+    codegen{
+        defaultPackage = 'grails.file.uploader'
+    }
+}
+
+info{
+    app{
+        name = '@info.app.name@'
+        version = '@info.app.version@'
+        grailsVersion = '@info.app.grailsVersion@'
+    }
+}
+
+spring {
+    groovy{
+        template {
+            checkTemplateLocation = false
+        }
+    }
+}
+
 fileuploader {
     AmazonKey = "RANDOM_KEY"
     AmazonSecret = "RANDOM_SECRET"

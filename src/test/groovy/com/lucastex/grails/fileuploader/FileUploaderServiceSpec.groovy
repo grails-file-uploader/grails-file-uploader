@@ -11,7 +11,7 @@ package com.lucastex.grails.fileuploader
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import org.codehaus.groovy.grails.plugins.codecs.HTMLCodec
+import org.grails.plugins.codecs.HTMLCodec
 import spock.lang.Specification
 
 @TestFor(FileUploaderService)
