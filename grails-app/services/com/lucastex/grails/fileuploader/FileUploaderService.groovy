@@ -14,6 +14,7 @@ import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
 import com.lucastex.grails.fileuploader.UFileType
 import com.lucastex.grails.fileuploader.MoveStatus
+import grails.core.GrailsApplication
 
 class FileUploaderService {
 
@@ -22,6 +23,7 @@ class FileUploaderService {
 
     def messageSource
     def rackspaceCDNFileUploaderService
+    GrailsApplication grailsApplication
 
     @PostConstruct
     void postConstruct() {
