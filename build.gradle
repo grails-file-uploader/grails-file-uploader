@@ -6,12 +6,48 @@ buildscript {
     }
     repositories {
         mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://repo.grails.org/grails/core" }
+        mavenCentral()
     }
     dependencies {
+        classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
+
+plugins {
+    id 'nebula.maven-publish' version '4.4.4'
+}
+
+project.publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from project.components.java
+            println "Removing dependencies without a version"
+
+            pom.withXml {
+                def pomNode = asNode()
+                // version-less dependencies are handled with dependencyManagement
+                pomNode.dependencies.dependency.findAll {
+                    it.version.text().isEmpty()
+                }.each {
+                    it.replaceNode {}
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+            url "http://maven-upload.causecode.com"
+        }
+    }
+}
+
 if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
     //codenarc.propertiesFile = "grails-app/conf/codenarc.properties"
 }
