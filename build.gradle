@@ -11,11 +11,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
+        // Uncomment while publishing 
+        //classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
+/*
 plugins {
     id 'nebula.maven-publish' version '4.4.4'
 }
@@ -47,6 +49,7 @@ project.publishing {
         }
     }
 }
+*/
 
 if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
     //codenarc.propertiesFile = "grails-app/conf/codenarc.properties"
