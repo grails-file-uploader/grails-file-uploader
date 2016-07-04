@@ -1,6 +1,5 @@
 package com.lucastex.grails.fileuploader
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 class FileUploaderService {
@@ -20,7 +19,7 @@ class FileUploaderService {
   def UFile saveFile(String group, CommonsMultipartFile file, String name, Locale locale) throws FileUploaderServiceException {
 
     //config handler
-    def config = ConfigurationHolder.config.fileuploader[group]
+    def config = grails.util.Holders.config.fileuploader[group]
 
     /** *********************
      check extensions
