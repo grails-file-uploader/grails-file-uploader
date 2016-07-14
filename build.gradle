@@ -11,7 +11,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        //classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
+        classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
@@ -44,19 +44,16 @@ project.publishing {
     repositories {
         maven {
             credentials {
-                username "priyanshu"
-                password "avoSamBrIcKEtE"
+                username mavenPublishUser
+                password mavenPublishPassword
             }
             url "http://maven-upload.causecode.com"
         }
     }
 }
 
-if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
-    //codenarc.propertiesFile = "grails-app/conf/codenarc.properties"
-}
-version "0.1"
-group "grails.file.uploader"
+version "2.4.7"
+group "com.causecode.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
