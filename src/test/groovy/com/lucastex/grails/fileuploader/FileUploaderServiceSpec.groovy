@@ -8,6 +8,8 @@
 
 package com.lucastex.grails.fileuploader
 
+import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -16,7 +18,12 @@ import spock.lang.Specification
 
 @TestFor(FileUploaderService)
 @TestMixin(GrailsUnitTestMixin)
+@Mock([UFile, FileUploaderService])
 class FileUploaderServiceSpec extends Specification {
+
+    def setup(){
+
+    }
 
     void "test isPublicGroup for various file groups"() {
         mockCodec(HTMLCodec)
@@ -26,5 +33,43 @@ class FileUploaderServiceSpec extends Specification {
         service.isPublicGroup("image") == false
         service.isPublicGroup("profile") == false
         service.isPublicGroup() == false
+    }
+
+    void "Test renewTemporaryURL method in FileUploaderService class for forceAll=false"(){
+        given: "a few instances of UFile class"
+        UFile uFileInstance1 = new UFile(dateUploaded: new Date(), downloads: 0, extension: "png", name: "abc",
+                                        path: "https://xyz/abc", size: 12345, fileGroup: "image", expiresOn: new Date()+30,
+                                        provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
+        UFile uFileInstance2 = new UFile(dateUploaded: new Date(), downloads: 0, extension: "png", name: "abc",
+                                         path: "https://xyz/abc", size: 12345, fileGroup: "image", expiresOn: new Date()+20,
+                                         provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
+        UFile uFileInstance3 = new UFile(dateUploaded: new Date(), downloads: 0, extension: "png", name: "abc",
+                                         path: "https://xyz/abc", size: 12345, fileGroup: "image", expiresOn: new Date()+10,
+                                         provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
+        UFile uFileInstance4 = new UFile(dateUploaded: new Date(), downloads: 0, extension: "png", name: "abc",
+                                         path: "https://xyz/abc", size: 12345, fileGroup: "image", expiresOn: new Date(),
+                                          provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
+        assert UFile.count() == 4
+
+        when: "renewTemporaryURL method is called"
+        FileUploaderService fileUploaderServiceInstance = new FileUploaderService()
+        fileUploaderServiceInstance.renewTemporaryURL()
+        String uFilePath = uFileInstance4.path
+        then: "It should only change image path of uFileInstance4"
+        uFileInstance1.path == "https://xyz/abc"
+        uFileInstance2.path == "https://xyz/abc"
+        uFileInstance3.path == "https://xyz/abc"
+        uFilePath != "https://xyz/abc"
+
+        when: "renewTemporaryURL method is called"
+        uFileInstance4.path = "https://xyz/abc"
+        uFileInstance4.save(flush: true)
+        assert uFileInstance4.path == "https://xyz/abc"
+        fileUploaderServiceInstance.renewTemporaryURL(true)
+        then: "It should renew the image path of all the Instance"
+        uFileInstance1.path != "https://xyz/abc"
+        uFileInstance2.path != "https://xyz/abc"
+        uFileInstance3.path != "https://xyz/abc"
+        uFileInstance4.path != "https://xyz/abc"
     }
 }
