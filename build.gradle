@@ -28,7 +28,7 @@ project.publishing {
 
             groupId "com.causecode.plugins"
             artifactId "file-uploader"
-            version "2.4.7-RC2"
+            version "2.4.7"
 
             pom.withXml {
                 def pomNode = asNode()

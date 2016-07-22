@@ -18,12 +18,8 @@ import spock.lang.Specification
 
 @TestFor(FileUploaderService)
 @TestMixin(GrailsUnitTestMixin)
-@Mock([UFile, FileUploaderService])
+@Mock([UFile])
 class FileUploaderServiceSpec extends Specification {
-
-    def setup(){
-
-    }
 
     void "test isPublicGroup for various file groups"() {
         mockCodec(HTMLCodec)
@@ -52,9 +48,9 @@ class FileUploaderServiceSpec extends Specification {
         assert UFile.count() == 4
 
         when: "renewTemporaryURL method is called"
-        FileUploaderService fileUploaderServiceInstance = new FileUploaderService()
-        fileUploaderServiceInstance.renewTemporaryURL()
+        service.renewTemporaryURL()
         String uFilePath = uFileInstance4.path
+
         then: "It should only change image path of uFileInstance4"
         uFileInstance1.path == "https://xyz/abc"
         uFileInstance2.path == "https://xyz/abc"
@@ -65,7 +61,8 @@ class FileUploaderServiceSpec extends Specification {
         uFileInstance4.path = "https://xyz/abc"
         uFileInstance4.save(flush: true)
         assert uFileInstance4.path == "https://xyz/abc"
-        fileUploaderServiceInstance.renewTemporaryURL(true)
+        service.renewTemporaryURL(true)
+
         then: "It should renew the image path of all the Instance"
         uFileInstance1.path != "https://xyz/abc"
         uFileInstance2.path != "https://xyz/abc"
