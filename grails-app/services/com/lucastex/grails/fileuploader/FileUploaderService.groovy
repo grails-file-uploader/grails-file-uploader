@@ -458,7 +458,7 @@ class FileUploaderService {
         return failedUFileIdList
     }
 
-    void renewTemporaryURL() {
+    void renewTemporaryURL(boolean forceAll = false) {
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
         amazonFileUploaderInstance.authenticate()
 
@@ -471,13 +471,14 @@ class FileUploaderService {
             } else {
                 isNotNull("expiresOn")
             }
-            or {
-                lt("expiresOn", new Date())
-                between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+            if (!forceAll) {
+                or {
+                    lt("expiresOn", new Date())
+                    between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+                }
             }
         }.each { UFile ufileInstance ->
             log.debug "Renewing URL for $ufileInstance"
-
             String containerName = ufileInstance.container
             String fileFullName = ufileInstance.fullName
             long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)

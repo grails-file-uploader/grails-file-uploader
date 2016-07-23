@@ -35,7 +35,6 @@ spring {
 fileuploader {
     AmazonKey = "RANDOM_KEY"
     AmazonSecret = "RANDOM_SECRET"
-    persistence.provider = "mongodb"
     user {
         maxSize = 1024 * 1024 * 2 // 2 MB
         allowedExtensions = ["jpg","jpeg","gif","png"]
