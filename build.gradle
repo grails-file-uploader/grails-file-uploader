@@ -6,7 +6,8 @@ buildscript {
     }
     repositories {
         mavenLocal()
-        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://repo.grails.org/grails/repo/" }
+        maven { url "https://repo.grails.org/grails/plugins/" }
         maven { url "https://repo.grails.org/grails/core" }
         mavenCentral()
     }
@@ -28,7 +29,7 @@ project.publishing {
 
             groupId "com.causecode.plugins"
             artifactId "file-uploader"
-            version "2.4.7"
+            version "2.4.8"
 
             pom.withXml {
                 def pomNode = asNode()
@@ -52,7 +53,7 @@ project.publishing {
     }
 }
 
-version "2.4.7"
+version "2.4.8"
 group "com.causecode.plugins"
 
 apply plugin:"eclipse"
