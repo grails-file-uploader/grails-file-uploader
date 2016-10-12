@@ -6,8 +6,8 @@
  * without modification, are not permitted.
  */
 
-import com.lucastex.grails.fileuploader.CDNProvider
-import com.lucastex.grails.fileuploader.util.Time
+import com.lucastex.grails.fileuploader.*
+import com.lucastex.grails.fileuploader.util.*
 
 grails{
     profile = 'web-plugin'
@@ -49,7 +49,7 @@ fileuploader {
         storageTypes = "CDN"
         container = "causecode-1"
         provider = CDNProvider.AMAZON
-        expirationPeriod = Time.DAY * 365
+        expirationPeriod = 24 * 60 * 60 * 1 * 365L
     }
     profile {
         maxSize = 1024 * 1024 * 2 // 2 MB
@@ -57,6 +57,6 @@ fileuploader {
         storageTypes = "CDN"
         container = "causecode-1"
         provider = CDNProvider.AMAZON
-        expirationPeriod = Time.DAY * 365
+        expirationPeriod = 24 * 60 * 60 * 1 * 365L
     }
 }

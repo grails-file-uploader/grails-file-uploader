@@ -1,4 +1,6 @@
-# File-Uploader Plugin (Latest 2.4.4)
+# File-Uploader Plugin (Latest 2.4.9)
+
+Supported Grails 3.2.0
 
 #### Causecode Technologies Pvt. Ltd.
 
