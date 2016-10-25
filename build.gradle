@@ -46,9 +46,10 @@ dependencyManagement {
 }
 
 dependencies {
-    // Default dependencies in grails 3.2.0 for plugin
-    // While porting to a new grails version, create a blank app and replace the default dependencies with the new ones.
-    compile "org.springframework.boot:spring-boot-starter-logging"
+    /* Default dependencies in grails 3.2.0 for plugin
+    * While porting to a new grails version, create a blank plugin and replace the default dependencies with the new ones.
+    */
+	compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -61,7 +62,8 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    //provided "org.codehaus.groovy:groovy-ant"
+    // The commented dependencies were shipped with Grails 3.2.0 and are not required for this plugin.
+	//provided "org.codehaus.groovy:groovy-ant"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
     //runtime "com.h2database:h2"
     testCompile "org.grails:grails-plugin-testing"
@@ -72,8 +74,8 @@ dependencies {
 
     /*
     * Dependencies which were needed for the application/plugin.
-    *Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent app
-    providedCompile "org.grails.plugins:hibernate4"
+    * Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent app
+    * providedCompile "org.grails.plugins:hibernate4"
     */
 
     compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
