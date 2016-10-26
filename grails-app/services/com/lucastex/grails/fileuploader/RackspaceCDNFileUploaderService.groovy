@@ -15,7 +15,7 @@ import org.jclouds.cloudfiles.CloudFilesClient
 import org.jclouds.openstack.swift.CommonSwiftClient
 import org.jclouds.openstack.swift.domain.ContainerMetadata
 import org.jclouds.openstack.swift.domain.SwiftObject
-import org.jclouds.rest.RestContext
+import org.jclouds.rest.ApiContext
 
 import com.google.common.collect.Lists
 import com.google.common.util.concurrent.Futures
@@ -37,7 +37,7 @@ class RackspaceCDNFileUploaderService {
     private Set<ContainerMetadata> containers = []
     // TODO: SwiftApi has been removed since jclouds 1.8. Implement Rackspace auth without using SwiftApi
     // private RestContext<CommonSwiftClient, CommonSwiftAsyncClient> swift
-    private RestContext swift
+    private ApiContext swift
 
     String uploadFileToCDN(String containerName, def file, String fileName) {
         SwiftObject object = swift.getApi().newSwiftObject()
