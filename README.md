@@ -1,4 +1,8 @@
-# File-Uploader Plugin (Latest 2.4.4)
+# File-Uploader Plugin (Latest 3.2.0)
+
+Supported Grails 3.2.0
+
+# For Grails 2.x refer branch [here](https://bitbucket.org/causecode/grails-file-uploader/src/a26a79d1a8fceada58f7ad3fd5550a75a27e247c/?at=grails-2.x-master)
 
 #### Causecode Technologies Pvt. Ltd.
 
