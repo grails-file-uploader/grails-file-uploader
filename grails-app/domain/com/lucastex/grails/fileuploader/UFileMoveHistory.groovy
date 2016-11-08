@@ -42,7 +42,7 @@ class UFileMoveHistory {
 enum MoveStatus {
     FAILURE(0),
     SUCCESS(1)
-    
+
     final int id
     MoveStatus(int id) {
         this.id = id

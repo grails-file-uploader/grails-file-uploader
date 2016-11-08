@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+/*
 import static java.util.concurrent.Executors.newFixedThreadPool
 import grails.util.Holders
 
@@ -23,10 +24,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
 import com.lucastex.grails.fileuploader.cdn.BlobDetail
+*/
 
 class RackspaceCDNFileUploaderService {
 
-    static transactional = false
+   /* static transactional = false
 
     def grailsApplication
 
@@ -150,5 +152,5 @@ class RackspaceCDNFileUploaderService {
 
             return uploadedBlobDetail
         }
-    }
+    }*/
 }

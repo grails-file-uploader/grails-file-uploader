@@ -31,6 +31,10 @@ class UFile implements Serializable {
         provider nullable: true
     }
 
+    static mapping = {
+        path sqlType: 'text'
+    }
+
     def afterDelete() {
         /*
          * Using Holder class to get service instead of injecting it as dependency injection with transient modifier.
@@ -52,7 +56,7 @@ class UFile implements Serializable {
     }
 
     String getContainer() {
-        containerName(Holders.getFlatConfig()["fileuploader.${fileGroup}.container"])
+        containerName(Holders.getFlatConfig()["fileuploader.groups.${fileGroup}.container"])
     }
 
     String getFullName() {
@@ -68,11 +72,15 @@ class UFile implements Serializable {
      * A small helper method which returns the passed container name where the current environment name will be
      * appended if the current environment is not the Production environment. This is used to keep the containers
      * separate for all environment.
-     * 
-     * @param containerName Name of the Amazon file container or Rackspace bucket.
+     *
+     * @param containerName Name of the Amazon file container or Google bucket.
      * @return Modified container name as described above.
      */
     static String containerName(String containerName) {
+        if (!containerName) {
+            return
+        }
+
         if (Environment.current != Environment.PRODUCTION) {
             return containerName + "-" + Environment.current.name
         }
@@ -101,7 +109,8 @@ enum UFileType {
 enum CDNProvider {
 
     AMAZON(1),
-    RACKSPACE(2)
+    RACKSPACE(2),
+    GOOGLE(3)
 
     final int id
     CDNProvider(int id) {

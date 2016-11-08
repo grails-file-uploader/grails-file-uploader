@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader
 
+import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.util.Holders
 import groovy.io.FileType
 
@@ -22,8 +23,7 @@ class FileUploaderService {
     private static String baseTemporaryDirectoryPath
 
     def messageSource
-    def rackspaceCDNFileUploaderService
-    GrailsApplication grailsApplication
+    //def rackspaceCDNFileUploaderService
 
     @PostConstruct
     void postConstruct() {
@@ -37,7 +37,29 @@ class FileUploaderService {
         File tempDirectory = new File(baseTemporaryDirectoryPath)
         tempDirectory.mkdirs()
 
-        log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}"
+        log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}]"
+    }
+
+    /**
+     * This method is used for dynamically instantiating the CDNFileUploader class based on the Provider.
+     *
+     * @param providerName The name of the provider.
+     * @return Instance of the CDNFileUploader class.
+     *
+     * @author Nikhil Sharma
+     * @since 2.4.9
+     */
+    CDNFileUploader getProviderInstance(String providerName) {
+        String packageName = "com.lucastex.grails.fileuploader.cdn.${providerName.toLowerCase()}."
+        String classNamePrefix = providerName.toLowerCase().capitalize()
+        String providerClassName = packageName + "${classNamePrefix}CDNFileUploaderImpl"
+
+        try {
+            return Class.forName(providerClassName)?.newInstance()
+        } catch (ClassNotFoundException e) {
+            log.debug "Could not find Provider class", e
+            throw new ProviderNotFoundException("Provider $providerName not found.", e)
+        }
     }
 
     String getNewTemporaryDirectoryPath() {
@@ -52,13 +74,15 @@ class FileUploaderService {
     }
 
     /**
+     * This method is used to save files to CDN providers.
+     *
      * @param group
      * @param file
      * @param customFileName Custom file name without extension.
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = "", Object userInstance = null,
-            Locale locale = null) throws FileUploaderServiceException {
+        Locale locale = null) throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException {
 
         Long fileSize
         Date expireOn
@@ -81,16 +105,17 @@ class FileUploaderService {
             fileSize = uploaderFile?.size
         }
 
-        log.info "Received ${empty ? 'empty ' : ''}file [$receivedFileName] of size [$fileSize] & content type [$contentType]."
+        log.info "Received ${empty ? 'empty ' : ''} file [$receivedFileName] of size [$fileSize] & content type " +
+                "[$contentType]."
         if (empty || !file) {
             return null
         }
 
-        ConfigObject config = Holders.getConfig().fileuploader
+        ConfigObject config = Holders.getConfig().fileuploader.groups
         ConfigObject groupConfig = config[group]
 
-        if (config[group].isEmpty()) {
-            throw new FileUploaderServiceException("No config defined for group [$group]. Please define one in your Config file.")
+        if (groupConfig.isEmpty()) {
+            throw new StorageConfigurationException("No config defined for group [$group]. Please define one in your Config file.")
         }
 
         int extensionAt = receivedFileName.lastIndexOf(".")
@@ -105,7 +130,7 @@ class FileUploaderService {
             String msg = messageSource.getMessage("fileupload.upload.unauthorizedExtension",
                     [fileExtension, groupConfig.allowedExtensions] as Object[], locale)
             log.debug msg
-            throw new FileUploaderServiceException(msg)
+            throw new StorageConfigurationException(msg)
         }
 
         /**
@@ -116,7 +141,7 @@ class FileUploaderService {
             if (fileSize > groupConfig.maxSize) { //if filesize is bigger than allowed
                 log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
                 def msg = messageSource.getMessage("fileupload.upload.fileBiggerThanAllowed", [maxSizeInKb] as Object[], locale)
-                throw new FileUploaderServiceException(msg)
+                throw new StorageConfigurationException(msg)
             }
         }
 
@@ -131,15 +156,10 @@ class FileUploaderService {
 
         if (storageTypes == "CDN") {
             type = UFileType.CDN_PUBLIC
-            String containerName
+            String containerName = UFile.containerName(groupConfig.container ?: config.container)
 
-            // If group specific container is not defined
-            if (groupConfig.container instanceof ConfigObject) {
-                // Then use the common container name
-                containerName = UFile.containerName(config.container)
-            } else {
-                // Otherwise use the group specific container
-                containerName = UFile.containerName(groupConfig.container)
+            if (!containerName) {
+                throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
             }
 
             long expirationPeriod = getExpirationPeriod(group)
@@ -185,31 +205,33 @@ class FileUploaderService {
             // Delete the temporary file when JVM exited since the base file is not required after upload
             tempFile.deleteOnExit()
 
-            if (groupConfig.provider instanceof ConfigObject) {
-                cdnProvider = config.provider
-            } else {
-                cdnProvider = groupConfig.provider
+            cdnProvider = groupConfig.provider ?: config.provider
+
+            if (!cdnProvider) {
+                throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
             Boolean makePublic = isPublicGroup(group)
             expireOn = new Date(new Date().time + expirationPeriod * 1000)
 
-            if (cdnProvider == CDNProvider.AMAZON) {
-                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
-                amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, makePublic, expirationPeriod)
+            if (cdnProvider != CDNProvider.RACKSPACE) {
+                CDNFileUploader fileUploaderInstance
+                try {
+                    fileUploaderInstance = getProviderInstance(cdnProvider.name())
+                    fileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, makePublic, expirationPeriod)
 
-                if (makePublic) {
-                    path = amazonFileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
-                    expireOn = null
-                } else {
-                    path = amazonFileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                    if (makePublic) {
+                        path = fileUploaderInstance.getPermanentURL(containerName, tempFileFullName)
+                        expireOn = null
+                    } else {
+                        path = fileUploaderInstance.getTemporaryURL(containerName, tempFileFullName, expirationPeriod)
+                    }
+                } finally {
+                    fileUploaderInstance?.close()
                 }
-
-                amazonFileUploaderInstance.close()
             } else {
-                String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
-                path = publicBaseURL + "/" + tempFileFullName
+//                String publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, tempFile, tempFileFullName)
+//                path = publicBaseURL + "/" + tempFileFullName
             }
         } else {
             // Base path to save file
@@ -238,11 +260,11 @@ class FileUploaderService {
             }
 
             // Move file
-            log.debug "Moving [$fileName] to [${path}]."
-            if (file instanceof File)
-                file.renameTo(new File(path))
-            else
-                file.transferTo(new File(path))
+//            log.debug "Moving [$fileName] to [${path}]."
+//            if (file instanceof File)
+//                file.renameTo(new File(path))
+//            else
+//                file.transferTo(new File(path))
         }
 
         UFile ufile = new UFile()
@@ -280,19 +302,22 @@ class FileUploaderService {
         return true
     }
 
-    boolean deleteFileForUFile(UFile ufileInstance) {
+    boolean deleteFileForUFile(UFile ufileInstance) throws ProviderNotFoundException, StorageException {
         log.debug "Deleting file for $ufileInstance"
 
         if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
             String containerName = ufileInstance.container
 
-            if (ufileInstance.provider == CDNProvider.AMAZON) {
-                AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
-                amazonFileUploaderInstance.authenticate()
-                amazonFileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
-                amazonFileUploaderInstance.close()
+            if (ufileInstance.provider != CDNProvider.RACKSPACE) {
+                CDNFileUploader fileUploaderInstance
+                try {
+                    fileUploaderInstance = getProviderInstance(ufileInstance.provider.name())
+                    fileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
+                } finally {
+                    fileUploaderInstance?.close()
+                }
             } else {
-                rackspaceCDNFileUploaderService.deleteFile(containerName, ufileInstance.fullName)
+                //rackspaceCDNFileUploaderService.deleteFile(containerName, ufileInstance.fullName)
             }
             return true
         }
@@ -363,10 +388,10 @@ class FileUploaderService {
      * @param ufileInstance
      * @param name
      * @param locale
-     * @throws FileUploaderServiceException
+     * @throws StorageConfigurationException
      * @throws IOException
      */
-    UFile cloneFile(String group, UFile ufileInstance, String name = "", Locale locale = null) throws FileUploaderServiceException, IOException {
+    UFile cloneFile(String group, UFile ufileInstance, String name = "", Locale locale = null) throws StorageConfigurationException, IOException {
         log.info "Cloning ufile [${ufileInstance?.id}][${ufileInstance?.name}]"
         if (!ufileInstance) {
             log.warn "Invalid/null ufileInstance received."
@@ -435,8 +460,8 @@ class FileUploaderService {
         }
         containerName = UFile.containerName(containerName)
 
-        rackspaceCDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
-        String baseURL = rackspaceCDNFileUploaderService.cdnEnableContainer(containerName)
+//        rackspaceCDNFileUploaderService.uploadFilesToCloud(containerName, blobDetailList)
+//        String baseURL = rackspaceCDNFileUploaderService.cdnEnableContainer(containerName)
 
         blobDetailList.each {
             UFile uploadUFileInstance = ufileInstanceList.find { ufileInstance ->
@@ -459,45 +484,57 @@ class FileUploaderService {
     }
 
     void renewTemporaryURL(boolean forceAll = false) {
-        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
-        amazonFileUploaderInstance.authenticate()
-
-        UFile.withCriteria {
-            eq("type", UFileType.CDN_PUBLIC)
-            eq("provider", CDNProvider.AMAZON)
-
-            if (Holders.getFlatConfig()["fileuploader.persistence.provider"] == "mongodb") {
-                eq("expiresOn", [$exists: true])
-            } else {
-                isNotNull("expiresOn")
+        CDNProvider.values().each { CDNProvider cdnProvider ->
+            if (cdnProvider == CDNProvider.RACKSPACE) {
+                return
             }
-            if (!forceAll) {
-                or {
-                    lt("expiresOn", new Date())
-                    between("expiresOn", new Date(), new Date() + 1) // Getting all CDN UFiles which are about to expire within one day.
+
+            CDNFileUploader fileUploaderInstance = getProviderInstance(cdnProvider.name())
+
+            if (!fileUploaderInstance) {
+                return
+            }
+
+            UFile.withCriteria {
+                eq("type", UFileType.CDN_PUBLIC)
+                eq("provider", cdnProvider)
+
+                if (Holders.getFlatConfig()["fileuploader.persistence.provider"] == "mongodb") {
+                    eq("expiresOn", [$exists: true])
+                } else {
+                    isNotNull("expiresOn")
                 }
-            }
-        }.each { UFile ufileInstance ->
-            log.debug "Renewing URL for $ufileInstance"
-            String containerName = ufileInstance.container
-            String fileFullName = ufileInstance.fullName
-            long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
+                if (!forceAll) {
+                    or {
+                        lt("expiresOn", new Date())
+                        // Getting all CDN UFiles which are about to expire within one day.
+                        between("expiresOn", new Date(), new Date() + 1)
+                    }
+                }
+            }.each { UFile ufileInstance ->
+                log.debug "Renewing URL for $ufileInstance"
 
-            ufileInstance.path = amazonFileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
-            ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
-            ufileInstance.save(flush: true)
-            if (ufileInstance.hasErrors()) {
-                log.warn "Error saving new URL for $ufileInstance"
+                String containerName = ufileInstance.container
+                String fileFullName = ufileInstance.fullName
+                long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
+
+                ufileInstance.path = fileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
+                ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+                ufileInstance.save(flush: true)
+                if (ufileInstance.hasErrors()) {
+                    log.debug "Error saving new URL for $ufileInstance"
+                }
+
+                log.debug "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
             }
 
-            log.info "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
+            fileUploaderInstance.close()
         }
-
-        amazonFileUploaderInstance.close()
     }
 
     long getExpirationPeriod(String fileGroup) {
-        return Holders.getFlatConfig()["fileuploader.${fileGroup}.expirationPeriod"] ?: (Time.DAY * 30)      // Default to 30 Days
+        // Default to 30 Days
+        return Holders.getFlatConfig()["fileuploader.groups.${fileGroup}.expirationPeriod"] ?: (Time.DAY * 30)
     }
 
     /**
@@ -526,13 +563,13 @@ class FileUploaderService {
 
     /**
      * This method is used to update meta data of all the previously uploaded files to the
-     * {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider} bucket. Currently only Amazon is supported.
-     * @param {@link com.lucastex.grails.fileuploader.CDNProvider CDNProvider}
+     * {@link CDNProvider CDNProvider} bucket. Currently only Amazon is supported.
+     * @param {@link CDNProvider CDNProvider}
      * @since 2.4.3
      * @author Priyanshu Chauhan
      */
     void updateAllUFileCacheHeader(CDNProvider cdnProvider = CDNProvider.AMAZON) {
-        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
+        AmazonCDNFileUploaderImpl amazonFileUploaderInstance = new AmazonCDNFileUploaderImpl()
         amazonFileUploaderInstance.authenticate()
 
         // TODO: Add support for Rackspace
@@ -562,7 +599,7 @@ class FileUploaderService {
      * @author Priyanshu Chauhan
      */
     Boolean isPublicGroup(String fileGroup) {
-        return Holders.getFlatConfig()["fileuploader.${fileGroup}.makePublic"] ? true : false
+        return Holders.getFlatConfig()["fileuploader.groups.${fileGroup}.makePublic"] ? true : false
     }
 
     /**
@@ -588,55 +625,60 @@ class FileUploaderService {
      * @param List UFile list. File to be moved
      * @author Rohit Pal
      */
-    void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false, List<UFile> uFileList) {
+    void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false,
+                        List<UFile> uFileList) throws ProviderNotFoundException, StorageException {
         String filename, savedUrlPath, publicBaseURL, message = "Moved successfully"
         File downloadedFile
         boolean isSuccess = true
 
         uFileList
-        .findAll { it.provider != toCDNProvider }
-        .each { uFile ->
+                .findAll { it.provider != toCDNProvider }
+                .each { uFile ->
 
             filename = uFile.name
             filename = filename.contains("/") ? filename.substring(filename.lastIndexOf("/") + 1) : filename
-            downloadedFile =  getFileFromURL(uFile.path, filename)
+            downloadedFile = getFileFromURL(uFile.path, filename)
 
             UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
 
-            if (downloadedFile.exists() == false) {
-                log.info "Downloaded file doesn't not exist."
+            if (!downloadedFile.exists()) {
+                log.debug "Downloaded file doesn't not exist."
                 return
             }
 
+            long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
+
             try {
-                if (toCDNProvider == CDNProvider.AMAZON) {
-                    AmazonCDNFileUploaderImpl amazonFileUploaderInstance = AmazonCDNFileUploaderImpl.getInstance()
-                    amazonFileUploaderInstance.authenticate()
-                    amazonFileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.name, makePublic, getExpirationPeriod())
+                if (toCDNProvider != CDNProvider.RACKSPACE) {
+                    CDNFileUploader fileUploaderInstance
+                    try {
+                        fileUploaderInstance = getProviderInstance(toCDNProvider.name())
+                        fileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.fullName, makePublic,
+                                expirationPeriod)
 
-                    if (makePublic) {
-                        savedUrlPath = amazonFileUploaderInstance.getPermanentURL(containerName, uFile.name)
-                    } else {
-                        savedUrlPath = amazonFileUploaderInstance.getTemporaryURL(containerName, uFile.name, getExpirationPeriod())
+                        if (makePublic) {
+                            savedUrlPath = fileUploaderInstance.getPermanentURL(containerName, uFile.fullName)
+                        } else {
+                            savedUrlPath = fileUploaderInstance.getTemporaryURL(containerName, uFile.fullName,
+                                    expirationPeriod)
+                        }
+
+                    } finally {
+                        fileUploaderInstance?.close()
                     }
-
-                    amazonFileUploaderInstance.close()
-
-                    if (!savedUrlPath.contains("amazonaws")) {
-                        throw new Exception("Saved path incorrect for Amazon")
-                    }
-
                 } else {
-                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile, uFile.name)
-                    savedUrlPath = "$publicBaseURL/${uFile.name}"
-
-                    if (!savedUrlPath.contains("rackcdn")) {
-                        throw new Exception("Saved path incorrect for Rackspace")
-                    }
+//                    publicBaseURL = rackspaceCDNFileUploaderService.uploadFileToCDN(containerName, downloadedFile,
+//                            uFile.fullName)
+//                    savedUrlPath = "$publicBaseURL/${uFile.name}"
+//
+//                    if (!savedUrlPath.contains("rackcdn")) {
+//                        throw new Exception("Saved path incorrect for Rackspace")
+//                    }
                 }
             } catch (Exception e) {
                 isSuccess = false
                 message = e.getMessage()
+                log.debug message
             }
 
             uFileHistory.moveCount++
@@ -646,19 +688,21 @@ class FileUploaderService {
             uFileHistory.details = message
 
             if (isSuccess) {
-                log.info "File moved: ${filename}"
+                log.debug "File moved: ${filename}"
 
                 uFileHistory.status = MoveStatus.SUCCESS
 
                 uFile.path = savedUrlPath
                 uFile.provider = toCDNProvider
 
+                uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+
                 if (makePublic) {
                     uFile.type = UFileType.CDN_PUBLIC
                 }
                 uFile.save(flush: true)
             } else {
-                log.warn "Error in moving file: ${filename}"
+                log.debug "Error in moving file: ${filename}"
                 uFileHistory.status = MoveStatus.FAILURE
             }
             uFile.save(flush: true)

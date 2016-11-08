@@ -1,5 +1,6 @@
 package com.lucastex.grails.fileuploader.cdn.amazon
 
+import com.lucastex.grails.fileuploader.UploadFailureException
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.util.Holders
 import org.apache.commons.logging.Log
@@ -26,20 +27,19 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
     AWSS3Client client
 
-    AmazonCDNFileUploaderImpl(String accessKey, String accessSecret) {
-        this.accessKey = accessKey
-        this.accessSecret = accessSecret
-    }
-
-    static AmazonCDNFileUploaderImpl getInstance() {
-        String key = Holders.getFlatConfig()["fileuploader.AmazonKey"]
-        String secret = Holders.getFlatConfig()["fileuploader.AmazonSecret"]
+    AmazonCDNFileUploaderImpl() {
+        String key = Holders.getFlatConfig()['fileuploader.storageProvider.amazon.AmazonKey']
+        String secret = Holders.getFlatConfig()['fileuploader.storageProvider.amazon.AmazonSecret']
 
         if (!key || !secret) {
             log.warn "No username or key configured for Amazon CDN service"
+            return
         }
 
-        return new AmazonCDNFileUploaderImpl(key, secret)
+        this.accessKey = key
+        this.accessSecret = secret
+
+        authenticate()
     }
 
     @Override
@@ -47,20 +47,20 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         context = ContextBuilder.newBuilder("aws-s3")
                 .credentials(accessKey, accessSecret)
                 .buildView(BlobStoreContext.class)
-        println "Context created ${context.class}"
+        log.info "Context created ${context.class}"
 
         blobStore = context.getBlobStore()
-        println "Blobstore ${blobStore.class}"
+        log.info "Blobstore ${blobStore.class}"
 
         // Storing wrapped api of S3Client with apache jcloud
         client = context.unwrap().getApi()
 
-        return false
+        return true
     }
 
     @Override
     void close() {
-        context.close()
+        context?.close()
     }
 
     @Override
@@ -135,7 +135,11 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
         s3ObjectToUpdate.setPayload(file)
-        client.putObject(containerName, s3ObjectToUpdate, fileOptions)
+        try {
+            client.putObject(containerName, s3ObjectToUpdate, fileOptions)
+        } catch (Exception e) {
+            throw new UploadFailureException(fileName, containerName, e)
+        }
         return true
     }
 

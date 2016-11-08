@@ -1,4 +1,4 @@
-# File-Uploader Plugin (Latest 3.2.0)
+# File-Uploader Plugin (Latest 3.0.0)
 
 Supported Grails 3.2.0
 
@@ -23,32 +23,52 @@ import com.lucastex.grails.fileuploader.CDNProvider
 grails.tempDirectory = "./temp-files"     // Required to store files temporarily. Must not ends with "/"
 
 fileuploader {
-    RackspaceKey = "mykey"
-    RackspaceUsername = "myusername"
 
-    AmazonKey = "somekey"	// For amazon S3
-    AmazonSecret = "somesecret"
-    defaultContainer = "anyConatainer"  // Container to move local files to cloud
+    storageProvider {
 
-    degreeApplication {			// Non CDN files, will be stored in local directory.
-        maxSize = 1000 * 1024 //256 kbytes
-        allowedExtensions = ["xls"]
-        path = "./web-app/degree-applications"
-        storageTypes = ""
+        amazon {
+            AmazonKey = "somekey"	// For amazon S3
+            AmazonSecret = "somesecret"
+            defaultContainer = "anyConatainer"  // Container to move local files to cloud
+        }
+        google {
+            authFile = '/path/to/key.json'
+
+            // This is must for both cases, i.e reading file using the path in 'auth' or reading hard coded credentials from here itself.
+            project_id = '<project_id_provided_in_json_key_file>'
+
+            // Other required values from JSON key file.
+            private_key_id = '<private_key_id_provided_in_json_key_file>'
+            private_key = '<private_key_provided_in_json_key_file>'
+            client_email = '<client_email_provided_in_json_key_file>'
+            client_id = '<client_id_provided_in_json_key_file>'
+
+            // Optional, this defaults to 'service_account'.
+            type = ''
+        }
     }
-    userAvatar {
-        maxSize = 1024 * 1024 * 2 //256 kbytes
-        allowedExtensions = ["jpg","jpeg","gif","png"]
-        storageTypes = "CDN"
-        container = "anyContainerName"
-    }
-    logo {
-        maxSize = 1024 * 1024 * 2 //256 kbytes
-        allowedExtensions = ["jpg","jpeg","gif","png"]
-        storageTypes = "CDN"
-        container = "anyContainerName"
-        provider = CDNProvider.AMAZON
-        expirationPeriod = 60 * 60 * 24 * 2 // Two hours
+
+    groups {
+        degreeApplication {			// Non CDN files, will be stored in local directory.
+            maxSize = 1000 * 1024 //256 kbytes
+            allowedExtensions = ["xls"]
+            path = "./web-app/degree-applications"
+            storageTypes = ""
+        }
+        userAvatar {
+            maxSize = 1024 * 1024 * 2 //256 kbytes
+            allowedExtensions = ["jpg","jpeg","gif","png"]
+            storageTypes = "CDN"
+            container = "anyContainerName"
+        }
+        logo {
+            maxSize = 1024 * 1024 * 2 //256 kbytes
+            allowedExtensions = ["jpg","jpeg","gif","png"]
+            storageTypes = "CDN"
+            container = "anyContainerName"
+            provider = CDNProvider.AMAZON
+            expirationPeriod = 60 * 60 * 24 * 2 // Two hours
+        }
     }
 }
 ```
@@ -61,3 +81,9 @@ This username & key needs to be passed in config as shown in above example. Auth
 
 2. By default path URL retrieved from Amazon S3 service is temporary URL, which will be valid for 30 days bydefault. Which
 can be overwritten for group level configuration by setting **expirationPeriod**. This period must be of long type in seconds.
+
+3. For Google Cloud Authentication, you will have to add the key (JSON file downloaded from the Cloud Console) to the server and add an environment
+   variable called GOOGLE_APPLICATION_CREDENTIALS which points to the file. In bashrc file, add:
+   ```
+   # Google Default Credentials
+   export GOOGLE_APPLICATION_CREDENTIALS='/path/to/key.json'
