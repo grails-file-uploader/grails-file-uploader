@@ -18,19 +18,19 @@ import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
+import groovy.util.logging.Slf4j
+
 import java.util.concurrent.TimeUnit
 import javax.activation.MimetypesFileTypeMap
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+
 /**
  * This class is used for all the Google Cloud Storage operations.
  *
  * @author Nikhil Sharma
  * @since 2.4.9
  */
-class GoogleCDNFileUploaderImpl extends CDNFileUploader {
-
-    private static Log log = LogFactory.getLog(this)
+@Slf4j
+class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     static Storage gStorage
 
@@ -39,7 +39,7 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader {
     }
 
     Blob getBlob(String containerName, String fileName) {
-        BlobId blobId = BlobId.of(containerName, fileName);
+        BlobId blobId = BlobId.of(containerName, fileName)
         try {
             return gStorage.get(blobId)
         } catch (StorageException e) {
@@ -79,9 +79,9 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader {
     boolean createContainer(String name) {
         Bucket bucket
         try {
-            bucket = gStorage.create(BucketInfo.of(name));
+            bucket = gStorage.create(BucketInfo.of(name))
         } catch (StorageException e) {
-            throw new GoogleStorageException("Could not create container.", e)
+            throw new GoogleStorageException('Could not create container.', e)
         }
 
         log.debug "Container with name ${bucket.name()} successfully created."
@@ -129,7 +129,7 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader {
 
         try {
             gStorage.create(blobInfo, file.bytes)
-        } catch (Exception e) {
+        } catch (StorageException e) {
             throw new UploadFailureException(fileName, containerName, e)
         }
 

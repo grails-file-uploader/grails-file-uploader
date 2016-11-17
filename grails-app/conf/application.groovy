@@ -62,6 +62,7 @@ fileuploader {
             maxSize = 1024 * 1024 * 2 // 2 MB
             allowedExtensions = ["jpg","jpeg","gif","png","txt"]
             storageTypes = "CDN"
+            path = './temp'
             container = "causecode"
             provider = CDNProvider.GOOGLE
             expirationPeriod = 24 * 60 * 60 * 1 * 365L
@@ -70,6 +71,7 @@ fileuploader {
             maxSize = 1024 * 1024 * 2 // 2 MB
             allowedExtensions = ["jpg","jpeg","gif","png","txt"]
             storageTypes = "CDN"
+            path = './temp'
             container = "causecode"
             provider = CDNProvider.AMAZON
             expirationPeriod = 24 * 60 * 60 * 1 * 365L

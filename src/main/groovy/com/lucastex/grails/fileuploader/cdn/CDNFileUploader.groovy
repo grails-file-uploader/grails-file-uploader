@@ -1,8 +1,16 @@
+/*
+ * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
 package com.lucastex.grails.fileuploader.cdn
 
 import org.jclouds.blobstore.BlobStore
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.cloudfiles.CloudFilesClient
+
 /**
  * Abstract class to provide an interface so that any cloud provider can be
  * easily configured in combination with Apache jCloud.
@@ -10,48 +18,44 @@ import org.jclouds.cloudfiles.CloudFilesClient
  * Container term used may points to different meaning to different providers.
  * For example: bucket is used in Amazon S3 Service
  */
-public abstract class CDNFileUploader {
+abstract class CDNFileUploader implements Closeable {
 
-    public String accessKey
-
-    public String accessSecret
-
-    public BlobStore blobStore
-
-    public CloudFilesClient cloudFilesClient
-
-    public BlobStoreContext context
+    String accessKey
+    String accessSecret
+    BlobStore blobStore
+    CloudFilesClient cloudFilesClient
+    BlobStoreContext context
 
     /**
      * Used to authenticate with the Cloud provider API using username/key, password/secret pairs.
      * @return
      */
-    public abstract boolean authenticate()
+    abstract boolean authenticate()
 
     /**
      * Used to close the context created by the `authenticate()` method.
      */
-    public abstract void close()
+    abstract void close()
 
     /**
      * Checks to see if any container exists or not.
      * @param name: Name of the container
      * @return
      */
-    public abstract boolean containerExists(String name)
+    abstract boolean containerExists(String name)
 
     /**
      * @param name: Name of the container
      * @return true if container created and false if container already exists
      */
-    public abstract boolean createContainer(String name)
+    abstract boolean createContainer(String name)
 
     /**
      * Deleting a object ( In terms of Amazone S3) or blob ( In terms of Apache JCloud)
      * @param containerName: Name of the container
      * @param fileName: Name of the file to delete
      */
-    public abstract void deleteFile(String containerName, String fileName)
+    abstract void deleteFile(String containerName, String fileName)
 
     /**
      * Used to get the permanent URL of the file stored on the cloud.
@@ -59,7 +63,7 @@ public abstract class CDNFileUploader {
      * @param fileName
      * @return
      */
-    public abstract String getPermanentURL(String containerName, String fileName)
+    abstract String getPermanentURL(String containerName, String fileName)
 
     /**
      * Used to get a temporary URL for particular object or file.
@@ -69,7 +73,7 @@ public abstract class CDNFileUploader {
      * @param expiration
      * @return Temporary URL for specified file.
      */
-    public abstract String getTemporaryURL(String containerName, String fileName, long expiration)
+    abstract String getTemporaryURL(String containerName, String fileName, long expiration)
 
     /**
      * Used to make a file public, so that any user create browse the file through the link.
@@ -77,7 +81,7 @@ public abstract class CDNFileUploader {
      * @param fileName
      * @return
      */
-    public abstract boolean makeFilePublic(String containerName, String fileName)
+    abstract boolean makeFilePublic(String containerName, String fileName)
 
     /**
      * Used to upload file to a cloud provider.
@@ -86,5 +90,5 @@ public abstract class CDNFileUploader {
      * @param fileName: A fileName to used as key
      * @return
      */
-    public abstract boolean uploadFile(String containerName, File file, String fileName, boolean makePublic, long maxAge)
+    abstract boolean uploadFile(String containerName, File file, String fileName, boolean makePublic, long maxAge)
 }

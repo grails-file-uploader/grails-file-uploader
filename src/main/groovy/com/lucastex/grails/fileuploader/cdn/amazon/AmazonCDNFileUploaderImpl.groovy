@@ -3,8 +3,7 @@ package com.lucastex.grails.fileuploader.cdn.amazon
 import com.lucastex.grails.fileuploader.UploadFailureException
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.util.Holders
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import groovy.util.logging.Slf4j
 import org.jclouds.ContextBuilder
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
@@ -18,21 +17,23 @@ import org.jclouds.s3.domain.S3Object
 import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import org.jclouds.s3.options.CopyObjectOptions
-
 import javax.activation.MimetypesFileTypeMap
 
-class AmazonCDNFileUploaderImpl extends CDNFileUploader {
-
-    private static Log log = LogFactory.getLog(this)
+/**
+ * This class is used for all the Google Cloud Storage operations.
+ */
+@Slf4j
+@SuppressWarnings(['CatchException'])
+class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     AWSS3Client client
 
     AmazonCDNFileUploaderImpl() {
-        String key = Holders.getFlatConfig()['fileuploader.storageProvider.amazon.AmazonKey']
-        String secret = Holders.getFlatConfig()['fileuploader.storageProvider.amazon.AmazonSecret']
+        String key = Holders.flatConfig['fileuploader.storageProvider.amazon.AmazonKey']
+        String secret = Holders.flatConfig['fileuploader.storageProvider.amazon.AmazonSecret']
 
         if (!key || !secret) {
-            log.warn "No username or key configured for Amazon CDN service"
+            log.warn 'No username or key configured for Amazon CDN service'
             return
         }
 
@@ -44,16 +45,16 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
     @Override
     boolean authenticate() {
-        context = ContextBuilder.newBuilder("aws-s3")
+        context = ContextBuilder.newBuilder('aws-s3')
                 .credentials(accessKey, accessSecret)
-                .buildView(BlobStoreContext.class)
+                .buildView(BlobStoreContext)
         log.info "Context created ${context.class}"
 
-        blobStore = context.getBlobStore()
+        blobStore = context.blobStore
         log.info "Blobstore ${blobStore.class}"
 
         // Storing wrapped api of S3Client with apache jcloud
-        client = context.unwrap().getApi()
+        client = context.unwrap().api
 
         return true
     }
@@ -93,7 +94,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
      * @param expiration expiration time in seconds for pre-signed URl.
      *        For example: 60 * 60 // For 1 hour.
      *
-     * @see http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURLJavaSDK.html
+     * @see 'http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURLJavaSDK.html'
      */
     @Override
     String getTemporaryURL(String containerName, String fileName, long expiration) {
@@ -104,7 +105,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     @Override
     boolean makeFilePublic(String containerName, String fileName) {
         AccessControlList acl = new AccessControlList()
-        acl.addPermission(new URI("http://acs.amazonaws.com/groups/global/AllUsers"), Permission.READ)
+        acl.addPermission(new URI('http://acs.amazonaws.com/groups/global/AllUsers'), Permission.READ)
         getObject(containerName, fileName).setAccessControlList(acl)
     }
 
@@ -130,7 +131,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
          * whereas blobStore can easily set content-type but lacks other options. Even tested on jclouds 1.9.1.
          * TODO: Needs to be revisited.
          */
-        mutableObjectMetadata.getContentMetadata().setContentType(contentType)
+        mutableObjectMetadata.contentMetadata.setContentType(contentType)
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
@@ -157,9 +158,9 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
     void updatePreviousFileMetaData(String containerName, String fileName, Boolean makePublic, long maxAge) {
         Map metaData = [:]
         String cacheControl = "max-age=$maxAge, public, must-revalidate, proxy-revalidate"
-        metaData["Cache-Control"] = cacheControl
+        metaData['Cache-Control'] = cacheControl
 
-        metaData["Content-Type"] = new MimetypesFileTypeMap().getContentType(fileName)
+        metaData['Content-Type'] = new MimetypesFileTypeMap().getContentType(fileName)
 
         CopyObjectOptions copyObjectOptions = new CopyObjectOptions()
         copyObjectOptions.overrideMetadataWith(metaData)
@@ -168,9 +169,11 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader {
         copyObjectOptions.overrideAcl(cannedAccessPolicy)
 
         try {
-            // Copying the same file with the same name to the location so that we can override the previous file with new meta data.
+            /* Copying the same file with the same name to the location so that we can override the previous file with
+            * new meta data.
+            */
             client.copyObject(containerName, fileName, containerName, fileName, copyObjectOptions)
-        } catch(KeyNotFoundException e) {
+        } catch (KeyNotFoundException e) {
             log.info("Blob cannot be located in the container for file $fileName")
         }
     }

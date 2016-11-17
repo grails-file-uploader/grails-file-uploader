@@ -14,12 +14,11 @@ import com.google.cloud.AuthCredentials
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import grails.util.Holders
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import groovy.util.logging.Slf4j
 
 /**
- * This file is used as a wrapper for the Google Credentials configuration. 
- * 
+ * This file is used as a wrapper for the Google Credentials configuration.
+ *
  * Authenticates the GCS in 3 ways,
  *
  * 1. Using direct credential values from Config object (File is not required in this case)
@@ -29,9 +28,9 @@ import org.apache.commons.logging.LogFactory
  * @author Nikhil Sharma
  * @since 2.5.2
  */
+@Slf4j
+@SuppressWarnings(['PropertyName', 'CyclomaticComplexity', 'CatchNullPointerException'])
 class GoogleCredentials {
-
-    private static Log log = LogFactory.getLog(this)
 
     String type
     String project_id
@@ -122,9 +121,9 @@ class GoogleCredentials {
 
     /**
      * Creates a Map from fields of this class required for AuthCredentials.
-     * 
+     *
      * @return Map A Map that is parsed for retrieving credentials.
-     * 
+     *
      * @author Nikhil Sharma
      * @since 2.5.2
      */
@@ -154,7 +153,7 @@ class GoogleCredentials {
      * @since 2.5.2
      */
     Storage authenticateUsingValuesFromConfig() throws IOException, NullPointerException, IllegalArgumentException {
-        ServiceAccountCredentials serviceAccountCredentials = ServiceAccountCredentials.fromJson(getCredentialsMap(),
+        ServiceAccountCredentials serviceAccountCredentials = ServiceAccountCredentials.fromJson(credentialsMap,
                 OAuth2Utils.HTTP_TRANSPORT)
 
         AuthCredentials authCredentials = new AuthCredentials.ServiceAccountAuthCredentials(serviceAccountCredentials)
@@ -168,7 +167,7 @@ class GoogleCredentials {
      * 1. Using direct credential values from Config object (File is not required in this case)
      * 2. Using config object to create AuthCredentials (Reading JSON key file's path from config object)
      * 3. Using default authentication (Reading JSON key file's path from environment variable)
-     * 
+     *
      * @throws StorageConfigurationException
      * @return Object Instance of Storage
      *

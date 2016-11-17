@@ -1,31 +1,40 @@
+/*
+ * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
 package grails.file.uploader
 
-import grails.plugins.*
-
+/**
+ * This class is used for defining plugin related settings.
+ */
+@SuppressWarnings(['EmptyMethod', 'UnusedMethodParameter'])
 class GrailsFileUploaderGrailsPlugin {
 
-    def version = "2.4.6"
-    def grailsVersion = "3.1.4 > *"
-    def groupId = "com.cc.plugins"
+    def version = '2.4.6'
+    def grailsVersion = '3.1.4 > *'
+    def groupId = 'com.cc.plugins'
     def pluginExcludes = [
-        "grails-app/views/error.gsp",
-        "src/templates"
+        'grails-app/views/error.gsp',
+        'src/templates'
     ]
 
-    def author = "Federico Hofman"
-    def authorEmail = "fhofman@gmail.com"
-    def title = "File Uploader Grails Plugin"
+    def author = 'Federico Hofman'
+    def authorEmail = 'fhofman@gmail.com'
+    def title = 'File Uploader Grails Plugin'
     def description = """This plugin provides easy integration with your Grails application
             to handle file uploading with multiple configuration.
             
             This is a heavily modified version with updates from visheshd, danieldbower, SAgrawal14"
             This plugin also supports uploading files to CDN for Rackspace & Amazon"""
 
-    def documentation = "https://github.com/causecode/grails-file-uploader"
-    def organization = [ name: "CauseCode Technologies Pvt. Ltd.", url: "http://causecode.com" ]
-    def scm = [ url: "https://github.com/causecode/grails-file-uploader/issues" ]
+    def documentation = 'https://github.com/causecode/grails-file-uploader'
+    def organization = [ name: 'CauseCode Technologies Pvt. Ltd.', url: 'http://causecode.com' ]
+    def scm = [ url: 'https://github.com/causecode/grails-file-uploader/issues' ]
 
-    Closure doWithSpring() { {->
+    Closure doWithSpring() { { ->
             // TODO Implement runtime spring config (optional)
         }
     }

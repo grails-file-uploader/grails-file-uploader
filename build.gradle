@@ -80,6 +80,7 @@ dependencies {
     * providedCompile "org.grails.plugins:hibernate4"
     */
 
+    testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
     compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
         exclude module: "jclouds-core"
         exclude module: "guice"
@@ -170,24 +171,19 @@ jacocoTestReport {
         html.enabled true
         html.destination "${buildDir}/jacoco/jacocoHtml/"
     }
-//    afterEvaluate {
-//        classDirectories = files(classDirectories.files.collect {
-//            fileTree(dir: it,
-//                    exclude: ['**/Application*/**',
-//                              '**/CrmTagLib*/**',
-//                              '**/FormatTagLib*/**',
-//                              '**/LeadTagLib*/**',
-//                              '**/CrmBootStrap*/**',
-//                              '**/BootStrap*/**',
-//                              '**/CrmGrailsPlugin*/**',
-//                              '**/UrlMappings*/**',
-//                              '**/CrmUrlMappings*/**',
-//                              '**/Base20Codec*/**',
-//                              '**/Base60Codec*/**',
-//                              'com/causecode/crm/marshaller/**',
-//                    ])
-//        })
-//    }
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: ['**/Application*/**',
+                              '**/FileUploaderTagLib*/**',
+                              '**/FileUploaderBootStrap*/**',
+                              '**/GrailsFileUploaderGrailsPlugin*/**',
+                              '**/UrlMappings*/**',
+                              '**/*Exception*/**',
+                              '**/RenewTemporaryURLJob*/**',
+                    ])
+        })
+    }
     executionData test
     jacocoTestReport.dependsOn test
 }

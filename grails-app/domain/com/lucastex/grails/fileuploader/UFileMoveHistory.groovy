@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -7,15 +7,13 @@
  */
 package com.lucastex.grails.fileuploader
 
-import com.lucastex.grails.fileuploader.UFile
-import com.lucastex.grails.fileuploader.CDNProvider
-
 /**
  * A domain class which will hold the data about a UFile move history.
  *
  * @author Rohit Pal
  * @since 2.4.4
  */
+@SuppressWarnings(['GrailsDomainHasEquals'])
 class UFileMoveHistory {
 
     static constraints = {
@@ -26,7 +24,7 @@ class UFileMoveHistory {
     }
 
     static mapping = {
-        moveCount defaultValue: "0"
+        moveCount defaultValue: '0'
     }
 
     UFile ufile
@@ -36,9 +34,14 @@ class UFileMoveHistory {
     CDNProvider toCDN
     MoveStatus status
     String details
+
+    @Override
+    String toString() {
+        "[$moveCount][$status]"
+    }
 }
 
-
+@SuppressWarnings(['GrailsDomainHasEquals'])
 enum MoveStatus {
     FAILURE(0),
     SUCCESS(1)
@@ -50,5 +53,10 @@ enum MoveStatus {
 
     int getValue() {
         return id
+    }
+
+    @Override
+    String toString() {
+        "${this.name()}($id)"
     }
 }
