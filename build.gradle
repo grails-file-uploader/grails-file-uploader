@@ -81,6 +81,7 @@ dependencies {
     */
 
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
+    provided "org.grails.plugins:quartz:2.0.8"
     compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
         exclude module: "jclouds-core"
         exclude module: "guice"
@@ -180,7 +181,7 @@ jacocoTestReport {
                               '**/GrailsFileUploaderGrailsPlugin*/**',
                               '**/UrlMappings*/**',
                               '**/*Exception*/**',
-                              '**/RenewTemporaryURLJob*/**',
+                              '**/DailyJob*/**',
                     ])
         })
     }

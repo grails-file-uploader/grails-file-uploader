@@ -16,6 +16,8 @@ import grails.util.Holders
 @SuppressWarnings(['GrailsDomainReservedSqlKeywordName', 'JavaIoPackageAccess', 'GrailsDomainHasEquals'])
 class UFile implements Serializable {
 
+    private static final long serialVersionUID = 1
+
     int downloads
 
     CDNProvider provider
@@ -31,6 +33,8 @@ class UFile implements Serializable {
     String path
 
     UFileType type
+
+    static transients = ['serialVersionUID']
 
     static constraints = {
         expiresOn nullable: true
@@ -122,7 +126,8 @@ enum CDNProvider {
 
     AMAZON(1),
     RACKSPACE(2),
-    GOOGLE(3)
+    GOOGLE(3),
+    LOCAL(4)
 
     final int id
     CDNProvider(int id) {

@@ -40,8 +40,8 @@ trait BaseTestSetup {
     // UFileMoveHistory
     Map getUFileMoveHistoryDataMap(int index) {
         Map dataMap = [ufile: getUFileDataMap(index), moveCount: index, lastUpdated: new Date(),
-                fromCDN: CDNProvider.RACKSPACE, toCDN: CDNProvider.GOOGLE, status: MoveStatus.SUCCESS,
-                       details: 'Moved file from rackspace to google cloud']
+                fromCDN: CDNProvider.RACKSPACE, toCDN: CDNProvider.GOOGLE, status: MoveStatus.FAILURE,
+                details: 'Moved file from rackspace to google cloud']
 
         return dataMap
     }

@@ -75,19 +75,28 @@ class FileUploaderController {
      * Admin related actions.
      */
     def list(Integer max) {
+        String query = params.query
         params.max = Math.min(max ?: 10, 100)
         List uFileInstanceList = UFile.createCriteria().list(params) {
+            if (query) {
+                List queries = query.tokenize(' ')
+                queries.each {
+                    ilike('name', "%${it}%")
+                }
+            }
         }
 
         [UFileInstanceList: uFileInstanceList, UFileInstanceTotal: uFileInstanceList.totalCount]
     }
 
-    def moveToCloud(CDNProvider cdnProvider) {
-        List<Long> ufileIdList = params.list('ufileId')
-        Set<UFile> validUFilesToMoveToCloud = []
-        List<Long> failedUFileIdList
+    def moveToCloud() {
+        params.putAll(request.JSON)
+        CDNProvider toCDNProvider = params.provider
 
-        List<UFile> uFileList = UFile.getAll(ufileIdList)
+        Set<UFile> validUFilesToMoveToCloud = []
+        List<UFile> uFileUploadFailureList = []
+
+        List<UFile> uFileList = UFile.getAll(params.ufileIds)
 
         uFileList.each {
             if (it?.canMoveToCDN() && it.fileExists) {
@@ -95,18 +104,14 @@ class FileUploaderController {
             }
         }
 
-        if (cdnProvider == CDNProvider.GOOGLE) {
-            failedUFileIdList = fileUploaderService.moveFilesToGoogleCloud(validUFilesToMoveToCloud as List)
-        } else if (CDNProvider.AMAZON) {
-            failedUFileIdList = fileUploaderService.moveFilesToAmazonCloud(validUFilesToMoveToCloud as List)
-        }
+        uFileUploadFailureList = fileUploaderService.moveFilesToCDN(validUFilesToMoveToCloud as List, toCDNProvider)
 
         int total = validUFilesToMoveToCloud.size()
-        int totalMoved = validUFilesToMoveToCloud.size() - failedUFileIdList.size()
+        int totalMoved = total - uFileUploadFailureList.size()
 
         String message = "$totalMoved/$total Files moved to cloud."
-        if (failedUFileIdList) {
-            message += " Id list of failed ufiles are: $failedUFileIdList"
+        if (uFileUploadFailureList) {
+            message += "list of failed ufiles are: $uFileUploadFailureList"
         }
         flash.message = message
 

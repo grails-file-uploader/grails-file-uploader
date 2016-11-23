@@ -1,6 +1,7 @@
 <html>
 <head>
     <meta name="layout" content="main">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <g:set var="entityName" value="${message(code: 'UFile.label', default: 'UFile')}" />
     <title><g:message code="default.list.label" args="[entityName]" /></title>
 </head>
@@ -71,32 +72,65 @@
                 <g:paginate total="${UFileInstanceTotal}" />
             </ul>
         </div>
+        <div>
+            <select id="provider">
+                <option value="Provider">Select Provider</option>
+                <option value="GOOGLE">GOOGLE</option>
+                <option value="AMAZON">AMAZON</option>
+            </select>
+        </div>
         <div class="col-sm-2">
             <a href="" id="move-tocdn-link" class="btn btn-primary pull-right">
                 <i class="icon-cloud-upload"></i> &nbsp;Move To Cloud</a>
         </div>
     </div>
-    <r:script>
+    <g:javascript>
+        $.fn.serializeObject = function()
+        {
+           var o = {};
+           var a = this.serializeArray();
+           $.each(a, function() {
+               if (o[this.name]) {
+                   if (!o[this.name].push) {
+                       o[this.name] = [o[this.name]];
+                   }
+                   o[this.name].push(this.value || '');
+               } else {
+                   o[this.name] = this.value || '';
+               }
+           });
+           return o;
+        };
         $('input[name=ufileId],input[name=ufile]').change(function() {
             selectedCount = $('input[name=ufileId]:checked').length;
-            $("a#move-tocdn-link").disable(selectedCount == 0);
+            $("a#move-tocdn-link").attr( 'disabled', (selectedCount == 0));
         });
         var selectedCount = $('input[name=ufileId]:checked').length;
         $("a#move-tocdn-link").click(function() {
+        var provider = $('#provider option:selected').text();
+        if (provider == 'Select Provider') {
+            alert("Please select a provider");
+            return;
+        }
+        var ufileIdMap = $("[name=ufileId]:checked").serializeObject();
             try {
-                $(this).disable(true);
+                $(this).attr('disabled', true);
                 blockPage(true);
             } catch(e) {}
             $.ajax({
-                method: "POST",
-                data: $("[name=ufileId]:checked").serialize(),
+                type: "POST",
                 url: "/fileUploader/moveToCloud",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify({ 'provider': provider,
+                    ufileIds: ufileIdMap.ufileId
+                }),
+                dataType: "json",
                 success: function() {
                     window.location.reload();
                 }
             })
             return false;
-        }).disable(selectedCount == 0)
-    </r:script>
+        }).attr('disabled', (selectedCount == 0))
+    </g:javascript>
 </body>
 </html>

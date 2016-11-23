@@ -8,19 +8,12 @@
 package com.lucastex.grails.fileuploader
 
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
-import com.lucastex.grails.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import grails.util.Holders
 import groovy.io.FileType
-import org.springframework.context.support.AbstractMessageSource
 import org.springframework.web.multipart.commons.CommonsMultipartFile
-
 import java.nio.channels.FileChannel
-
 import javax.annotation.PostConstruct
-
 import org.apache.commons.validator.UrlValidator
-
-import com.lucastex.grails.fileuploader.cdn.BlobDetail
 import com.lucastex.grails.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.lucastex.grails.fileuploader.util.Time
 
@@ -34,6 +27,7 @@ class FileUploaderService {
     private static String baseTemporaryDirectoryPath
     static final Map SAVE_FLUSH = [flush: true]
     private static final int THOUSAND = 1000
+    private static final int HUNDRED = 100
     private static final String SLASH = '/'
     private static final String UNDERSCORE = '_'
 
@@ -88,7 +82,7 @@ class FileUploaderService {
     }
 
     /**
-     * This method is used to save files to CDN providers.
+     * This method is used to save files locally or to CDN providers.
      *
      * @param group
      * @param file
@@ -105,16 +99,17 @@ class FileUploaderService {
         String path
 
         FileGroup fileGroupInstance = new FileGroup(group)
-        Map fileGroupMap = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
+        Map fileDataMap = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
 
-        if ((fileGroupMap.empty == true) || !file) {
+        if (fileDataMap.isFileEmpty || !file) {
             return null
         }
 
         try {
-            fileGroupInstance.allowedExtensions(fileGroupMap, locale, group)
-            fileGroupInstance.validateFileSize(fileGroupMap, locale)
+            fileGroupInstance.allowedExtensions(fileDataMap, locale, group)
+            fileGroupInstance.validateFileSize(fileDataMap, locale)
         } catch (StorageConfigurationException storageConfigurationException) {
+            log.error storageConfigurationException.message
             throw storageConfigurationException
         }
 
@@ -125,8 +120,9 @@ class FileUploaderService {
             type = UFileType.CDN_PUBLIC
 
             try {
-                fileGroupInstance.scopeFileName(userInstance, fileGroupMap, group, currentTimeMillis)
+                fileGroupInstance.scopeFileName(userInstance, fileDataMap, group, currentTimeMillis)
             } catch (StorageConfigurationException storageConfigurationException) {
+                log.error storageConfigurationException.message
                 throw storageConfigurationException
             }
             long expirationPeriod = getExpirationPeriod(group)
@@ -140,7 +136,7 @@ class FileUploaderService {
             } else {
                 if (file instanceof CommonsMultipartFile) {
                     tempFile = new File(newTemporaryDirectoryPath +
-                            "${fileGroupMap.fileName}.${fileGroupMap.fileExtension}")
+                            "${fileDataMap.fileName}.${fileDataMap.fileExtension}")
 
                     file.transferTo(tempFile)
                 }
@@ -158,20 +154,21 @@ class FileUploaderService {
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * THOUSAND)
 
             try {
-                path = uploadFileToCloud(fileGroupMap, group, fileGroupInstance, tempFile)
+                path = uploadFileToCloud(fileDataMap, fileGroupInstance, tempFile)
             } catch (ProviderNotFoundException providerNotFoundException) {
+                log.error providerNotFoundException.message
                 throw providerNotFoundException
             }
         } else {
-            path = fileGroupInstance.getLocalSystemPath(storageTypes, fileGroupMap, currentTimeMillis)
+            path = fileGroupInstance.getLocalSystemPath(storageTypes, fileDataMap, currentTimeMillis)
 
             // Move file
-            log.debug "Moving [$fileGroupMap.fileName] to [${path}]."
+            log.debug "Moving [$fileDataMap.fileName] to [${path}]."
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name: fileGroupMap.fileName, size: fileGroupMap.fileSize, path: path, type: type,
-                extension: fileGroupMap.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+        UFile ufile = new UFile([name: fileDataMap.fileName, size: fileDataMap.fileSize, path: path, type: type,
+                extension: fileDataMap.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
         ufile.save()
         if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -181,16 +178,16 @@ class FileUploaderService {
 
     /**
      * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
-     * @params fileGroupMap, group, fileGroupInstance, tempFile
+     * @params fileDataMap, fileGroupInstance, tempFile
      * @return path of uploaded file
      *
      */
-    String uploadFileToCloud(Map fileGroupMap, String group, FileGroup fileGroupInstance, File tempFile) {
+    String uploadFileToCloud(Map fileDataMap, FileGroup fileGroupInstance, File tempFile) {
         CDNFileUploader fileUploaderInstance
         String path
-        long expirationPeriod = getExpirationPeriod(group)
-        String tempFileFullName = fileGroupMap.fileName + '.' + fileGroupMap.fileExtension
-        Boolean makePublic = isPublicGroup(group)
+        long expirationPeriod = getExpirationPeriod(fileGroupInstance.groupName)
+        String tempFileFullName = fileDataMap.fileName + '.' + fileDataMap.fileExtension
+        Boolean makePublic = isPublicGroup(fileGroupInstance.groupName)
         String containerName = fileGroupInstance.containerName
 
         try {
@@ -204,6 +201,7 @@ class FileUploaderService {
                         expirationPeriod)
             }
         } catch (ProviderNotFoundException providerNotFoundException) {
+            log.error providerNotFoundException.message
             throw providerNotFoundException
         } finally {
             fileUploaderInstance?.close()
@@ -248,14 +246,13 @@ class FileUploaderService {
     boolean deleteFileForUFile(UFile ufileInstance) throws ProviderNotFoundException, StorageException {
         log.debug "Deleting file for $ufileInstance"
 
-        if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
-            String containerName = ufileInstance.container
+        if (ufileInstance.type == UFileType.CDN_PRIVATE || ufileInstance.type == UFileType.CDN_PUBLIC) {
 
             if (ufileInstance.provider == CDNProvider.GOOGLE || ufileInstance.provider == CDNProvider.AMAZON) {
                 CDNFileUploader fileUploaderInstance
                 try {
                     fileUploaderInstance = getProviderInstance(ufileInstance.provider.name())
-                    fileUploaderInstance.deleteFile(containerName, ufileInstance.fullName)
+                    fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
                 } finally {
                     fileUploaderInstance?.close()
                 }
@@ -307,7 +304,7 @@ class FileUploaderService {
     File fileForUFile(UFile ufileInstance, Locale locale) {
         File file
 
-        if (ufileInstance.type in [UFileType.CDN_PRIVATE, UFileType.CDN_PUBLIC]) {
+        if (ufileInstance.type == UFileType.CDN_PRIVATE || ufileInstance.type == UFileType.CDN_PUBLIC) {
             file = getFileFromURL(ufileInstance.path, ufileInstance.fullName)
         } else {
             file = new File(ufileInstance.path)
@@ -388,117 +385,15 @@ class FileUploaderService {
         if (ufileInstance.type == UFileType.LOCAL) {
             return "/fileUploader/show/$ufileInstance.id"
         }
-        if (ufileInstance.type == UFileType.CDN_PUBLIC) {
+        if (ufileInstance.type == UFileType.CDN_PUBLIC || ufileInstance.type == UFileType.CDN_PRIVATE) {
             return ufileInstance.path
         }
-    }
-
-    /**
-     * This method is used to move files from Local server storage to Google cloud.
-     * @params List of files to be moved
-     *
-     * @author Ankit Agrawal
-     * @since 3.0.1
-     *
-     */
-    List<Long> moveFilesToGoogleCloud(List<UFile> ufileInstanceList) {
-        List<Long> failedUFileIdList = []
-        long expirationPeriod
-        CDNFileUploader fileUploaderInstance = new GoogleCDNFileUploaderImpl()
-
-        List<BlobDetail> blobDetailList = getBlobDetailList(ufileInstanceList)
-
-        blobDetailList.each {
-            UFile uploadUFileInstance = it.ufile
-            expirationPeriod = getExpirationPeriod(uploadUFileInstance.fileGroup)
-            fileUploaderInstance.uploadFile(uploadUFileInstance.container, it.localFile, it.remoteBlobName, false,
-                    expirationPeriod)
-
-            failedUFileIdList = saveUploadedUFileInstance(it, uploadUFileInstance, fileUploaderInstance)
-        }
-        return failedUFileIdList
-    }
-
-    /**
-     * This method is used to move files from Local server storage to Amazon cloud.
-     * @params List of files to be moved
-     *
-     * @author Ankit Agrawal
-     * @since 3.0.1
-     *
-     */
-    List<Long> moveFilesToAmazonCloud(List<UFile> ufileInstanceList) {
-        List<Long> failedUFileIdList = []
-        CDNFileUploader fileUploaderInstance = new AmazonCDNFileUploaderImpl()
-        long expirationPeriod
-
-        List<BlobDetail> blobDetailList = getBlobDetailList(ufileInstanceList)
-
-
-        blobDetailList.each {
-            UFile uploadUFileInstance = it.ufile
-            expirationPeriod = getExpirationPeriod(uploadUFileInstance.fileGroup)
-            fileUploaderInstance.uploadFile(uploadUFileInstance.container, it.localFile, it.remoteBlobName,
-                    false, expirationPeriod)
-
-            failedUFileIdList = saveUploadedUFileInstance(it, uploadUFileInstance, fileUploaderInstance)
-        }
-        return failedUFileIdList
-    }
-
-    /**
-     * This method saves details for UFile instances which were moved to CDN.
-     * @params blobDetailInstance, uFileInstance, fileUploaderInstance
-     * @return failedUFileIdList
-     *
-     * @author Ankit Agrawal
-     * @since 3.0.1
-     *
-     */
-    List<Long> saveUploadedUFileInstance(BlobDetail it, UFile uploadUFileInstance, CDNFileUploader fileUploaderInstance) {
-        List<Long> failedUFileIdList = []
-        if (uploadUFileInstance) {
-            if (it.eTag) {
-                uploadUFileInstance.name = it.remoteBlobName
-                uploadUFileInstance.path = fileUploaderInstance.getPermanentURL(uploadUFileInstance.container,
-                        it.remoteBlobName)
-                uploadUFileInstance.type = UFileType.CDN_PRIVATE
-                uploadUFileInstance.save(SAVE_FLUSH)
-            } else {
-                failedUFileIdList << it.ufile.id
-            }
-        } else {
-            log.error 'Missing blobInstance. Never reach condition occured.'
-        }
-        return failedUFileIdList
-    }
-
-    /**
-     * This method iterates on uFileInstanceList and assigns values to BlobDetail instances.
-     * @params List of files to be moved
-     * @return blobDetailList
-     *
-     * @author Ankit Agrawal
-     * @since 3.0.1
-     *
-     */
-    List<Long> getBlobDetailList(List<UFile> ufileInstanceList) {
-        List<BlobDetail> blobDetailList = []
-
-        ufileInstanceList.each {
-            String fullName = it.fullName.trim().replaceAll(' ', UNDERSCORE).replaceAll(HYPHEN, UNDERSCORE)
-            String newFileName = "${it.fileGroup}-${System.currentTimeMillis()}-${fullName}"
-            blobDetailList << new BlobDetail(newFileName, new File(it.path), it)
-            Thread.sleep(2)
-        }
-
-        return blobDetailList
     }
 
     void renewTemporaryURL(boolean forceAll = false) {
         String expiresOnString = 'expiresOn'
         CDNProvider.values().each { CDNProvider cdnProvider ->
-            if (cdnProvider == CDNProvider.RACKSPACE) {
+            if (cdnProvider == CDNProvider.RACKSPACE || cdnProvider == CDNProvider.LOCAL) {
                 return
             }
 
@@ -524,14 +419,14 @@ class FileUploaderService {
                         between(expiresOnString, new Date(), new Date() + 1)
                     }
                 }
+                maxResults(HUNDRED)
             }.each { UFile ufileInstance ->
                 log.debug "Renewing URL for $ufileInstance"
 
-                String containerName = ufileInstance.container
-                String fileFullName = ufileInstance.fullName
                 long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
 
-                ufileInstance.path = fileUploaderInstance.getTemporaryURL(containerName, fileFullName, expirationPeriod)
+                ufileInstance.path = fileUploaderInstance.getTemporaryURL(ufileInstance.container,
+                        ufileInstance.fullName, expirationPeriod)
                 ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * THOUSAND)
                 ufileInstance.save(SAVE_FLUSH)
                 if (ufileInstance.hasErrors()) {
@@ -585,7 +480,6 @@ class FileUploaderService {
         AmazonCDNFileUploaderImpl amazonFileUploaderInstance = new AmazonCDNFileUploaderImpl()
         amazonFileUploaderInstance.authenticate()
 
-        // TODO: Add support for Rackspace
         if (cdnProvider != CDNProvider.AMAZON) {
             log.warn "Only AMAZON is allowed for updating cache header not $cdnProvider"
             return
@@ -594,6 +488,7 @@ class FileUploaderService {
         UFile.withCriteria {
             eq('type', UFileType.CDN_PUBLIC)
             eq('provider', cdnProvider)
+            maxResults(HUNDRED)
         }.each { UFile uFileInstance ->
             Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
             long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
@@ -616,7 +511,8 @@ class FileUploaderService {
     }
 
     /**
-     * Moves file from CDN provider to other, updates UFile path. Needs to be executed only once.
+     * Moves all UFiles stored at any CDN provider to the given CDN provider. Does not touch UFiles stored locally.
+     * Needs to be executed only once.
      * @param CDNProvider target CDN Provider enum
      * @param String CDN Container name
      * @param boolean true or false if move was successful
@@ -626,108 +522,152 @@ class FileUploaderService {
         if (!toCDNProvider || !containerName) {
             return false
         }
-        moveFilesToCDN(toCDNProvider, containerName, makePublic, UFile.findAllByTypeNotEqual(UFileType.LOCAL))
+        moveFilesToCDN(UFile.findAllByTypeNotEqual(UFileType.LOCAL), toCDNProvider, makePublic)
         return true
     }
 
     /**
-     * Moves file from CDN provider to other, updates UFile path. Needs to be executed only once.
+     * Moves files saved locally or from one CDN provider to another CDN provider, updates UFile path.
+     * Needs to be executed only once.
      * @param CDNProvider target CDN Provider enum
      * @param String CDN Container name
      * @param boolean true or false if move was successful
      * @param List UFile list. File to be moved
      * @author Rohit Pal
      */
-    void moveFilesToCDN(CDNProvider toCDNProvider, String containerName, boolean makePublic = false,
-            List<UFile> uFileList) throws ProviderNotFoundException, StorageException {
-        String filename, savedUrlPath
+    // TODO Refactor this method and move iterations on individual UFiles to a new method.
+    @SuppressWarnings(['CatchException'])
+    def moveFilesToCDN(List<UFile> uFileList, CDNProvider toCDNProvider,
+                boolean makePublic = false) throws ProviderNotFoundException, StorageException {
+        String fileName, savedUrlPath
         String message = 'Moved successfully'
         File downloadedFile
         boolean isSuccess = true
+        List<UFile> uFileUploadFailureList = []
 
         uFileList
-            .findAll { it.provider != toCDNProvider }
+            .findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }
             .each { uFile ->
-                filename = uFile.name
-                filename = filename.contains(SLASH) ? filename[(filename.lastIndexOf(SLASH) + 1)..-1] : filename
-                downloadedFile = getFileFromURL(uFile.path, filename)
+                fileName = getNewFileNameFromUFile(uFile)
 
-                UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-
-                if (!downloadedFile.exists()) {
-                    log.debug "Downloaded file doesn't not exist."
-                    return
+                if (uFile.type == UFileType.LOCAL) {
+                    downloadedFile = new File(uFile.path)
+                } else {
+                    if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
+                        downloadedFile = getFileFromURL(uFile.path, uFile.name)
+                    }
                 }
 
-                long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
+            if (!downloadedFile.exists()) {
+                log.debug "Downloaded file doesn't not exist."
+                return
+            }
 
-                try {
-                    if (toCDNProvider == CDNProvider.GOOGLE || toCDNProvider == CDNProvider.AMAZON) {
-                        CDNFileUploader fileUploaderInstance
-                        try {
-                            fileUploaderInstance = getProviderInstance(toCDNProvider.name())
-                            fileUploaderInstance.uploadFile(containerName, downloadedFile, uFile.fullName, makePublic,
+            long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
+
+            try {
+                if (toCDNProvider == CDNProvider.GOOGLE || toCDNProvider == CDNProvider.AMAZON) {
+                    CDNFileUploader fileUploaderInstance
+                    try {
+                        fileUploaderInstance = getProviderInstance(toCDNProvider.name())
+                        fileUploaderInstance.uploadFile(uFile.container, downloadedFile, fileName, makePublic,
                                     expirationPeriod)
 
-                            if (makePublic) {
-                                savedUrlPath = fileUploaderInstance.getPermanentURL(containerName, uFile.fullName)
-                            } else {
-                                savedUrlPath = fileUploaderInstance.getTemporaryURL(containerName, uFile.fullName,
+                        if (makePublic) {
+                            savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.container, fileName)
+                        } else {
+                            savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.container, fileName,
                                         expirationPeriod)
-                            }
-                        } finally {
-                            fileUploaderInstance?.close()
                         }
+                    } finally {
+                        fileUploaderInstance?.close()
                     }
-                } catch (Exception e) {
-                    isSuccess = false
-                    message = e.message
-                    log.debug message
                 }
+            } catch (Exception e) {
+                isSuccess = false
+                message = e.message
+                log.debug message
+            }
 
+                UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
                 uFileHistory.moveCount++
                 uFileHistory.lastUpdated = new Date()
                 uFileHistory.toCDN = toCDNProvider
-                uFileHistory.fromCDN = uFile.provider
+                uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
                 uFileHistory.details = message
 
                 if (isSuccess) {
-                    log.debug "File moved: ${filename}"
+                    log.debug "File moved: ${uFile.name}"
 
                     uFileHistory.status = MoveStatus.SUCCESS
+                    uFile.name = fileName
                     uFile.path = savedUrlPath
                     uFile.provider = toCDNProvider
                     uFile.expiresOn = new Date(new Date().time + expirationPeriod * THOUSAND)
+                    uFile.type = makePublic ? UFileType.CDN_PUBLIC : UFileType.CDN_PRIVATE
 
-                    if (makePublic) {
-                        uFile.type = UFileType.CDN_PUBLIC
-                    }
                     uFile.save(SAVE_FLUSH)
                 } else {
-                    log.debug "Error in moving file: ${filename}"
+                    log.debug "Error in moving file: ${fileName}"
                     uFileHistory.status = MoveStatus.FAILURE
+                    uFileUploadFailureList << uFile
                 }
-                uFile.save(SAVE_FLUSH)
                 uFileHistory.save(SAVE_FLUSH)
             }
 
-        reSubmitForFailedFiles(toCDNProvider, containerName, makePublic)
+        return uFileUploadFailureList
     }
 
-    // Re-submitting UFile for failed files
-    void reSubmitForFailedFiles(CDNProvider toCDNProvider, String containerName, boolean makePublic) {
-        List<UFile> failureFileList = UFileMoveHistory.withCriteria {
+    /**
+     * Method fetches instances of failed CDN uploads from UFileMoveHistory and tries to upload them to desired
+     * CDNProvider.
+     * This method is called from a DailyJob.
+     *
+     */
+    // TODO Remove repeated queries and enable uploads for each UFile in list.
+    void moveFailedFilesToCDN() {
+        List failureFileListForGoogleCDN = UFileMoveHistory.withCriteria {
             and {
                 eq('status', MoveStatus.FAILURE)
-                le('moveCount', 3)
+                eq('toCDN', 3)
             }
             projections {
                 property('ufile')
             }
+            maxResults(HUNDRED)
         }
 
-        if (failureFileList.size() > 0) {
-            moveFilesToCDN(toCDNProvider, containerName, makePublic, failureFileList)
+        if (failureFileListForGoogleCDN.size() > 0) {
+            moveFilesToCDN(failureFileListForGoogleCDN, CDNProvider.GOOGLE)
         }
+
+        List failureFileListForAmazonCDN = UFileMoveHistory.withCriteria {
+            and {
+                eq('status', MoveStatus.FAILURE)
+                eq('toCDN', 1)
+            }
+            projections {
+                property('ufile')
+            }
+            maxResults(HUNDRED)
+        }
+
+        if (failureFileListForAmazonCDN.size() > 0) {
+            moveFilesToCDN(failureFileListForAmazonCDN, CDNProvider.AMAZON)
+        }
+    }
+
+    /**
+     * Method uses fullName of a UFile to construct a new fileName.
+     * @params UFile uFile
+     * @return String fileName
+     *
+     */
+    String getNewFileNameFromUFile(UFile uFile) {
+        String fullName
+        fullName = uFile.fullName.trim().replaceAll(' ', UNDERSCORE).replaceAll(HYPHEN, UNDERSCORE)
+        fullName = fullName.contains(SLASH) ? fullName[(fullName.lastIndexOf(SLASH) + 1)..-1] : fullName
+
+        return "${uFile.fileGroup}-${System.currentTimeMillis()}-${fullName}"
     }
 }

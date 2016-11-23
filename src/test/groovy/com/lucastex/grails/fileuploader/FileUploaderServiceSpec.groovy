@@ -131,7 +131,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
         when: "moveFilesToCDN method is called"
         assert uFileInstance.provider == CDNProvider.GOOGLE
-        service.moveFilesToCDN(CDNProvider.AMAZON, 'dummy', false, [uFileInstance])
+        service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON)
 
         then: "File would be moved successfully"
         uFileInstance.provider == CDNProvider.AMAZON
@@ -273,7 +273,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
         when: "The uploadFileToCloud method is called"
         String resultPath = service.uploadFileToCloud([fileName: 'test', fileExtension: '.txt'],
-                'testGoogle', fileGroupInstance, file)
+                fileGroupInstance, file)
 
         then: "It should return path of uploaded file"
         resultPath == 'http://fixedURL.com'
@@ -286,6 +286,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     void "test moveFilesToCDN method for making a file public while moving and error occurs"() {
         given: "An instance of UFile and File"
         UFile uFileInstance = getUFileInstance(1)
+        uFileInstance.type = UFileType.CDN_PUBLIC
         File fileInstance = getFileInstance()
         uFileInstance.path = System.getProperty('user.dir') + "/temp/test.txt"
 
@@ -296,8 +297,8 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
         when: "moveFilesToCDN method is called"
         assert uFileInstance.provider == CDNProvider.GOOGLE
-        assert uFileInstance.type == UFileType.LOCAL
-        service.moveFilesToCDN(CDNProvider.AMAZON, 'dummy', true, [uFileInstance])
+        assert uFileInstance.type == UFileType.CDN_PUBLIC
+        service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON, true)
 
         then: "File move history would contain failure status"
         UFileMoveHistory uFileMoveHistoryInstance = UFileMoveHistory.get(1)
@@ -324,7 +325,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         when: "moveFilesToCDN method is called"
         assert uFileInstance.provider == CDNProvider.GOOGLE
         assert uFileInstance.type == UFileType.LOCAL
-        service.moveFilesToCDN(CDNProvider.AMAZON, 'dummy', true, [uFileInstance])
+        service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON, true)
 
         then: "File would be made public"
         uFileInstance.type == UFileType.CDN_PUBLIC
@@ -346,10 +347,10 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         }
         mockExistsMethodReturnFalse()
 
-        def result = service.moveFilesToCDN(CDNProvider.AMAZON, 'dummy', false, [uFileInstance])
+        def failedUploadList = service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON)
 
-        then: "File would be moved successfully"
-        result == null
+        then: "File would be moved successfully and method would return empty list for failed uploads"
+        failedUploadList == []
 
         cleanup:
         fileInstance.delete()
@@ -358,8 +359,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     @DirtiesRuntime
     void "test moveToNewCDN method for various cases"() {
         given: "Mocked method"
-        FileUploaderService.metaClass.moveFilesToCDN = { CDNProvider toCDNProvider, String containerName,
-                boolean makePublic = false, List<UFile> uFileList ->
+        FileUploaderService.metaClass.moveFilesToCDN = { List<UFile> uFileList, CDNProvider toCDNProvider ->
             return
         }
 
@@ -377,7 +377,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     }
 
     @DirtiesRuntime
-    void "test updateAllUFileCacheHeader for varios cases"() {
+    void "test updateAllUFileCacheHeader for various cases"() {
         given: "Mocked method"
         mockAuthenticateMethod()
 
@@ -644,59 +644,6 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     }
 
     @DirtiesRuntime
-    void "test moveFilesToGoogleCloud method for failure"() {
-        given: "A list of UFile instances"
-        List<UFile> ufileInstanceList= [getUFileInstance(1)]
-
-        when: "moveFilesToGoogleCloud method is called"
-        def result = service.moveFilesToGoogleCloud(ufileInstanceList)
-
-        then: "It should return list of ids of failed uploads"
-        result == [1]
-    }
-
-    @DirtiesRuntime
-    void "test moveFilesToAmazonCloud method for failure"() {
-        given: "A list of UFile instances"
-        List<UFile> ufileInstanceList= [getUFileInstance(1)]
-
-        when: "moveFilesToAmazonCloud method is called"
-        def result = service.moveFilesToAmazonCloud(ufileInstanceList)
-
-        then: "It should return list of ids of failed uploads"
-        result == [1]
-    }
-
-    @DirtiesRuntime
-    void "test saveUploadedUFileInstance for various cases"() {
-        given: "Required instances"
-        UFile uFileInstance = getUFileInstance(1)
-        File fileInstance = getFileInstance()
-        GoogleCDNFileUploaderImpl googleCDNFileUploader = new GoogleCDNFileUploaderImpl()
-        BlobDetail blobDetailInstance = new BlobDetail('test', fileInstance, uFileInstance, 'testTag')
-
-        and: "Mocked Method"
-        mockGetPermanentURL()
-
-        when: "saveUploadedUFileInstance method is called and uploadFileInstance is null"
-        def result = service.saveUploadedUFileInstance(null, null, null)
-
-        then: "Method should return an empty list for failed uploads"
-        result == []
-
-        when: "uploadFileInstance contains etag"
-        service.saveUploadedUFileInstance(blobDetailInstance, uFileInstance, googleCDNFileUploader)
-
-        then: "Method should update UFile data and return empty list for failed uploads"
-        uFileInstance.name == "test"
-        uFileInstance.path == "http://fixedURL.com"
-        uFileInstance.type == UFileType.CDN_PRIVATE
-
-        cleanup:
-        fileInstance.delete()
-    }
-
-    @DirtiesRuntime
     void "test getProviderInstance method class does not exist"() {
         when: "getProviderInstance method is called"
         service.getProviderInstance('test')
@@ -706,6 +653,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         e.message == 'Provider test not found.'
     }
 
+    // Fix this as per need.
     @DirtiesRuntime
     void "test saveFile method for various cases"() {
         given: "An instance of File"
@@ -719,7 +667,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         mockExistsMethodReturnFalse()
 
         when: "saveFile method is hit"
-        def result = service.saveFile("test", commonsMultipartFileInstance, 'test')
+        def result = service.saveFile("testGoogle", commonsMultipartFileInstance, 'test')
 
         then: "Method should return null"
         result == null
@@ -771,6 +719,35 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         fileInstance.delete()
     }
 
+    @DirtiesRuntime
+    void "test moveFailedFilesToCDN for various cases"() {
+        given: "Instances of UFileMoveHistory"
+        UFileMoveHistory uFileMoveHistoryInstance = getUFileMoveHistoryInstance(1)
+
+        FileUploaderService.metaClass.moveFilesToCDN = {List<UFile> uFileList, CDNProvider toCDNProvider,
+            boolean makePublic = false ->
+            return
+        }
+
+        when: "moveFailedFilesToCDN method is called and failedList containes no UFiles"
+        service.moveFailedFilesToCDN()
+
+        then: "No exception is thrown"
+        noExceptionThrown()
+
+        when: "moveFailedFilesToCDN method is called and failedList containes UFiles"
+        UFileMoveHistory.metaClass.static.withCriteria = { Closure closure ->
+            assert closure != null
+            new JsonBuilder() closure
+            return [uFileMoveHistoryInstance]
+        }
+
+        service.moveFailedFilesToCDN()
+
+        then: "No exception is thrown"
+        noExceptionThrown()
+    }
+
     // TODO ------ mock getMessage method.
     @DirtiesRuntime
     void "test ufileById method for various cases"() {
@@ -783,63 +760,5 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
         then: "Method returns ufile instance"
         result == uFileInstance
-
-//        when: "ufileById method is called and UFile with given id does not exist in database"
-//        service.ufileById(2, locale)
-//
-//        then: "Method throws FileNotFoundException"
-//        FileNotFoundException e = thrown()
     }
-
-//    // TODO ------ Mock getMessage method.
-//    @DirtiesRuntime
-//    void "test fileForUFile method when file foes not exist"() {
-//        given: "An instance of File and UFile"
-//        File fileInstance = getFileInstance()
-//        UFile uFileInstance = getUFileInstance(1)
-//
-////        AbstractMessageSource messageSource = new AbstractMessageSource() {
-////            @Override
-////            protected MessageFormat resolveCode(String code, Locale locale) {
-////                return null
-////            }
-////        }
-////        messageSource.addMessage 'foo.bar', null, 'Hello World'
-//
-//        and: "Mocked method"
-////        AbstractMessageSource.metaClass.getMessage = { String code, Object[] args, Locale locale ->
-////            println ">>>"
-////            return 'file not found'
-////        }
-//
-////        AbstractMessageSource.metaClass.getMessageInternal = { String code, Object[] args, Locale locale ->
-////            println ">>>"
-////            return true
-////        }
-//
-////        AbstractMessageSource testInstance = GroovyMock(AbstractMessageSource, global: true)
-////        testInstance.getMessage(_, _, _) >> { "file not found" }
-////        service.messageSource = testInstance
-//
-////        AbstractMessageSource testInstance = Mock(AbstractMessageSource)
-////        testInstance.getMessage(_, _, _) >> { 'file'}
-////        service.messageSource = testInstance
-//
-////        service.messageSource = [getMessage: { String code, Object[] args, Locale locale ->
-////            println ">>>>>"
-////            return "message"
-////        }] as AbstractMessageSource
-//
-//        when: "fileForUFile method is called and file does not exist"
-//        uFileInstance.path = System.getProperty('user.dir') + '/temp/test/'
-//        assert uFileInstance.downloads == 1
-//        service.fileForUFile(uFileInstance, null)
-//
-//        then: "Method should throw Exception"
-//        Exception exception = thrown(IOException)
-//        println exception.message
-//
-//        cleanup:
-//        fileInstance.delete()
-//    }
 }

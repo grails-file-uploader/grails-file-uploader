@@ -49,13 +49,14 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     @Override
     boolean authenticate() throws GoogleStorageException {
+        Storage storageVar
         try {
-            gStorage = gStorage ?: new GoogleCredentials().storage
+            storageVar = gStorage ?: new GoogleCredentials().storage
         } catch (StorageConfigurationException e) {
             throw new GoogleStorageException('Could not authenticate GoogleCDNFileUploader', e)
         }
 
-        return gStorage ? true : false
+        return storageVar ? true : false
     }
 
     @Override

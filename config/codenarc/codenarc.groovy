@@ -211,6 +211,9 @@ ruleset {
     GrailsSessionReference
     GrailsStatelessService
 
+    // Custom rule for Grails max parameter in list queries.
+    rule('file:config/codenarc/GrailsMaxForListQueriesRule.groovy')
+
     // rulesets/groovyism.xml
     AssignCollectionSort
     AssignCollectionUnique

@@ -7,6 +7,7 @@
  */
 package com.lucastex.grails.fileuploader
 
+import grails.converters.JSON
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import spock.lang.Specification
@@ -28,6 +29,15 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         response.UFileInstanceList[0].id == 1
         response.UFileInstanceList[0].fileGroup == 'testGoogle'
         response.UFileInstanceTotal == 1
+
+        when: "Params contain query to fetch list and no matching results are found"
+        controller.params.query = 'updatesList'
+        response = controller.list()
+
+        then: "Server repsonds empty UFileInstanceList and its count"
+        controller.response.status == 200
+        response.UFileInstanceList == []
+        response.UFileInstanceTotal == 0
     }
 
     void "test download action for various cases"() {
@@ -113,5 +123,25 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
         cleanup:
         fileInstance.delete()
+    }
+
+    void "test moveToCloud method for various cases"() {
+        given: "An instance ofUFile"
+        UFile uFileInstance = getUFileInstance(1)
+        controller.request.json = ([provider: "GOOGLE", ufileIds: "1"] as JSON).toString()
+
+        and: "Mocked method"
+        controller.fileUploaderService = [moveFilesToCDN: { List<UFile> uFileList, CDNProvider toCDNProvider,
+                boolean makePublic = false ->
+            return [uFileInstance]
+        }] as FileUploaderService
+
+        when: "moveToCloud method is called"
+        def result = controller.moveToCloud()
+
+        then: "No exception is thrown and method returns null"
+        result == null
+        noExceptionThrown()
+        controller.response.status == 200
     }
 }

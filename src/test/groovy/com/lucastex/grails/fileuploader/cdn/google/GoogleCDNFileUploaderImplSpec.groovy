@@ -15,6 +15,7 @@ import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageException
 import com.lucastex.grails.fileuploader.GoogleStorageException
 import com.lucastex.grails.fileuploader.UploadFailureException
+import grails.test.runtime.DirtiesRuntime
 import spock.lang.Specification
 import spock.util.mop.ConfineMetaClassChanges
 
@@ -55,6 +56,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         googleCDNFileUploaderImpl.gStorage = storageInstance
     }
 
+    @DirtiesRuntime
     void "test getBlob method for various cases"() {
         when: "Server fails to get Blob"
         mockGetMethodOfStorageThrowException()
@@ -72,6 +74,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         noExceptionThrown()
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for delete failure"() {
         given: "mocked methods for Blob class"
         Blob.metaClass.delete = { Blob.BlobSourceOption... options ->
@@ -88,6 +91,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         e.message == "Could not delete file testFile from container dummyContainer"
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for successful deletion"() {
         given: "mocked method for Blob class"
         mockDeleteMethod()
@@ -100,6 +104,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         noExceptionThrown()
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for upload failure"() {
         given: "A file instance and mocked 'of' method of class BlobId"
         File file = new File('test.txt')
@@ -126,6 +131,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         file.delete()
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for create Container failure"() {
         given: "Mocked method"
         Storage storageInstance = Mock(Storage)
@@ -140,6 +146,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         e.message == "Could not create container."
     }
 
+    @DirtiesRuntime
     void "test uploadFile method for successful upload"() {
         given: "A file instance and mocked 'of' method of class BlobId"
         File file = new File('test.txt')
@@ -161,11 +168,13 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         file.delete()
     }
 
+    @DirtiesRuntime
     void "test makeFilePublic method"() {
         expect: "Following must be true"
         !googleCDNFileUploaderImpl.makeFilePublic('dummyContainer', 'test')
     }
 
+    @DirtiesRuntime
     void "test getPermanentURL method"() {
         when: "getPermanentURL method is called"
         String result = googleCDNFileUploaderImpl.getPermanentURL('dummyContainer', 'test')
@@ -175,6 +184,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         result == null
     }
 
+    @DirtiesRuntime
     void "test getTemporaryURL method to return a temporary url"() {
         when: "getTemporaryURL method is called"
         String result = googleCDNFileUploaderImpl.getTemporaryURL('dummyContainer', 'test', 3600L)
@@ -184,6 +194,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         result == null
     }
 
+    @DirtiesRuntime
     void "test createContainer method for successful execution"() {
         given: "Mocked method"
         Storage storageInstance = Mock(Storage)
@@ -198,6 +209,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         result
     }
 
+    @DirtiesRuntime
     void "test containerExist method for various cases"() {
         when: "Server fails to get container"
         mockGetMethodOfStorageThrowException()

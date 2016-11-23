@@ -8,25 +8,25 @@
 package com.lucastex.grails.fileuploader
 
 /**
- * A job which gets triggered at 2 am to renew temporary url.
+ * A job which gets triggered at 2 am.
  */
-class RenewTemporaryURLJob {
+class DailyJob {
+
+    def fileUploaderService
+    def grailsEvents
 
     static triggers = {
         cron name: 'RenewTempURLTrigger', cronExpression: '0 0 2 * * ? *'   // Once every twenty four hours at 2am
     }
 
-    def fileUploaderService
-    def grailsEvents
-
     def execute() {
-        log.info 'Started executing RenewTemporaryURLJob..'
+        log.info 'Started executing DailyJob..'
         fileUploaderService.renewTemporaryURL()
+        fileUploaderService.moveFailedFilesToCDN()
 
         // Trigger event to notity the installing app for any further app specific processing
         grailsEvents.event('file-uploader', 'on-ufile-renewal')
 
-        log.info 'Finished executing RenewTemporaryURLJob.'
+        log.info 'Finished executing DailyJob.'
     }
-
 }

@@ -11,6 +11,9 @@ import com.lucastex.grails.fileuploader.BaseTestSetup
 import com.lucastex.grails.fileuploader.UploadFailureException
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.test.mixin.Mock
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import grails.test.runtime.DirtiesRuntime
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.blobstore.KeyNotFoundException
 import org.jclouds.s3.domain.AccessControlList
@@ -18,7 +21,7 @@ import org.jclouds.s3.domain.internal.S3ObjectImpl
 import spock.lang.Specification
 import spock.util.mop.ConfineMetaClassChanges
 
-@ConfineMetaClassChanges([AccessControlList])
+@TestMixin(GrailsUnitTestMixin)
 class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSetup {
 
     AmazonCDNFileUploaderImpl amazonCDNFileUploaderImpl
@@ -27,14 +30,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         amazonCDNFileUploaderImpl = new AmazonCDNFileUploaderImpl()
     }
 
-//    void "test authenticate method for successful response"() {
-//        when: "autenticate method is called"
-//        boolean response = amazonCDNFileUploaderImpl.authenticate()
-//
-//        then: "Method returns true"
-//        response
-//    }
-
+    @DirtiesRuntime
     void "test Amazon Cloud Storage for upload failure"() {
         given: "A file instance"
         File file = getFileInstance()
@@ -55,6 +51,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         file.delete()
     }
 
+    @DirtiesRuntime
     void "test Amazon Cloud Storage for upload success"() {
         given: "A file instance"
         File file = getFileInstance()
@@ -74,6 +71,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         file.delete()
     }
 
+    @DirtiesRuntime
     void "test makeFilePublic method for failure case"() {
         given: "Mocked methods"
         AccessControlList.metaClass.addPermission = { URI groupGranteeURI, String permission ->
@@ -91,6 +89,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         !result
     }
 
+    @DirtiesRuntime
     void "test updatePreviousFileMetaData for update failure"() {
         given: "Mocked method"
         AWSS3Client clientInstance = Mock(AWSS3Client)
@@ -104,17 +103,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         noExceptionThrown()
     }
 
-    // TODO ------ find a way to handle null pointer exceptions
-//    void "test getTemporaryURL method to return temporary url"() {
-//        given: ""
-//
-//        when: "getTemporaryURL method is called"
-//        String response = amazonCDNFileUploaderImpl.getTemporaryURL('dummy', 'test', 3600L)
-//
-//        then: "Method returns url"
-//        println response
-//    }
-
+    @DirtiesRuntime
     void "test various methods for successFul execution"() {
         given: "Mocked methods"
         AWSS3Client clientInstance = Mock(AWSS3Client)

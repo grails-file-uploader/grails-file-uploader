@@ -166,4 +166,18 @@ class GoogleCredentialsSpec extends Specification {
         then: 'Authentication should be successful'
         storage != null
     }
+
+    /* Note- Since method reads data from file path provided using environment variable, it would only be successfully
+     * executed when environment variable is set and test is run from terminal.
+    */
+    @DirtiesRuntime
+    void "test authenticateUsingEnvironmentVariable method for successful authentication"() {
+        when: "authenticateUsingEnvironmentVariable method is called"
+        GoogleCredentials googleCredentials = new GoogleCredentials()
+        googleCredentials.initializeGoogleCredentialsFromConfig()
+        Storage storage = googleCredentials.authenticateUsingEnvironmentVariable()
+
+        then: 'Authentication should be successful'
+        storage != null
+    }
 }

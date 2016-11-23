@@ -35,7 +35,7 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
         then: "Method returns a valid map"
         result.fileName == 'test.txt'
         result.customFileName == 'test.txt'
-        result.empty == true
+        result.isFileEmpty == true
         result.fileSize == 0L
 
         cleanup:
