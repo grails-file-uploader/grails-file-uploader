@@ -12,6 +12,7 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.runtime.DirtiesRuntime
 import grails.util.Holders
+import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.context.support.AbstractMessageSource
 import org.springframework.context.support.ResourceBundleMessageSource
@@ -46,12 +47,29 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
         given: "An instance of FileGroup class"
         FileGroup fileGroupInstance = new FileGroup('test')
 
-        when: "allowedExtensions method is called"
+        when: "allowedExtensions method is called and no configurations exist for given group"
         fileGroupInstance.allowedExtensions(null, null, 'test')
 
         then: "Method throws StorageConfigurationException"
         StorageConfigurationException e = thrown()
         e.message == "No config defined for group [test]. Please define one in your Config file."
+    }
+
+    void "test allowedExtensions methods when wrong extension is passed"() {
+        given: "An instance of FileGroup class"
+        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+
+        and: 'Mocked method'
+        MessageSource testInstance = Mock(MessageSource)
+        testInstance.getMessage(_, _, _) >> { 'Invalid extension'}
+        fileGroupInstance.messageSource = testInstance
+
+        when: "allowedExtensions method is called and file has wrong extensions"
+        fileGroupInstance.allowedExtensions([fileExtension: 'mkv'], null, 'test.mkv')
+
+        then: "Method throws StorageConfigurationException"
+        StorageConfigurationException exception =thrown()
+        exception.message == 'Invalid extension'
     }
 
     void "test getLocalSystemPath method to get localPath"() {
@@ -90,26 +108,22 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
         e.message == 'Container name not defined in the Config. Please define one.'
     }
 
-    // TODO ------ mock getMessage method
-//    void "test validateFileSize method when fileSize exceeds max value"() {
-//        given: "An instance of FileGroup class"
-//        FileGroup fileGroupInstance = new FileGroup('testGoogle')
-//        Map fileGroupMap = [fileSize: 1024 * 1024 * 1024]
-//        Locale locale = LocaleContextHolder.getLocale()
-//
-////        and: "Mocked method"
-////        AbstractMessageSource testInstance = Mock(AbstractMessageSource)
-////        testInstance.getMessage(_, _, _) >> { 'file'}
-////        fileGroupInstance.messageSource = testInstance
-////        fileGroupInstance.messageSource = [getMessage: { String code, Object[] args, Locale locale ->
-////            return "File too big"
-////        }] as AbstractMessageSource
-//
-//        when: "validateFileSize method is called"
-//        fileGroupInstance.validateFileSize(fileGroupMap, locale)
-//
-//        then: "Method should throw StorageConfigurationException"
-//        StorageConfigurationException e = thrown()
-//        println e.message
-//    }
+    void "test validateFileSize method when fileSize exceeds max value"() {
+        given: "An instance of FileGroup class"
+        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+        Map fileGroupMap = [fileSize: 1024 * 1024 * 1024]
+        Locale locale = LocaleContextHolder.getLocale()
+
+        and: "Mocked method"
+        MessageSource testInstance = Mock(MessageSource)
+        testInstance.getMessage(_, _, _) >> { 'file too big'}
+        fileGroupInstance.messageSource = testInstance
+
+        when: "validateFileSize method is called"
+        fileGroupInstance.validateFileSize(fileGroupMap, locale)
+
+        then: "Method should throw StorageConfigurationException"
+        StorageConfigurationException e = thrown()
+        e.message == 'file too big'
+    }
 }

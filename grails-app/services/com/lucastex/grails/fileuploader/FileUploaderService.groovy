@@ -10,6 +10,7 @@ package com.lucastex.grails.fileuploader
 import com.lucastex.grails.fileuploader.cdn.CDNFileUploader
 import grails.util.Holders
 import groovy.io.FileType
+import org.springframework.context.MessageSource
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import java.nio.channels.FileChannel
 import javax.annotation.PostConstruct
@@ -31,7 +32,7 @@ class FileUploaderService {
     private static final String SLASH = '/'
     private static final String UNDERSCORE = '_'
 
-    def messageSource
+    MessageSource messageSource
 
     @PostConstruct
     void postConstruct() {

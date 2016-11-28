@@ -21,6 +21,7 @@ import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
+import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.context.support.AbstractMessageSource
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -748,17 +749,90 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         noExceptionThrown()
     }
 
-    // TODO ------ mock getMessage method.
     @DirtiesRuntime
     void "test ufileById method for various cases"() {
         given: "An instance of UFile"
         UFile uFileInstance = getUFileInstance(1)
         Locale locale = LocaleContextHolder.getLocale()
 
+        and: 'Mocked method'
+        MessageSource testInstance = Mock(MessageSource)
+        testInstance.getMessage(_, _, _) >> { 'File not found'}
+        service.messageSource = testInstance
+
         when: "ufileById method is called and UFile exists"
         def result = service.ufileById(1, locale)
 
         then: "Method returns ufile instance"
         result == uFileInstance
+
+        when: "uFIleById method is called and ufile does not exist"
+        service.ufileById(2, locale)
+
+        then: "Method throws FileNotFoundException"
+        FileNotFoundException e =thrown()
+        e.message == 'File not found'
+    }
+
+    @DirtiesRuntime
+    void "test fileForUFile method when file does not exist"() {
+        given: "An instance of File and UFile"
+        File fileInstance = getFileInstance()
+        UFile uFileInstance = getUFileInstance(1)
+
+        and: "Mocked methods"
+        FileUploaderService.metaClass.getFileFromURL = {String url, String filename ->
+            return fileInstance
+        }
+
+        mockExistsMethodReturnFalse()
+
+        MessageSource testInstance = Mock(MessageSource)
+        testInstance.getMessage(_, _, _) >> { 'File not found'}
+        service.messageSource = testInstance
+
+        when: "UFile is PUBLIC type and file exist"
+        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
+        uFileInstance.type = UFileType.CDN_PUBLIC
+        def result = service.fileForUFile(uFileInstance, null)
+
+        then: "Method should throw IOException"
+        IOException e = thrown()
+        e.message == 'File not found'
+
+        cleanup:
+        fileInstance.delete()
+    }
+
+    @DirtiesRuntime
+    void "test saveFile method when validation fails"() {
+        given: "An instance of File"
+        File fileInstance = getFileInstance()
+
+        and: "Mocked method"
+        FileGroup.metaClass.scopeFileName = { Object userInstance, Map fileDataMap, String group,
+                Long currentTimeMillis ->
+            throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
+        }
+
+        when: "saveFile methos is called and exception is thrown while modifying fileName"
+        service.saveFile('testGoogle', fileInstance)
+
+        then: "StorageConfigurationException is thrown"
+        StorageConfigurationException e = thrown()
+        e.message == 'Container name not defined in the Config. Please define one.'
+
+        when: "saveFile method is called and FileSize is greater than perrmitted value"
+        FileGroup.metaClass.validateFileSize = { Map fileDataMap, Locale locale ->
+            throw new StorageConfigurationException('File too big.')
+        }
+        service.saveFile('testGoogle', fileInstance)
+
+        then: "Method throws StorageConfigurationException"
+        StorageConfigurationException exception = thrown()
+        exception.message == 'File too big.'
+
+        cleanup:
+        fileInstance.delete()
     }
 }

@@ -9,7 +9,7 @@ package com.lucastex.grails.fileuploader
 
 import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.springframework.context.support.AbstractMessageSource
+import org.springframework.context.MessageSource
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 /**
@@ -23,7 +23,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile
 class FileGroup {
     ConfigObject groupConfig, config
     String groupName
-    AbstractMessageSource messageSource
+    MessageSource messageSource
     private static final String HYPHEN = '-'
     private static final String SLASH = '/'
 

@@ -32,17 +32,10 @@ class GoogleCredentialsSpec extends Specification {
         Holders.grailsApplication.config.fileuploader.storageProvider.google = storageProviderGoogle
     }
 
-    @DirtiesRuntime
-    void "test getStorage method for various cases"() {
+    void "test getStorage method when authentication fails"() {
         given: "Config object is set to null"
         GoogleCredentials googleCredentials = new GoogleCredentials()
-        googleCredentials.initializeGoogleCredentialsFromConfig()
         Holders.grailsApplication.config.fileuploader.storageProvider.google = null
-
-        and: "Mocked method"
-        StorageOptions.metaClass.static.defaultInstance = { ->
-            throw new IllegalArgumentException('Authentication Failed')
-        }
 
         when: "getStorage method is called"
         googleCredentials.getStorage()
@@ -52,7 +45,6 @@ class GoogleCredentialsSpec extends Specification {
         exception.message == 'GCS Authentication failed due to bad configuration'
     }
 
-    @DirtiesRuntime
     void 'test credentials initialization from config object'() {
         when: 'Credentials are read from the config object'
         GoogleCredentials googleCredentials = new GoogleCredentials()
@@ -63,7 +55,6 @@ class GoogleCredentialsSpec extends Specification {
         googleCredentials.type == storageProviderGoogle.type
     }
 
-    @DirtiesRuntime
     void 'test credentials initialization when config object is empty'() {
         given: 'Config object is set to null'
         GoogleCredentials googleCredentials = new GoogleCredentials()
@@ -77,7 +68,6 @@ class GoogleCredentialsSpec extends Specification {
         exception.message == 'No configuration found for storage provider Google.'
     }
 
-    @DirtiesRuntime
     void 'test credentials initialization when config object does not contain the project_id'() {
         given: 'project_id is set to blank string'
         Holders.grailsApplication.config.fileuploader.storageProvider.google.project_id = ''
@@ -91,7 +81,6 @@ class GoogleCredentialsSpec extends Specification {
         exception.message == 'Project Id is required for storage provider Google.'
     }
 
-    @DirtiesRuntime
     void 'test authenticaton by reading path of json file from config object'() {
         given: 'auth variable is set to point to testkey.json file'
         File file = new File('')
@@ -115,7 +104,6 @@ class GoogleCredentialsSpec extends Specification {
     }
 
     @Unroll
-    @DirtiesRuntime
     void 'test authenticaton by reading path of json file from config object when path is #filePath'() {
         given: 'auth is set to blank/incorrect path'
         Holders.grailsApplication.config.fileuploader.storageProvider.google = [:]
@@ -138,7 +126,6 @@ class GoogleCredentialsSpec extends Specification {
         '/incorrect/path/to/testkey.json' | IOException | '/incorrect/path/to/testkey.json (No such file or directory)'
     }
 
-    @DirtiesRuntime
     void 'test authentication for failure when credentials are read directly from the configuration object'() {
         given: 'Google storage provider configuration'
         Holders.grailsApplication.config.fileuploader.storageProvider.google = null
@@ -155,7 +142,6 @@ class GoogleCredentialsSpec extends Specification {
         storage == null
     }
 
-    @DirtiesRuntime
     void 'test authentication for success when credentials are read directly from the configuration object'() {
         when: 'Credentials are read directly from the config object'
         Holders.grailsApplication.config.fileuploader.storageProvider.google.project_id = 'test_id'
@@ -167,17 +153,12 @@ class GoogleCredentialsSpec extends Specification {
         storage != null
     }
 
-    /* Note- Since method reads data from file path provided using environment variable, it would only be successfully
-     * executed when environment variable is set and test is run from terminal.
-    */
-    @DirtiesRuntime
-    void "test authenticateUsingEnvironmentVariable method for successful authentication"() {
+    void "test authenticateUsingEnvironmentVariable method"() {
         when: "authenticateUsingEnvironmentVariable method is called"
         GoogleCredentials googleCredentials = new GoogleCredentials()
-        googleCredentials.initializeGoogleCredentialsFromConfig()
-        Storage storage = googleCredentials.authenticateUsingEnvironmentVariable()
+        googleCredentials.authenticateUsingEnvironmentVariable()
 
-        then: 'Authentication should be successful'
-        storage != null
+        then: 'Authentication should fail and exception is thrown'
+        IllegalArgumentException e = thrown()
     }
 }
