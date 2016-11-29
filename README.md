@@ -9,8 +9,8 @@ Supported Grails 3.2.0
 ## Access Protect Controller & Actions
 
 ```
-'/fileUploader/show': ['ROLE_USER'], (According to application needs)
-'/fileUploader/download': ['ROLE_USER'], (According to application needs)
+'/file-uploader/show': ['ROLE_USER'], (According to application needs)
+'/file-uploader/download': ['ROLE_USER'], (According to application needs)
 ```
 
 ## Uploading files to CDN
@@ -18,7 +18,7 @@ Supported Grails 3.2.0
 To upload files to CDN (Supports both Rackspace and Amazon) one must have some configuration like given below:
 
 ```
-import com.lucastex.grails.fileuploader.CDNProvider
+import CDNProvider
 
 grails.tempDirectory = "./temp-files"     // Required to store files temporarily. Must not ends with "/"
 

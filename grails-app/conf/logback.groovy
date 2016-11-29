@@ -14,7 +14,7 @@ logback = {
     'org.codehaus.groovy.grails.orm.hibernate'     // hibernate integration
 
     debug   'grails.app.filters.com.causecode', 'com.causecode',
-            'grails.app.services.com.lucastex.grails.fileuploader'
+            'grails.app.services.com.causecode.grails.fileuploader'
 
 }
 

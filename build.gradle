@@ -76,8 +76,8 @@ dependencies {
 
     /*
     * Dependencies which were needed for the application/plugin.
-    * Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent app
-    * providedCompile "org.grails.plugins:hibernate4"
+    * Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent
+    * app
     */
 
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases

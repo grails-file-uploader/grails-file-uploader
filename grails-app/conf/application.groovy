@@ -6,8 +6,8 @@
  * without modification, are not permitted.
  */
 
-import com.lucastex.grails.fileuploader.*
-import com.lucastex.grails.fileuploader.util.*
+import com.causecode.grails.fileuploader.*
+import com.causecode.grails.fileuploader.util.*
 
 grails{
     profile = 'web-plugin'
