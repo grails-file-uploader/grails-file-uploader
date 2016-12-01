@@ -9,6 +9,7 @@ package com.causecode.grails.fileuploader
 
 /**
  * Exception class
+ * This exception is thrown when CDN configuration related error is encountered.
  */
 class StorageConfigurationException extends Exception {
 

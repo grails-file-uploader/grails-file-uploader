@@ -8,7 +8,8 @@
 package com.causecode.grails.fileuploader
 
 /**
- * Exception class
+ * Exception class.
+ * This exception is thrown when Storage operations throw any Exception.
  */
 class GoogleStorageException extends StorageException {
 

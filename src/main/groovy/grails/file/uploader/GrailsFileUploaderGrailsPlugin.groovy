@@ -13,7 +13,7 @@ package grails.file.uploader
 @SuppressWarnings(['EmptyMethod', 'UnusedMethodParameter'])
 class GrailsFileUploaderGrailsPlugin {
 
-    def version = '2.4.6'
+    def version = '3.0.1'
     def grailsVersion = '3.1.4 > *'
     def groupId = 'com.cc.plugins'
     def pluginExcludes = [

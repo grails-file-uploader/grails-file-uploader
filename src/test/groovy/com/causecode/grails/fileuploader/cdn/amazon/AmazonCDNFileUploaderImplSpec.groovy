@@ -101,7 +101,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
     }
 
     @DirtiesRuntime
-    void "test various methods for successFul execution"() {
+    void "test containerExists method for successFul execution"() {
         given: "Mocked methods"
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.bucketExists(_) >> { return true }
@@ -109,5 +109,10 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
 
         expect:
         amazonCDNFileUploaderImpl.containerExists('test') == true
+    }
+
+    void "test getTemporaryUrl method to get temporary url of a file"() {
+        expect:
+        amazonCDNFileUploaderImpl.getTemporaryURL('testGoogle', 'test', 1L) != null
     }
 }

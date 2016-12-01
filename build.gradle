@@ -81,6 +81,7 @@ dependencies {
     */
 
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
+    compile "com.google.code.gson:gson:2.5" // To resolve guice dependency.
     provided "org.grails.plugins:quartz:2.0.8"
     compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
         exclude module: "jclouds-core"
@@ -99,7 +100,6 @@ dependencies {
     }
     compile ("org.apache.jclouds:jclouds-core:1.9.2") {
         exclude module: "asm"
-        exclude module: 'guice'
         exclude module: 'http-client'
     }
     compile("com.google.guava:guava:19.0")

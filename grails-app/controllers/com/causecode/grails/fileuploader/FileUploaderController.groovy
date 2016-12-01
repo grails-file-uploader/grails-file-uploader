@@ -44,11 +44,10 @@ class FileUploaderController {
 
     @SuppressWarnings(['JavaIoPackageAccess'])
     def show() {
-        int fourOFour = 404
         def id = params.id  // Support both Long Id or Mongo's ObjectId
         UFile uFileInstance = UFile.get(id)
         if (!uFileInstance) {
-            response.sendError(fourOFour)
+            response.sendError(404)
             return
         }
 
@@ -67,7 +66,7 @@ class FileUploaderController {
             }
         } else {
             log.warn "Missing file for UFile id [$id]."
-            response.sendError(fourOFour)
+            response.sendError(404)
         }
     }
 

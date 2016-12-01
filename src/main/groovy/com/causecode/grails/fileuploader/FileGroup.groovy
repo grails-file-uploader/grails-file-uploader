@@ -24,8 +24,6 @@ class FileGroup {
     ConfigObject groupConfig, config
     String groupName
     MessageSource messageSource
-    private static final String HYPHEN = '-'
-    private static final String SLASH = '/'
 
     FileGroup(String group) {
         groupName = group
@@ -73,7 +71,7 @@ class FileGroup {
          * Convert all white space to underscore and hyphens to underscore to differentiate
          * different data on filename created below.
          */
-        fileName.trim().replaceAll(' ', '_').replaceAll(HYPHEN, '_')
+        fileName.trim().replaceAll(' ', '_').replaceAll('-', '_')
 
         return [fileName: fileName, fileExtension: fileExtension, customFileName: customFileName,
                 isFileEmpty: isFileEmpty, fileSize: fileSize]
@@ -129,15 +127,15 @@ class FileGroup {
     String getLocalSystemPath(String storageTypes, Map fileDataMap, long currentTimeMillis) {
         // Base path to save file
         String localPath = this.groupConfig.path
-        if (!localPath.endsWith(SLASH)) {
-            localPath = localPath + SLASH
+        if (!localPath.endsWith('/')) {
+            localPath = localPath + '/'
         }
 
         if (storageTypes?.contains('monthSubdirs')) {  //subdirectories by month and year
             Calendar cal = Calendar.instance
-            localPath = localPath + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + SLASH
+            localPath = localPath + cal[Calendar.YEAR].toString() + cal[Calendar.MONTH].toString() + '/'
         } else {  //subdirectories by millisecond
-            localPath = localPath + currentTimeMillis + SLASH
+            localPath = localPath + currentTimeMillis + '/'
         }
 
         // Make sure the directory exists
@@ -172,17 +170,17 @@ class FileGroup {
         }
 
         StringBuilder fileNameBuilder = new StringBuilder(group)
-                .append(HYPHEN)
+                .append('-')
 
         StringBuilder fileName = new StringBuilder(fileDataMap.fileName)
 
         if (userInstance && userInstance.id) {
             fileName.append(userInstance.id.toString())
-            fileName.append(HYPHEN)
+            fileName.append('-')
         }
 
         fileNameBuilder.append(currentTimeMillis)
-                .append(HYPHEN)
+                .append('-')
                 .append(fileName)
 
         /**

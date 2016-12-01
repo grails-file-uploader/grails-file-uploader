@@ -9,6 +9,7 @@ package com.causecode.grails.fileuploader
 
 /**
  * Exception class
+ * Exception is thrown if any Storage related error is encountered.
  */
 class StorageException extends Exception {
 

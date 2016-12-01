@@ -8,6 +8,7 @@
 package com.causecode.grails.fileuploader
 
 import com.causecode.grails.fileuploader.cdn.CDNFileUploader
+import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
 import org.springframework.context.MessageSource
@@ -21,25 +22,19 @@ import com.causecode.grails.fileuploader.util.Time
 /**
  * A service class for all fileUpload related operations.
  */
-@SuppressWarnings(['JavaIoPackageAccess', 'Instanceof'])
+@SuppressWarnings(['JavaIoPackageAccess', 'Instanceof', 'AssignmentToStaticFieldFromInstanceMethod'])
 class FileUploaderService {
 
-    private static final String HYPHEN = '-'
     private static String baseTemporaryDirectoryPath
-    static final Map SAVE_FLUSH = [flush: true]
-    private static final int THOUSAND = 1000
-    private static final int HUNDRED = 100
-    private static final String SLASH = '/'
-    private static final String UNDERSCORE = '_'
-
     MessageSource messageSource
+    GrailsApplication grailsApplication
 
     @PostConstruct
     void postConstruct() {
         baseTemporaryDirectoryPath = Holders.flatConfig['grails.tempDirectory'] ?: './temp'
 
-        if (!baseTemporaryDirectoryPath.endsWith(SLASH)) {
-            baseTemporaryDirectoryPath += SLASH
+        if (!baseTemporaryDirectoryPath.endsWith('/')) {
+            baseTemporaryDirectoryPath += '/'
         }
 
         // Make sure directory exists
@@ -64,7 +59,7 @@ class FileUploaderService {
         String providerClassName = packageName + "${classNamePrefix}CDNFileUploaderImpl"
 
         try {
-            return Class.forName(providerClassName)?.newInstance()
+            return grailsApplication.classLoader.loadClass(providerClassName)?.newInstance()
         } catch (ClassNotFoundException e) {
             log.debug 'Could not find Provider class', e
             throw new ProviderNotFoundException("Provider $providerName not found.", e)
@@ -72,7 +67,7 @@ class FileUploaderService {
     }
 
     String getNewTemporaryDirectoryPath() {
-        String tempDirectoryPath = baseTemporaryDirectoryPath + UUID.randomUUID().toString() + SLASH
+        String tempDirectoryPath = baseTemporaryDirectoryPath + UUID.randomUUID().toString() + '/'
         File tempDirectory = new File(tempDirectoryPath)
         tempDirectory.mkdirs()
 
@@ -90,8 +85,8 @@ class FileUploaderService {
      * @param customFileName Custom file name without extension.
      * @return
      */
-    UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null,
-        Locale locale = null) throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException {
+    UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
+            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException {
 
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
@@ -100,15 +95,15 @@ class FileUploaderService {
         String path
 
         FileGroup fileGroupInstance = new FileGroup(group)
-        Map fileDataMap = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
+        Map fileData = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
 
-        if (fileDataMap.isFileEmpty || !file) {
+        if (fileData.isFileEmpty || !file) {
             return null
         }
 
         try {
-            fileGroupInstance.allowedExtensions(fileDataMap, locale, group)
-            fileGroupInstance.validateFileSize(fileDataMap, locale)
+            fileGroupInstance.allowedExtensions(fileData, locale, group)
+            fileGroupInstance.validateFileSize(fileData, locale)
         } catch (StorageConfigurationException storageConfigurationException) {
             log.error storageConfigurationException.message
             throw storageConfigurationException
@@ -121,7 +116,7 @@ class FileUploaderService {
             type = UFileType.CDN_PUBLIC
 
             try {
-                fileGroupInstance.scopeFileName(userInstance, fileDataMap, group, currentTimeMillis)
+                fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
             } catch (StorageConfigurationException storageConfigurationException) {
                 log.error storageConfigurationException.message
                 throw storageConfigurationException
@@ -137,7 +132,7 @@ class FileUploaderService {
             } else {
                 if (file instanceof CommonsMultipartFile) {
                     tempFile = new File(newTemporaryDirectoryPath +
-                            "${fileDataMap.fileName}.${fileDataMap.fileExtension}")
+                            "${fileData.fileName}.${fileData.fileExtension}")
 
                     file.transferTo(tempFile)
                 }
@@ -152,24 +147,24 @@ class FileUploaderService {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
-            expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * THOUSAND)
+            expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
 
             try {
-                path = uploadFileToCloud(fileDataMap, fileGroupInstance, tempFile)
+                path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
             } catch (ProviderNotFoundException providerNotFoundException) {
                 log.error providerNotFoundException.message
                 throw providerNotFoundException
             }
         } else {
-            path = fileGroupInstance.getLocalSystemPath(storageTypes, fileDataMap, currentTimeMillis)
+            path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
 
             // Move file
-            log.debug "Moving [$fileDataMap.fileName] to [${path}]."
+            log.debug "Moving [$fileData.fileName] to [${path}]."
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name: fileDataMap.fileName, size: fileDataMap.fileSize, path: path, type: type,
-                extension: fileDataMap.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+        UFile ufile = new UFile([name: fileData.fileName, size: fileData.fileSize, path: path, type: type,
+                extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
         ufile.save()
         if (ufile.hasErrors()) {
             log.warn "Error saving UFile instance: $ufile.errors"
@@ -179,15 +174,15 @@ class FileUploaderService {
 
     /**
      * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
-     * @params fileDataMap, fileGroupInstance, tempFile
+     * @params fileData, fileGroupInstance, tempFile
      * @return path of uploaded file
      *
      */
-    String uploadFileToCloud(Map fileDataMap, FileGroup fileGroupInstance, File tempFile) {
+    String uploadFileToCloud(Map fileData, FileGroup fileGroupInstance, File tempFile) {
         CDNFileUploader fileUploaderInstance
         String path
         long expirationPeriod = getExpirationPeriod(fileGroupInstance.groupName)
-        String tempFileFullName = fileDataMap.fileName + '.' + fileDataMap.fileExtension
+        String tempFileFullName = fileData.fileName + '.' + fileData.fileExtension
         Boolean makePublic = isPublicGroup(fileGroupInstance.groupName)
         String containerName = fileGroupInstance.containerName
 
@@ -218,8 +213,7 @@ class FileUploaderService {
     void moveFile(def file, String path) {
         if (file instanceof File) {
             file.renameTo(new File(path))
-        }
-        else {
+        } else {
             if (file instanceof CommonsMultipartFile) {
                 file.transferTo(new File(path))
             }
@@ -392,7 +386,6 @@ class FileUploaderService {
     }
 
     void renewTemporaryURL(boolean forceAll = false) {
-        String expiresOnString = 'expiresOn'
         CDNProvider.values().each { CDNProvider cdnProvider ->
             if (cdnProvider == CDNProvider.RACKSPACE || cdnProvider == CDNProvider.LOCAL) {
                 return
@@ -409,18 +402,18 @@ class FileUploaderService {
                 eq('provider', cdnProvider)
 
                 if (Holders.flatConfig['fileuploader.persistence.provider'] == 'mongodb') {
-                    eq(expiresOnString, [$exists: true])
+                    eq('expiresOn', [$exists: true])
                 } else {
-                    isNotNull(expiresOnString)
+                    isNotNull('expiresOn')
                 }
                 if (!forceAll) {
                     or {
-                        lt(expiresOnString, new Date())
+                        lt('expiresOn', new Date())
                         // Getting all CDN UFiles which are about to expire within one day.
-                        between(expiresOnString, new Date(), new Date() + 1)
+                        between('expiresOn', new Date(), new Date() + 1)
                     }
                 }
-                maxResults(HUNDRED)
+                maxResults(100)
             }.each { UFile ufileInstance ->
                 log.debug "Renewing URL for $ufileInstance"
 
@@ -428,8 +421,8 @@ class FileUploaderService {
 
                 ufileInstance.path = fileUploaderInstance.getTemporaryURL(ufileInstance.container,
                         ufileInstance.fullName, expirationPeriod)
-                ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * THOUSAND)
-                ufileInstance.save(SAVE_FLUSH)
+                ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+                ufileInstance.save(flush: true)
                 if (ufileInstance.hasErrors()) {
                     log.debug "Error saving new URL for $ufileInstance"
                 }
@@ -489,7 +482,7 @@ class FileUploaderService {
         UFile.withCriteria {
             eq('type', UFileType.CDN_PUBLIC)
             eq('provider', cdnProvider)
-            maxResults(HUNDRED)
+            maxResults(100)
         }.each { UFile uFileInstance ->
             Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
             long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
@@ -572,13 +565,13 @@ class FileUploaderService {
                     try {
                         fileUploaderInstance = getProviderInstance(toCDNProvider.name())
                         fileUploaderInstance.uploadFile(uFile.container, downloadedFile, fileName, makePublic,
-                                    expirationPeriod)
+                                expirationPeriod)
 
                         if (makePublic) {
                             savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.container, fileName)
                         } else {
                             savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.container, fileName,
-                                        expirationPeriod)
+                                    expirationPeriod)
                         }
                     } finally {
                         fileUploaderInstance?.close()
@@ -590,31 +583,31 @@ class FileUploaderService {
                 log.debug message
             }
 
-                UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-                uFileHistory.moveCount++
-                uFileHistory.lastUpdated = new Date()
-                uFileHistory.toCDN = toCDNProvider
-                uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
-                uFileHistory.details = message
+            UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
+            uFileHistory.moveCount ++
+            uFileHistory.lastUpdated = new Date()
+            uFileHistory.toCDN = toCDNProvider
+            uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
+            uFileHistory.details = message
 
-                if (isSuccess) {
-                    log.debug "File moved: ${uFile.name}"
+            if (isSuccess) {
+                log.debug "File moved: ${uFile.name}"
 
-                    uFileHistory.status = MoveStatus.SUCCESS
-                    uFile.name = fileName
-                    uFile.path = savedUrlPath
-                    uFile.provider = toCDNProvider
-                    uFile.expiresOn = new Date(new Date().time + expirationPeriod * THOUSAND)
-                    uFile.type = makePublic ? UFileType.CDN_PUBLIC : UFileType.CDN_PRIVATE
+                uFileHistory.status = MoveStatus.SUCCESS
+                uFile.name = fileName
+                uFile.path = savedUrlPath
+                uFile.provider = toCDNProvider
+                uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+                uFile.type = makePublic ? UFileType.CDN_PUBLIC : UFileType.CDN_PRIVATE
 
-                    uFile.save(SAVE_FLUSH)
-                } else {
-                    log.debug "Error in moving file: ${fileName}"
-                    uFileHistory.status = MoveStatus.FAILURE
-                    uFileUploadFailureList << uFile
-                }
-                uFileHistory.save(SAVE_FLUSH)
+                uFile.save(flush: true)
+            } else {
+                log.debug "Error in moving file: ${fileName}"
+                uFileHistory.status = MoveStatus.FAILURE
+                uFileUploadFailureList << uFile
             }
+            uFileHistory.save(flush: true)
+        }
 
         return uFileUploadFailureList
     }
@@ -635,7 +628,7 @@ class FileUploaderService {
             projections {
                 property('ufile')
             }
-            maxResults(HUNDRED)
+            maxResults(100)
         }
 
         if (failureFileListForGoogleCDN.size() > 0) {
@@ -650,7 +643,7 @@ class FileUploaderService {
             projections {
                 property('ufile')
             }
-            maxResults(HUNDRED)
+            maxResults(100)
         }
 
         if (failureFileListForAmazonCDN.size() > 0) {
@@ -666,8 +659,8 @@ class FileUploaderService {
      */
     String getNewFileNameFromUFile(UFile uFile) {
         String fullName
-        fullName = uFile.fullName.trim().replaceAll(' ', UNDERSCORE).replaceAll(HYPHEN, UNDERSCORE)
-        fullName = fullName.contains(SLASH) ? fullName[(fullName.lastIndexOf(SLASH) + 1)..-1] : fullName
+        fullName = uFile.fullName.trim().replaceAll(' ', '_').replaceAll('-', '_')
+        fullName = fullName.contains('/') ? fullName[(fullName.lastIndexOf('/') + 1)..-1] : fullName
 
         return "${uFile.fileGroup}-${System.currentTimeMillis()}-${fullName}"
     }

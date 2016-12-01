@@ -15,9 +15,6 @@ package com.causecode.grails.fileuploader
 class FileUploaderTagLib {
 
 	static namespace = 'fileuploader'
-//    private static final int THOUSAND = 1000
-//    private static final int ONE = 1
-//    private static final int ONE_THOUSAND_TWENTY_FOUR
 
     def fileUploaderService
 

@@ -9,6 +9,7 @@ package com.causecode.grails.fileuploader
 
 /**
  * Exception class
+ * This exception is thrown when any operation that requires CDNProvider is unable to find a provider.
  */
 class ProviderNotFoundException extends Exception {
 

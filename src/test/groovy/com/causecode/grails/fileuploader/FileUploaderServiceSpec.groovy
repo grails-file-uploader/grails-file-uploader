@@ -547,6 +547,9 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
         then: "File would not be deleted"
         fileInstance.exists()
+
+        cleanup:
+        fileInstance.delete()
     }
 
     @DirtiesRuntime
@@ -642,16 +645,22 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     }
 
     @DirtiesRuntime
-    void "test getProviderInstance method class does not exist"() {
-        when: "getProviderInstance method is called"
+    void "test getProviderInstance method"() {
+        when: "getProviderInstance method is called and class does not exist"
         service.getProviderInstance('test')
 
         then: "Method should throw exception"
         ProviderNotFoundException e = thrown()
         e.message == 'Provider test not found.'
+
+        when: "getProviderInstance method is called and class exist"
+        def result = service.getProviderInstance('Amazon')
+
+        then: "No exception is thrown"
+        noExceptionThrown()
+        result != null
     }
 
-    // Fix this as per need.
     @DirtiesRuntime
     void "test saveFile method for various cases"() {
         given: "An instance of File"
