@@ -6,8 +6,8 @@
  * without modification, are not permitted.
  */
 
-import com.causecode.grails.fileuploader.*
-import com.causecode.grails.fileuploader.util.*
+import com.causecode.fileuploader.*
+import com.causecode.fileuploader.util.*
 
 grails{
     profile = 'web-plugin'
@@ -39,7 +39,7 @@ fileuploader {
             allowedExtensions = ["jpg", "jpeg", "gif", "png"]
             storageTypes = "CDN"
             container = "causecode-1"
-            provider = CDNProvider.AMAZON
+            provider = com.causecode.fileuploader.CDNProvider.AMAZON
             makePublic = true
         }
         image {
@@ -47,7 +47,7 @@ fileuploader {
             allowedExtensions = ["jpg", "jpeg", "gif", "png"]
             storageTypes = "CDN"
             container = "causecode-1"
-            provider = CDNProvider.AMAZON
+            provider = com.causecode.fileuploader.CDNProvider.AMAZON
             expirationPeriod = 24 * 60 * 60 * 1 * 365L
         }
         profile {
@@ -55,7 +55,7 @@ fileuploader {
             allowedExtensions = ["jpg", "jpeg", "gif", "png"]
             storageTypes = "CDN"
             container = "causecode-1"
-            provider = CDNProvider.AMAZON
+            provider = com.causecode.fileuploader.CDNProvider.AMAZON
             expirationPeriod = 24 * 60 * 60 * 1 * 365L
         }
         testGoogle {
@@ -64,7 +64,7 @@ fileuploader {
             storageTypes = "CDN"
             path = './temp'
             container = "causecode"
-            provider = CDNProvider.GOOGLE
+            provider = com.causecode.fileuploader.CDNProvider.GOOGLE
             expirationPeriod = 24 * 60 * 60 * 1 * 365L
         }
         testAmazon {
@@ -73,7 +73,7 @@ fileuploader {
             storageTypes = "CDN"
             path = './temp'
             container = "causecode"
-            provider = CDNProvider.AMAZON
+            provider = com.causecode.fileuploader.CDNProvider.AMAZON
             expirationPeriod = 24 * 60 * 60 * 1 * 365L
         }
     }

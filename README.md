@@ -18,7 +18,7 @@ Supported Grails 3.2.0
 To upload files to CDN (Supports both Rackspace and Amazon) one must have some configuration like given below:
 
 ```
-import CDNProvider
+import com.causecode.fileuploader.CDNProvider
 
 grails.tempDirectory = "./temp-files"     // Required to store files temporarily. Must not ends with "/"
 
