@@ -72,10 +72,11 @@ class UFileSpec extends Specification implements BaseTestSetup {
         uFileInstance.provider = CDNProvider.RACKSPACE
 
         when: "afterDelete method is called for this instance"
-        def result = uFileInstance.afterDelete()
+        uFileInstance.afterDelete()
 
-        then: "Method should return true"
-        result
+        then: "Method should throw exception"
+        ProviderNotFoundException e = thrown()
+        e.message == 'Provider RACKSPACE not found.'
     }
 
     void "test containerName method for various cases"() {

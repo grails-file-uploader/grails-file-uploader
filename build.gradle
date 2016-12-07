@@ -76,8 +76,6 @@ dependencies {
 
     /*
     * Dependencies which were needed for the application/plugin.
-    * Make sure to comment while packaging to allow Grails Mongodb plugin to install & hibernate to uninstall in parent
-    * app
     */
 
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
@@ -109,6 +107,8 @@ dependencies {
     }
     compile "commons-fileupload:commons-fileupload:1.3.1"
     compile "org.ow2.asm:asm:5.0.3"
+    provided "com.causecode.plugins:nucleus:0.4.2"
+    provided "org.grails.plugins:spring-security-core:3.1.1"
 }
 
 project.publishing {
@@ -195,4 +195,8 @@ codenarc {
 
 codenarcMain {
     configFile file('config/codenarc/codenarc.groovy')
+}
+
+jar {
+    exclude('**/UrlMappings*')
 }

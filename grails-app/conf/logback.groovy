@@ -1,22 +1,34 @@
+/*
+ * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
+
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import grails.util.Environment
+
+GString loggingPattern = "%d{HH:mm:ss.SSS} %-5level [${hostname}] %logger - %msg%n"
+
+// For logging to console.
 appender('STDOUT', ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
-        pattern = "%level %logger - %msg%n"
+        pattern = loggingPattern
     }
 }
 
-logback = {
-    error   'org.codehaus.groovy.grails.web.servlet'        // controllers
-    'org.codehaus.groovy.grails.web.pages'           // GSP
-    'org.codehaus.groovy.grails.web.mapping.filter' // URL mapping
-    'org.codehaus.groovy.grails.web.mapping'        // URL mapping
-    'org.codehaus.groovy.grails.commons'            // core / classloading
-    'org.codehaus.groovy.grails.plugins'            // plugins
-    'org.codehaus.groovy.grails.orm.hibernate'     // hibernate integration
+def logfileDate = timestamp("yyyyMMdd'T'HHmmss")
+GString logFilePath = "${System.properties['user.home']}/logs/causecode/${logfileDate}.log"
 
-    debug   'grails.app.filters.com.causecode', 'com.causecode',
-            'grails.app.services.com.causecode.fileuploader'
+if (Environment.current in [Environment.DEVELOPMENT, Environment.TEST]) {
 
+    // Enable Spring Framework logs by passing the argument like 'grails -Dspring.logs=1 run-app'.
+    if (System.properties['spring.logs'] == '1') {
+        logger('org.springframework', DEBUG, ['STDOUT'], false)
+    }
 }
 
-//root(DEBUG,['STDOUT'])
-root(ERROR,['STDOUT'])
+logger('grails.app', DEBUG, ['STDOUT'], false)
+logger('com.causecode', DEBUG, ['STDOUT'], false)
+logger('com.causecode', INFO, ['STDOUT'])

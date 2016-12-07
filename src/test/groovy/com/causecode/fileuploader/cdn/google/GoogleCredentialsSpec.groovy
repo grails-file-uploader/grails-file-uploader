@@ -82,7 +82,7 @@ class GoogleCredentialsSpec extends Specification {
         given: 'auth variable is set to point to testkey.json file'
         File file = new File('')
         String testFilePath = file.absolutePath +
-                '/src/test/groovy/com/causecode/grails/fileuploader/cdn/google/testkey.json'
+                '/src/test/groovy/com/causecode/fileuploader/cdn/google/testkey.json'
         file.delete()
         // Only auth variable should be present. To confirm credentials are read from the file and not the config.
         Holders.grailsApplication.config.fileuploader.storageProvider.google = [:]

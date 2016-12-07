@@ -14,17 +14,6 @@ import spock.lang.Unroll
 @TestFor(UFileMoveHistory)
 class UFileMoveHistorySpec extends Specification implements BaseTestSetup {
 
-    void "test toString method to return expected response"() {
-        given: "An instance of UFileMoveHistory"
-        UFileMoveHistory uFileMoveHistoryInstance = getUFileMoveHistoryInstance(1)
-
-        when: "toString method is called"
-        String result = uFileMoveHistoryInstance.toString()
-
-        then: "Resulting value must match the method response"
-        result == "[$uFileMoveHistoryInstance.moveCount][$uFileMoveHistoryInstance.status]".toString()
-    }
-
     @Unroll
     void "test getValue method for various values"() {
         given: "An instance of MoveStatus"

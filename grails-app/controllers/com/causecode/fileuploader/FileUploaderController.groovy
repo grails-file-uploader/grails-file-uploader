@@ -22,14 +22,9 @@ class FileUploaderController {
         try {
             uFileInstance = fileUploaderService.ufileById(params.id, request.locale)
             file = fileUploaderService.fileForUFile(uFileInstance, request.locale)
-        } catch (FileNotFoundException fnfe) {
-            log.debug fnfe.message
-            flash.message = fnfe.message
-            redirect controller: params.errorController, action: params.errorAction
-            return
-        } catch (IOException ioe) {
-            log.error ioe.message
-            flash.message = ioe.message
+        } catch (FileNotFoundException | IOException e) {
+            log.error e.message
+            flash.message = e.message
             redirect controller: params.errorController, action: params.errorAction
             return
         }
@@ -40,11 +35,13 @@ class FileUploaderController {
         response.setContentType('application/octet-stream')
         response.setHeader('Content-disposition', "${params.contentDisposition}; filename=${uFileInstance.name}")
         response.outputStream << file.readBytes()
+
+        return
     }
 
     @SuppressWarnings(['JavaIoPackageAccess'])
     def show() {
-        def id = params.id  // Support both Long Id or Mongo's ObjectId
+        def id = params.id  // Support both Long Id and Mongo's ObjectId
         UFile uFileInstance = UFile.get(id)
         if (!uFileInstance) {
             response.sendError(404)
@@ -68,6 +65,8 @@ class FileUploaderController {
             log.warn "Missing file for UFile id [$id]."
             response.sendError(404)
         }
+
+        return
     }
 
     /**

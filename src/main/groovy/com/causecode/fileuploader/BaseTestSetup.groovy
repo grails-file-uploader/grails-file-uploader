@@ -18,8 +18,6 @@ package com.causecode.fileuploader
 @SuppressWarnings(['JavaIoPackageAccess'])
 trait BaseTestSetup {
 
-    static final Map SAVE_FLUSH = [flush: true]
-
     // UFile
     Map getUFileDataMap(int index) {
         Map dataMap = [downloads: index, provider: CDNProvider.GOOGLE, size: 1L, extension: 'jpg',
@@ -31,7 +29,7 @@ trait BaseTestSetup {
     UFile getUFileInstance(int index) {
         Map uFileDataMap = getUFileDataMap(index)
         UFile ufileInstance = new UFile(uFileDataMap)
-        ufileInstance.save(SAVE_FLUSH)
+        ufileInstance.save()
         assert ufileInstance.id
 
         return ufileInstance
@@ -49,7 +47,7 @@ trait BaseTestSetup {
     UFileMoveHistory getUFileMoveHistoryInstance(int index) {
         Map ufileMoveHistoryDataMap = getUFileMoveHistoryDataMap(index)
         UFileMoveHistory uFileMoveHistoryInstance = new UFileMoveHistory(ufileMoveHistoryDataMap)
-        uFileMoveHistoryInstance.save(SAVE_FLUSH)
+        uFileMoveHistoryInstance.save()
         assert uFileMoveHistoryInstance.id
 
         return uFileMoveHistoryInstance

@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package grails.file.uploader
+package fileuploader
 
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration

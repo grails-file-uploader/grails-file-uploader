@@ -7,12 +7,8 @@
  */
 package com.causecode.fileuploader
 
-import com.causecode.fileuploader.FileGroup
-import com.causecode.fileuploader.ProviderNotFoundException
-import com.causecode.fileuploader.StorageConfigurationException
-import com.causecode.fileuploader.StorageException
-import com.causecode.fileuploader.UploadFailureException
 import com.causecode.fileuploader.cdn.CDNFileUploader
+import com.causecode.util.NucleusUtils
 import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
@@ -102,17 +98,12 @@ class FileUploaderService {
         FileGroup fileGroupInstance = new FileGroup(group)
         Map fileData = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
 
-        if (fileData.isFileEmpty || !file) {
+        if (fileData.empty || !file) {
             return null
         }
 
-        try {
-            fileGroupInstance.allowedExtensions(fileData, locale, group)
-            fileGroupInstance.validateFileSize(fileData, locale)
-        } catch (StorageConfigurationException storageConfigurationException) {
-            log.error storageConfigurationException.message
-            throw storageConfigurationException
-        }
+        fileGroupInstance.allowedExtensions(fileData, locale, group)
+        fileGroupInstance.validateFileSize(fileData, locale)
 
         // If group specific storage type is not defined then use the common storage type
         String storageTypes = fileGroupInstance.groupConfig.storageTypes ?: fileGroupInstance.config.storageTypes
@@ -120,19 +111,15 @@ class FileUploaderService {
         if (storageTypes == 'CDN') {
             type = UFileType.CDN_PUBLIC
 
-            try {
-                fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
-            } catch (StorageConfigurationException storageConfigurationException) {
-                log.error storageConfigurationException.message
-                throw storageConfigurationException
-            }
+            fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
             long expirationPeriod = getExpirationPeriod(group)
 
             File tempFile
 
             if (file instanceof File) {
-                // No need to transfer a file of type File since its already in a temporary location.
-                // (Saves resource utilization)
+                /* No need to transfer a file of type File since its already in a temporary location.
+                * (Saves resource utilization)
+                */
                 tempFile = file
             } else {
                 if (file instanceof CommonsMultipartFile) {
@@ -154,12 +141,8 @@ class FileUploaderService {
 
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
 
-            try {
-                path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
-            } catch (ProviderNotFoundException providerNotFoundException) {
-                log.error providerNotFoundException.message
-                throw providerNotFoundException
-            }
+            path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
+
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
 
@@ -168,12 +151,10 @@ class FileUploaderService {
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
-        ufile.save()
-        if (ufile.hasErrors()) {
-            log.warn "Error saving UFile instance: $ufile.errors"
-        }
+        UFile ufile = new UFile([name: fileData.fileName, size: fileData.fileSize, path: path, type: type,
+                extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+        NucleusUtils.save(ufile, true)
+
         return ufile
     }
 
@@ -201,9 +182,6 @@ class FileUploaderService {
                 path = fileUploaderInstance.getTemporaryURL(containerName, tempFileFullName,
                         expirationPeriod)
             }
-        } catch (ProviderNotFoundException providerNotFoundException) {
-            log.error providerNotFoundException.message
-            throw providerNotFoundException
         } finally {
             fileUploaderInstance?.close()
         }
@@ -248,14 +226,12 @@ class FileUploaderService {
 
         if (ufileInstance.type == UFileType.CDN_PRIVATE || ufileInstance.type == UFileType.CDN_PUBLIC) {
 
-            if (ufileInstance.provider == CDNProvider.GOOGLE || ufileInstance.provider == CDNProvider.AMAZON) {
-                CDNFileUploader fileUploaderInstance
-                try {
-                    fileUploaderInstance = getProviderInstance(ufileInstance.provider.name())
-                    fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
-                } finally {
-                    fileUploaderInstance?.close()
-                }
+            CDNFileUploader fileUploaderInstance
+            try {
+                fileUploaderInstance = getProviderInstance(ufileInstance.provider.name())
+                fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
+            } finally {
+                fileUploaderInstance?.close()
             }
             return true
         }
@@ -272,7 +248,7 @@ class FileUploaderService {
 
             int numFilesInParentFolder = 0
             timestampFolder.eachFile(FileType.FILES) {
-                numFilesInParentFolder ++
+                numFilesInParentFolder++
             }
             if (numFilesInParentFolder == 0) {
                 timestampFolder.delete()
@@ -312,8 +288,8 @@ class FileUploaderService {
 
         if (file.exists()) {
             // Increment the viewed number
-            ufileInstance.downloads ++
-            ufileInstance.save()
+            ufileInstance.downloads++
+            NucleusUtils.save(ufileInstance, true)
             return file
         }
 
@@ -333,11 +309,13 @@ class FileUploaderService {
      */
     UFile cloneFile(String group, UFile ufileInstance, String name = '', Locale locale = null)
             throws StorageConfigurationException, IOException {
-        log.info "Cloning ufile [${ufileInstance?.id}][${ufileInstance?.name}]"
+
         if (!ufileInstance) {
             log.warn 'Invalid/null ufileInstance received.'
             return null
         }
+
+        log.info "Cloning ufile [${ufileInstance.id}][${ufileInstance.name}]"
 
         String tempFile = newTemporaryDirectoryPath + (name ?: ufileInstance.fullName)
 
@@ -350,18 +328,18 @@ class FileUploaderService {
         UrlValidator urlValidator = new UrlValidator()
 
         if (urlValidator.isValid(sourceFilePath) && ufileInstance.type != UFileType.LOCAL) {
-            FileOutputStream fos = null
+            FileOutputStream fileOutputStream = null
 
             try {
-                fos = new FileOutputStream(destFile)
-                fos.write(new URL(sourceFilePath).bytes)
+                fileOutputStream = new FileOutputStream(destFile)
+                fileOutputStream.write(new URL(sourceFilePath).bytes)
             } finally {
-                fos.close()
+                fileOutputStream.close()
             }
         } else {
             File sourceFile = new File(sourceFilePath)
-            FileChannel source = null
-            FileChannel destination = null
+            FileChannel source
+            FileChannel destination
 
             try {
                 source = new FileInputStream(sourceFile).channel
@@ -427,7 +405,7 @@ class FileUploaderService {
                 ufileInstance.path = fileUploaderInstance.getTemporaryURL(ufileInstance.container,
                         ufileInstance.fullName, expirationPeriod)
                 ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
-                ufileInstance.save(flush: true)
+                NucleusUtils.save(ufileInstance, true)
                 if (ufileInstance.hasErrors()) {
                     log.debug "Error saving new URL for $ufileInstance"
                 }
@@ -454,13 +432,13 @@ class FileUploaderService {
         String path = newTemporaryDirectoryPath
 
         File file = new File(path + filename)
-        FileOutputStream fos = new FileOutputStream(file)
+        FileOutputStream fileOutputStream = new FileOutputStream(file)
         try {
-            fos.write(new URL(url).bytes)
+            fileOutputStream.write(new URL(url).bytes)
         } catch (FileNotFoundException e) {
             log.info "URL ${url} not found"
         }
-        fos.close()
+        fileOutputStream.close()
 
         // Delete the temporary file when JVM exited since the base file is not required after upload
         file.deleteOnExit()
@@ -585,11 +563,11 @@ class FileUploaderService {
             } catch (Exception e) {
                 isSuccess = false
                 message = e.message
-                log.debug message
+                log.debug message, e
             }
 
             UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-            uFileHistory.moveCount ++
+            uFileHistory.moveCount++
             uFileHistory.lastUpdated = new Date()
             uFileHistory.toCDN = toCDNProvider
             uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
@@ -605,13 +583,13 @@ class FileUploaderService {
                 uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
                 uFile.type = makePublic ? UFileType.CDN_PUBLIC : UFileType.CDN_PRIVATE
 
-                uFile.save(flush: true)
+                NucleusUtils.save(uFile, true)
             } else {
                 log.debug "Error in moving file: ${fileName}"
                 uFileHistory.status = MoveStatus.FAILURE
                 uFileUploadFailureList << uFile
             }
-            uFileHistory.save(flush: true)
+            NucleusUtils.save(uFileHistory, true)
         }
 
         return uFileUploadFailureList
@@ -625,35 +603,16 @@ class FileUploaderService {
      */
     // TODO Remove repeated queries and enable uploads for each UFile in list.
     void moveFailedFilesToCDN() {
-        List failureFileListForGoogleCDN = UFileMoveHistory.withCriteria {
-            and {
-                eq('status', MoveStatus.FAILURE)
-                eq('toCDN', 3)
-            }
-            projections {
-                property('ufile')
-            }
-            maxResults(100)
+        List failureFileList = UFileMoveHistory.withCriteria {
+            eq('status', MoveStatus.FAILURE)
+            maxResults(200)
         }
 
-        if (failureFileListForGoogleCDN.size() > 0) {
-            moveFilesToCDN(failureFileListForGoogleCDN, CDNProvider.GOOGLE)
-        }
+        List failureFileListForGoogleCDN = failureFileList.findAll { it.toCDN == CDNProvider.GOOGLE }*.ufile
+        List failureFileListForAmazonCDN = failureFileList.findAll { it.toCDN == CDNProvider.AMAZON }*.ufile
 
-        List failureFileListForAmazonCDN = UFileMoveHistory.withCriteria {
-            and {
-                eq('status', MoveStatus.FAILURE)
-                eq('toCDN', 1)
-            }
-            projections {
-                property('ufile')
-            }
-            maxResults(100)
-        }
-
-        if (failureFileListForAmazonCDN.size() > 0) {
-            moveFilesToCDN(failureFileListForAmazonCDN, CDNProvider.AMAZON)
-        }
+        moveFilesToCDN(failureFileListForGoogleCDN, CDNProvider.GOOGLE)
+        moveFilesToCDN(failureFileListForAmazonCDN, CDNProvider.AMAZON)
     }
 
     /**

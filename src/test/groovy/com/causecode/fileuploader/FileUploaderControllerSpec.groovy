@@ -45,37 +45,19 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         UFile uFileInstance = getUFileInstance(1)
         File fileInstance = getFileInstance()
 
-        when: "download action is hit and FileNotFoundException is thrown"
-        controller.fileUploaderService = [ufileById: { Serializable idUfile, Locale locale ->
-            return uFileInstance
-        }, fileForUFile: { UFile ufileInstance, Locale locale ->
-            throw new FileNotFoundException()
-        }] as FileUploaderService
+        and: "Mocked fileUploaderService methods"
+        FileUploaderService fileUploaderService = Mock(FileUploaderService)
+        fileUploaderService.ufileById(_, _) >> { uFileInstance }
+        fileUploaderService.fileForUFile(_, _) >> { throw new FileNotFoundException() } >> { return fileInstance }
+        controller.fileUploaderService = fileUploaderService
 
+        when: "download action is hit and FileNotFoundException is thrown"
         def result = controller.download()
 
         then: "Server returns null"
         result == null
 
-        when: "download action is hit and IOException is thrown"
-        controller.fileUploaderService = [ufileById: { Serializable idUfile, Locale locale ->
-            return uFileInstance
-        }, fileForUFile: { UFile ufileInstance, Locale locale ->
-            throw new IOException()
-        }] as FileUploaderService
-        controller.response.reset()
-
-        result = controller.download()
-
-        then: "Server returns null"
-        result == null
-
         when: "upload action is hit and no exceptions are thrown"
-        controller.fileUploaderService = [ufileById: { Serializable idUfile, Locale locale ->
-            return uFileInstance
-        }, fileForUFile: { UFile ufileInstance, Locale locale ->
-            return fileInstance
-        }] as FileUploaderService
         controller.response.reset()
 
         controller.download()
@@ -125,7 +107,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         fileInstance.delete()
     }
 
-    void "test moveToCloud method for various cases"() {
+    void "test moveToCloud action for various cases"() {
         given: "An instance ofUFile"
         UFile uFileInstance = getUFileInstance(1)
         controller.request.json = ([provider: "GOOGLE", ufileIds: "1"] as JSON).toString()
@@ -136,11 +118,10 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
             return [uFileInstance]
         }] as FileUploaderService
 
-        when: "moveToCloud method is called"
-        def result = controller.moveToCloud()
+        when: "moveToCloud action is called"
+        controller.moveToCloud()
 
-        then: "No exception is thrown and method returns null"
-        result == null
+        then: "No exception is thrown"
         noExceptionThrown()
         controller.response.status == 200
     }

@@ -35,29 +35,29 @@ class FileGroup {
      * This method is used to modify File name, get extension and other required properties.
      * @params file,
      * @params customFileName - Custom file name without extension.
-     * @return Map containing fileExtension,, updated fileName, customFileName, fileSize and isFileEmpty.
+     * @return Map containing fileExtension,, updated fileName, customFileName, fileSize and empty.
      *
      */
     Map getFileNameAndExtensions(def file, String customFileName) {
         String contentType, receivedFileName, fileName, fileExtension
         long fileSize
-        boolean isFileEmpty = true
+        boolean empty = true
 
         if (file instanceof File) {
             contentType = ''
-            isFileEmpty = !file.exists()
+            empty = !file.exists()
             receivedFileName = file.name
             fileSize = file.size()
         } else {
             if (file instanceof CommonsMultipartFile) {    // Means instance is of Spring's CommonsMultipartFile.
                 def uploaderFile = file
                 contentType = uploaderFile?.contentType
-                isFileEmpty = uploaderFile?.isEmpty()
+                empty = uploaderFile?.isEmpty()
                 receivedFileName = uploaderFile?.originalFilename
                 fileSize = uploaderFile?.size
             }
         }
-        log.info "Received ${isFileEmpty ? 'empty ' : ''} file [$receivedFileName] of size [$fileSize] & content " +
+        log.info "Received ${empty ? 'empty ' : ''} file [$receivedFileName] of size [$fileSize] & content " +
                 "type [$contentType]."
 
         int extensionAt = receivedFileName.lastIndexOf('.')
@@ -74,7 +74,7 @@ class FileGroup {
         fileName.trim().replaceAll(' ', '_').replaceAll('-', '_')
 
         return [fileName: fileName, fileExtension: fileExtension, customFileName: customFileName,
-                isFileEmpty: isFileEmpty, fileSize: fileSize]
+                empty: empty, fileSize: fileSize]
     }
 
     /**

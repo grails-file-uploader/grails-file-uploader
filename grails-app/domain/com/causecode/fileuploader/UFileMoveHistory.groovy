@@ -7,13 +7,17 @@
  */
 package com.causecode.fileuploader
 
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
+
 /**
  * A domain class which will hold the data about a UFile move history.
  *
  * @author Rohit Pal
  * @since 2.4.4
  */
-@SuppressWarnings(['GrailsDomainHasEquals'])
+@EqualsAndHashCode
+@ToString
 class UFileMoveHistory {
 
     static constraints = {
@@ -34,13 +38,9 @@ class UFileMoveHistory {
     CDNProvider toCDN
     MoveStatus status
     String details
-
-    @Override
-    String toString() {
-        "[$moveCount][$status]"
-    }
 }
 
+@ToString
 @SuppressWarnings(['GrailsDomainHasEquals'])
 enum MoveStatus {
     FAILURE(0),
@@ -53,10 +53,5 @@ enum MoveStatus {
 
     int getValue() {
         return id
-    }
-
-    @Override
-    String toString() {
-        "${this.name()}($id)"
     }
 }

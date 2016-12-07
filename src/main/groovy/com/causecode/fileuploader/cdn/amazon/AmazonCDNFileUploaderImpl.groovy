@@ -31,7 +31,7 @@ import javax.activation.MimetypesFileTypeMap
  */
 @Slf4j
 @SuppressWarnings(['CatchException'])
-class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
+class AmazonCDNFileUploaderImpl extends CDNFileUploader {
 
     AWSS3Client client
 
@@ -176,6 +176,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
         copyObjectOptions.overrideAcl(cannedAccessPolicy)
 
         try {
+
             /* Copying the same file with the same name to the location so that we can override the previous file with
             * new meta data.
             */

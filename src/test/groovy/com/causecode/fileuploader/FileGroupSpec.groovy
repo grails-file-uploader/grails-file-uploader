@@ -11,33 +11,34 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.runtime.DirtiesRuntime
+import grails.util.Holders
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import spock.lang.Specification
 
 @Mock([UFile])
 @TestMixin(GrailsUnitTestMixin)
-class FileGroupSpec extends Specification  implements BaseTestSetup {
+class FileGroupSpec extends Specification implements BaseTestSetup {
 
     void "test getFileNameAndExtensions method to return File data"() {
         given: "An instance of File"
-        File fileInstance = new File('test')
-        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+        File fileInstance = new File('testLocal')
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
 
         when: "getFileNameAndExtensions method is called"
-        Map result = fileGroupInstance.getFileNameAndExtensions(fileInstance, 'test.txt')
+        Map result = fileGroupInstance.getFileNameAndExtensions(fileInstance, 'testLocal.txt')
 
         then: "Method returns a valid map"
-        result.fileName == 'test.txt'
-        result.customFileName == 'test.txt'
-        result.isFileEmpty == true
+        result.fileName == 'testLocal.txt'
+        result.customFileName == 'testLocal.txt'
+        result.empty == true
         result.fileSize == 0L
 
         cleanup:
         fileInstance.delete()
     }
 
-    void "test allowedExtensions methods for failure cases"() {
+    void "test allowedExtensions method when no configurations exist for the given group"() {
         given: "An instance of FileGroup class"
         FileGroup fileGroupInstance = new FileGroup('test')
 
@@ -55,23 +56,23 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
 
         and: 'Mocked method'
         MessageSource testInstance = Mock(MessageSource)
-        testInstance.getMessage(_, _, _) >> { 'Invalid extension'}
+        testInstance.getMessage(_, _, _) >> { 'Invalid extension' }
         fileGroupInstance.messageSource = testInstance
 
         when: "allowedExtensions method is called and file has wrong extensions"
         fileGroupInstance.allowedExtensions([fileExtension: 'mkv'], null, 'test.mkv')
 
         then: "Method throws StorageConfigurationException"
-        StorageConfigurationException exception =thrown()
+        StorageConfigurationException exception = thrown()
         exception.message == 'Invalid extension'
     }
 
     void "test getLocalSystemPath method to get localPath"() {
         given: "An instance of FileGroup class"
-        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
 
         when: "getLocalSystemPath method is called"
-        String resultPath = fileGroupInstance.getLocalSystemPath('monthSubdirs uuid', null, 0L)
+        String resultPath = fileGroupInstance.getLocalSystemPath('monthSubdirsuuid', null, 0L)
 
         then: "Method returns path of file"
         resultPath.contains('./temp')
@@ -92,7 +93,7 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
         fileGroupMap.fileName == 'testGoogle-0-test1-'
 
         when: "scopeFileName method is called and container name does not exist"
-        UFile.metaClass.static.containerName = {String containerName ->
+        UFile.metaClass.static.containerName = { String containerName ->
             return null
         }
         fileGroupInstance.scopeFileName(null, null, null, 0L)
@@ -110,7 +111,7 @@ class FileGroupSpec extends Specification  implements BaseTestSetup {
 
         and: "Mocked method"
         MessageSource testInstance = Mock(MessageSource)
-        testInstance.getMessage(_, _, _) >> { 'file too big'}
+        testInstance.getMessage(_, _, _) >> { 'file too big' }
         fileGroupInstance.messageSource = testInstance
 
         when: "validateFileSize method is called"

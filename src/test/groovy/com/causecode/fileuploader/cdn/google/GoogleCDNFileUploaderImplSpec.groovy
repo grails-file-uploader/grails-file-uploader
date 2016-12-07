@@ -226,23 +226,4 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         noExceptionThrown()
         result
     }
-
-    /* This test case was written to check if a file was actually uploaded to cloud. To enable this test case-
-    * 1. comment out setup block
-    * 2. Set GOOGLE_APPLICATION_CREDENTIALS environment variable.
-    * 3. Run test-app via command line
-    */
-//    void "test Google Cloud Storage for successfully uploading a file"() {
-//        given: "A file instance"
-//        File file = new File('test.txt')
-//        file.createNewFile()
-//        file << "This is a test document"
-//
-//        when: "uploadFile method is called"
-//        def result = googleCDNFileUploaderImpl.uploadFile("causecode-test", file, "test", false, 3600l)
-//
-//        then: "No exception is thrown and file gets uploaded, method returns true"
-//        notThrown(UploadFailureException)
-//        result
-//    }
 }

@@ -11,7 +11,6 @@ package com.causecode.fileuploader
  * A tag library that fulfills role of 'view helper' in the Model View Controller (MVC) pattern and
  * helps with GSP rendering
  */
-@SuppressWarnings(['DuplicateNumberLiteral'])
 class FileUploaderTagLib {
 
 	static namespace = 'fileuploader'
@@ -19,9 +18,9 @@ class FileUploaderTagLib {
     def fileUploaderService
 
 	static Long oneByte  = 1
-	static Long oneKByte = 1	*	1000
-	static Long oneMByte = 1 	* 	1000	*	1024
-	static Long oneGByte = 1	*	1000	*	1024	*	1024
+	static Long oneKByte = 1 * 1000
+	static Long oneMByte = 1 * 1000 * 1024
+	static Long oneGByte = 1 * 1000 * 1024 * 1024
 
 	def download = { attrs, body ->
 

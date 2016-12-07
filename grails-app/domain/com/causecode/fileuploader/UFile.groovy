@@ -9,11 +9,13 @@ package com.causecode.fileuploader
 
 import grails.util.Environment
 import grails.util.Holders
+import groovy.transform.EqualsAndHashCode
 
 /**
  * A domain class which will hold the UFile related data.
  */
-@SuppressWarnings(['GrailsDomainReservedSqlKeywordName', 'JavaIoPackageAccess', 'GrailsDomainHasEquals'])
+@EqualsAndHashCode
+@SuppressWarnings(['GrailsDomainReservedSqlKeywordName', 'JavaIoPackageAccess'])
 class UFile implements Serializable {
 
     private static final long serialVersionUID = 1

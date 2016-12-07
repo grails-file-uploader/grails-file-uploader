@@ -28,7 +28,6 @@ import spock.lang.Unroll
 
 @TestFor(FileUploaderService)
 @Mock([UFile, UFileMoveHistory])
-@TestMixin(GrailsUnitTestMixin)
 class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
 
     void setup() {
@@ -159,14 +158,6 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         and: "Mocked AmazonCDNFileUploaderImpl's methods"
         mockAuthenticateMethod()
 
-        AmazonCDNFileUploaderImpl.metaClass.getTemporaryURL = { String containerName, String fileName, long expiration->
-            return "http://fixedURL.com"
-        }
-
-        AmazonCDNFileUploaderImpl.metaClass.close = {
-            return true
-        }
-
         when: "renewTemporaryURL method is called"
         service.renewTemporaryURL()
         String uFilePath = uFileInstance4.path
@@ -216,27 +207,6 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         fileGroup | provider
         "testAmazon" | CDNProvider.AMAZON
         "testGoogle" | CDNProvider.GOOGLE
-    }
-
-    @DirtiesRuntime
-    void "test saveFile for uploading files with ProviderNotFoundException exception"() {
-        given: "A file instance"
-        File file = getFileInstance()
-
-        // TODO: Use metaClass in the next release to mock the getProviderInstance method
-        def mock = [getProviderInstance: { providerName ->
-            throw new ProviderNotFoundException("Provider $providerName not found.")
-        }] as FileUploaderService
-
-        when: "The saveFile() method is called"
-        mock.saveFile("testAmazon", file, 'test')
-
-        then: "It should throw ProviderNotFoundException"
-        ProviderNotFoundException e = thrown()
-        e.message == "Provider AMAZON not found."
-
-        cleanup:
-        file.delete()
     }
 
     @DirtiesRuntime
@@ -568,6 +538,14 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         then: "Method returns true and no exceptions are thrown"
         noExceptionThrown()
         response
+
+        when: "deleteFileForUFile method is called and class does not exist"
+        uFileInstance.provider = CDNProvider.RACKSPACE
+        service.deleteFileForUFile(uFileInstance)
+
+        then: "Method returns true and no exceptions are thrown"
+        ProviderNotFoundException e = thrown()
+        e.message == 'Provider RACKSPACE not found.'
     }
 
     @DirtiesRuntime
@@ -701,13 +679,11 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         DiskFileItem fileItem = getFileItem()
         CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem);
 
-        Holders.grailsApplication.config.fileuploader.groups.testGoogle.storageTypes = 'local'
-
         and: "Mocked methods"
         mockGetFileNameAndExtensions()
 
         when: "saveFile method is called and file gets saved"
-        def result = service.saveFile("testGoogle", fileInstance, 'test')
+        def result = service.saveFile("testLocal", fileInstance, 'test')
 
         then: "Method should return saved UFile instance"
         result.id != null
@@ -717,7 +693,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
             return [fileName: null, fileExtension: 'txt', customFileName: 'unit-test', empty: false,
                     fileSize: 38L]
         }
-        result = service.saveFile("testGoogle", commonsMultipartFileInstance, 'test')
+        result = service.saveFile("testLocal", commonsMultipartFileInstance, 'test')
 
         then: "File would not be saved"
         result.id == null

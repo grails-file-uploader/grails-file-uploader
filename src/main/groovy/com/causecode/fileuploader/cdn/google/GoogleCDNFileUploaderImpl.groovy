@@ -30,7 +30,7 @@ import javax.activation.MimetypesFileTypeMap
  * @since 2.4.9
  */
 @Slf4j
-class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
+class GoogleCDNFileUploaderImpl extends CDNFileUploader {
 
     static Storage gStorage
 
@@ -49,14 +49,13 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     @Override
     boolean authenticate() throws GoogleStorageException {
-        Storage storageVar
         try {
-            storageVar = gStorage ?: new GoogleCredentials().storage
+            gStorage = gStorage ?: new GoogleCredentials().storage
         } catch (StorageConfigurationException e) {
             throw new GoogleStorageException('Could not authenticate GoogleCDNFileUploader', e)
         }
 
-        return storageVar ? true : false
+        return gStorage ? true : false
     }
 
     @Override
