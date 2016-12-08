@@ -89,6 +89,8 @@ class FileUploaderController {
 
     def moveToCloud() {
         params.putAll(request.JSON)
+        params.max = params.max ?: 100
+
         CDNProvider toCDNProvider = params.provider
 
         Set<UFile> validUFilesToMoveToCloud = []

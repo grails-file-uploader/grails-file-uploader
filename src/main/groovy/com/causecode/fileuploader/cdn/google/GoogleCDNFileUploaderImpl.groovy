@@ -30,9 +30,20 @@ import javax.activation.MimetypesFileTypeMap
  * @since 2.4.9
  */
 @Slf4j
-class GoogleCDNFileUploaderImpl extends CDNFileUploader {
+/** TODO Investigate why codenarc throws error for not implementing Closeable even though Closeable has been implemented
+ * in parent class (CDNFileUploader).
+ */
+class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     static Storage gStorage
+
+    static {
+        try {
+            gStorage = gStorage ?: new GoogleCredentials().storage
+        } catch (StorageConfigurationException e) {
+            throw new GoogleStorageException('Could not authenticate GoogleCDNFileUploader', e)
+        }
+    }
 
     GoogleCDNFileUploaderImpl() {
         authenticate()
@@ -49,11 +60,6 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader {
 
     @Override
     boolean authenticate() throws GoogleStorageException {
-        try {
-            gStorage = gStorage ?: new GoogleCredentials().storage
-        } catch (StorageConfigurationException e) {
-            throw new GoogleStorageException('Could not authenticate GoogleCDNFileUploader', e)
-        }
 
         return gStorage ? true : false
     }

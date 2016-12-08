@@ -15,7 +15,6 @@ import groovy.io.FileType
 import org.springframework.context.MessageSource
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import java.nio.channels.FileChannel
-import javax.annotation.PostConstruct
 import org.apache.commons.validator.UrlValidator
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.util.Time
@@ -23,15 +22,14 @@ import com.causecode.fileuploader.util.Time
 /**
  * A service class for all fileUpload related operations.
  */
-@SuppressWarnings(['JavaIoPackageAccess', 'Instanceof', 'AssignmentToStaticFieldFromInstanceMethod'])
+@SuppressWarnings(['JavaIoPackageAccess', 'Instanceof'])
 class FileUploaderService {
 
     private static String baseTemporaryDirectoryPath
     MessageSource messageSource
     GrailsApplication grailsApplication
 
-    @PostConstruct
-    void postConstruct() {
+    static {
         baseTemporaryDirectoryPath = Holders.flatConfig['grails.tempDirectory'] ?: './temp'
 
         if (!baseTemporaryDirectoryPath.endsWith('/')) {
@@ -42,7 +40,8 @@ class FileUploaderService {
         File tempDirectory = new File(baseTemporaryDirectoryPath)
         tempDirectory.mkdirs()
 
-        log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}]"
+        // log will not be accessible in static initialisation block.
+        // log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}]"
     }
 
     /**

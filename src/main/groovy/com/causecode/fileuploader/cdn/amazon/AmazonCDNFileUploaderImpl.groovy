@@ -31,7 +31,11 @@ import javax.activation.MimetypesFileTypeMap
  */
 @Slf4j
 @SuppressWarnings(['CatchException'])
-class AmazonCDNFileUploaderImpl extends CDNFileUploader {
+/**
+ * TODO Investigate why codenarc throws error for not implementing Closeable even though Closeable has been implemented
+ * in parent class (CDNFileUploader).
+ */
+class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
     AWSS3Client client
 

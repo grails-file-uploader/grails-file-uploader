@@ -24,8 +24,12 @@ class DailyJob {
         fileUploaderService.renewTemporaryURL()
         fileUploaderService.moveFailedFilesToCDN()
 
-        // Trigger event to notity the installing app for any further app specific processing
-        grailsEvents.event('file-uploader', 'on-ufile-renewal')
+        /*
+         * Trigger event to notity the installing app for any further app specific processing.
+         *
+         * TODO This is not working. Need to investigate grails events.
+         */
+        // grailsEvents.event("file-uploader", "on-ufile-renewal")
 
         log.info 'Finished executing DailyJob.'
     }
