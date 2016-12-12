@@ -48,7 +48,7 @@ class GoogleCredentialsSpec extends Specification {
         googleCredentials.initializeGoogleCredentialsFromConfig()
 
         then: 'Fields should be successfully initialized'
-        googleCredentials.project_id == storageProviderGoogle.project_id
+        googleCredentials.projectId == storageProviderGoogle.project_id
         googleCredentials.type == storageProviderGoogle.type
     }
 
@@ -96,7 +96,7 @@ class GoogleCredentialsSpec extends Specification {
 
         then: 'Authentication should be successful and no Exception is thrown'
         notThrown(Exception)
-        googleCredentials.project_id == 'test_id'
+        googleCredentials.projectId == 'test_id'
         storage != null // Only writing storage will do but that is not readable.
     }
 

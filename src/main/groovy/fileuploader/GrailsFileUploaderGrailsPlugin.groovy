@@ -10,7 +10,6 @@ package fileuploader
 /**
  * This class is used for defining plugin related settings.
  */
-@SuppressWarnings(['EmptyMethod', 'UnusedMethodParameter'])
 class GrailsFileUploaderGrailsPlugin {
 
     def version = '3.0.1'

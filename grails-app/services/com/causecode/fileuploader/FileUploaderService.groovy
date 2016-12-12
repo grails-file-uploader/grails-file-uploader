@@ -8,11 +8,13 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
+import com.causecode.fileuploader.util.FileUploaderUtils
 import com.causecode.util.NucleusUtils
 import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
 import org.springframework.context.MessageSource
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import java.nio.channels.FileChannel
 import org.apache.commons.validator.UrlValidator
@@ -25,24 +27,8 @@ import com.causecode.fileuploader.util.Time
 @SuppressWarnings(['JavaIoPackageAccess', 'Instanceof'])
 class FileUploaderService {
 
-    private static String baseTemporaryDirectoryPath
     MessageSource messageSource
     GrailsApplication grailsApplication
-
-    static {
-        baseTemporaryDirectoryPath = Holders.flatConfig['grails.tempDirectory'] ?: './temp'
-
-        if (!baseTemporaryDirectoryPath.endsWith('/')) {
-            baseTemporaryDirectoryPath += '/'
-        }
-
-        // Make sure directory exists
-        File tempDirectory = new File(baseTemporaryDirectoryPath)
-        tempDirectory.mkdirs()
-
-        // log will not be accessible in static initialisation block.
-        // log.info "Temporary directory for file uploading [${tempDirectory.absolutePath}]"
-    }
 
     /**
      * This method is used for dynamically instantiating the CDNFileUploader class based on the Provider.
@@ -67,7 +53,7 @@ class FileUploaderService {
     }
 
     String getNewTemporaryDirectoryPath() {
-        String tempDirectoryPath = baseTemporaryDirectoryPath + UUID.randomUUID().toString() + '/'
+        String tempDirectoryPath = FileUploaderUtils.baseTemporaryDirectoryPath + UUID.randomUUID().toString() + '/'
         File tempDirectory = new File(tempDirectoryPath)
         tempDirectory.mkdirs()
 
@@ -202,7 +188,6 @@ class FileUploaderService {
         }
     }
 
-    @SuppressWarnings('CatchException')
     boolean deleteFile(Serializable idUfile) {
         UFile ufile = UFile.get(idUfile)
         if (!ufile) {
@@ -212,7 +197,7 @@ class FileUploaderService {
 
         try {
             ufile.delete()
-        } catch (Exception e) {
+        } catch (DataIntegrityViolationException e) {
             log.error "Could not delete ufile: ${idUfile}", e
             return false
         }

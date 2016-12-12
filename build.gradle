@@ -11,6 +11,7 @@ buildscript {
     }
     dependencies {
         classpath "com.netflix.nebula:nebula-publishing-plugin:4.4.4"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.2"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
@@ -27,8 +28,7 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
-apply plugin:"jacoco"
-apply plugin:"codenarc"
+apply plugin: 'gradle-code-quality'
 
 ext {
     grailsVersion = project.grailsVersion
@@ -160,43 +160,13 @@ grailsPublish {
     portalPassword = ""    
 }
 
-jacoco {
-    toolVersion = "0.7.7.201606060606"
-    reportsDir = file("$buildDir/jacoco")
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled false
-        csv.enabled false
-        html.enabled true
-        html.destination "${buildDir}/jacoco/jacocoHtml/"
-    }
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it,
-                    exclude: ['**/Application*/**',
-                              '**/FileUploaderTagLib*/**',
-                              '**/FileUploaderBootStrap*/**',
-                              '**/GrailsFileUploaderGrailsPlugin*/**',
-                              '**/UrlMappings*/**',
-                              '**/*Exception*/**',
-                              '**/DailyJob*/**',
-                    ])
-        })
-    }
-    executionData test
-    jacocoTestReport.dependsOn test
-}
-
-codenarc {
-    toolVersion = "0.25.2"
-}
-
-codenarcMain {
-    configFile file('config/codenarc/codenarc.groovy')
-}
-
-jar {
-    exclude('**/UrlMappings*')
+ccJacocoExt {
+    excludes = ['**/Application*/**',
+                '**/FileUploaderTagLib*/**',
+                '**/FileUploaderBootStrap*/**',
+                '**/GrailsFileUploaderGrailsPlugin*/**',
+                '**/UrlMappings*/**',
+                '**/*Exception*/**',
+                '**/DailyJob*/**',
+    ]
 }

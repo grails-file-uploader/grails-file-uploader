@@ -81,8 +81,8 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
     @DirtiesRuntime
     void "test scopeFileName when containerName does not exist"() {
         given: "An instance of FileGroup class"
-        FileGroup fileGroupInstance = new FileGroup('testGoogle')
         UFile uFileInstance = getUFileInstance(1)
+        FileGroup fileGroupInstance = new FileGroup('testGoogle')
         Map fileGroupMap = [fileName: 'test']
 
         when: "scopeFileMethod is called and method executes successfully"
@@ -93,9 +93,11 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         fileGroupMap.fileName == 'testGoogle-0-test1-'
 
         when: "scopeFileName method is called and container name does not exist"
-        UFile.metaClass.static.containerName = { String containerName ->
+        GroovyMock(UFile, global: true)
+        UFile.containerName(_) >> {
             return null
         }
+
         fileGroupInstance.scopeFileName(null, null, null, 0L)
 
         then: "Method throws StorageConfigurationException Exception"

@@ -14,6 +14,7 @@ import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.runtime.DirtiesRuntime
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.blobstore.KeyNotFoundException
+import org.jclouds.http.HttpResponseException
 import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import spock.lang.Specification
@@ -27,14 +28,13 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         amazonCDNFileUploaderImpl = new AmazonCDNFileUploaderImpl()
     }
 
-    @DirtiesRuntime
     void "test Amazon Cloud Storage for upload failure"() {
         given: "A file instance"
         File file = getFileInstance()
 
         and: "Mocked method"
         AWSS3Client clientInstance = Mock(AWSS3Client)
-        clientInstance.putObject(_, _, _) >> { throw new Exception('test exception') }
+        clientInstance.putObject(_, _, _) >> { throw new HttpResponseException('Test exception', null, null) }
         amazonCDNFileUploaderImpl.client = clientInstance
 
         when: "uploadFile method is called"

@@ -17,6 +17,7 @@ import org.jclouds.aws.s3.blobstore.options.AWSS3PutObjectOptions
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.blobstore.KeyNotFoundException
 import org.jclouds.http.HttpRequest
+import org.jclouds.http.HttpResponseException
 import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.AccessControlList.Permission
 import org.jclouds.s3.domain.CannedAccessPolicy
@@ -30,7 +31,6 @@ import javax.activation.MimetypesFileTypeMap
  * This class is used for all the Google Cloud Storage operations.
  */
 @Slf4j
-@SuppressWarnings(['CatchException'])
 /**
  * TODO Investigate why codenarc throws error for not implementing Closeable even though Closeable has been implemented
  * in parent class (CDNFileUploader).
@@ -148,8 +148,11 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
 
         s3ObjectToUpdate.setPayload(file)
         try {
+            /* Throws HttpResponseException if the conditions requested set are not satisfied by the object
+             * on the server.
+             */
             client.putObject(containerName, s3ObjectToUpdate, fileOptions)
-        } catch (Exception e) {
+        } catch (HttpResponseException e) {
             throw new UploadFailureException(fileName, containerName, e)
         }
         return true

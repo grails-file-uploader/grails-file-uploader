@@ -29,15 +29,14 @@ import groovy.util.logging.Slf4j
  * @since 2.5.2
  */
 @Slf4j
-@SuppressWarnings(['PropertyName', 'CyclomaticComplexity', 'CatchNullPointerException'])
 class GoogleCredentials {
 
     String type
-    String project_id
-    String private_key_id
-    String private_key
-    String client_email
-    String client_id
+    String projectId
+    String privateKeyId
+    String privateKey
+    String clientEmail
+    String clientId
 
     ConfigObject googleCredentials
 
@@ -56,12 +55,17 @@ class GoogleCredentials {
             throw new StorageConfigurationException('No configuration found for storage provider Google.')
         }
 
-        this.project_id = googleCredentials.project_id
+        this.projectId = googleCredentials.project_id
         this.type = googleCredentials.type ?: 'service_account'
 
-        if (!this.project_id) {
+        if (!this.projectId) {
             throw new StorageConfigurationException('Project Id is required for storage provider Google.')
         }
+
+        this.privateKeyId = googleCredentials.private_key_id
+        this.privateKey = googleCredentials.private_key
+        this.clientEmail = googleCredentials.client_email
+        this.clientId = googleCredentials.client_id
     }
 
     /**
@@ -92,7 +96,7 @@ class GoogleCredentials {
     Storage setAuthCredentialsAndAuthenticate(AuthCredentials authCredentials) throws IllegalArgumentException {
         StorageOptions.Builder builder = StorageOptions.builder()
         builder.authCredentials(authCredentials)
-        builder.projectId(this.project_id)
+        builder.projectId(this.projectId)
 
         return builder.build().service()
     }
@@ -128,16 +132,11 @@ class GoogleCredentials {
      * @since 2.5.2
      */
     Map getCredentialsMap() {
-        this.private_key_id = googleCredentials.private_key_id
-        this.private_key = googleCredentials.private_key
-        this.client_email = googleCredentials.client_email
-        this.client_id = googleCredentials.client_id
-
         return [
-            client_id: this.client_id,
-            client_email: this.client_email,
-            private_key: this.private_key,
-            private_key_id: this.private_key_id
+            client_id: this.clientId,
+            client_email: this.clientEmail,
+            private_key: this.privateKey,
+            private_key_id: this.privateKeyId
         ]
     }
 
@@ -174,6 +173,7 @@ class GoogleCredentials {
      * @author Nikhil Sharma
      * @since 2.5.2
      */
+    @SuppressWarnings(['CyclomaticComplexity', 'CatchNullPointerException'])
     Storage getStorage() throws StorageConfigurationException {
         try {
             initializeGoogleCredentialsFromConfig()
