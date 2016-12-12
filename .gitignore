@@ -31,3 +31,4 @@ plugin.xml
 grails-file-uploader-*.zip
 grails-file-uploader-*.zip.sha1
 bin/**
+temp
