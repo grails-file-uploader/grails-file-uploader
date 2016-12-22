@@ -4,9 +4,17 @@ buildscript {
     }
     repositories {
         mavenLocal()
-        maven { url "https://repo.grails.org/grails/repo/" }
-        maven { url "https://repo.grails.org/grails/plugins/" }
+        maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://repo.grails.org/grails/core" }
+        maven { url "http://repo.spring.io/milestone/" }
+        maven { url "https://repo.grails.org/grails/plugins" }
+        maven {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+            url "http://maven.causecode.com"
+        }
         mavenCentral()
     }
     dependencies {
@@ -170,3 +178,8 @@ ccJacocoExt {
                 '**/DailyJob*/**',
     ]
 }
+
+jar {
+    exclude('**/crm/UrlMappings*')
+}
+
