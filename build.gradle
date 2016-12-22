@@ -180,6 +180,6 @@ ccJacocoExt {
 }
 
 jar {
-    exclude('**/crm/UrlMappings*')
+    exclude('**/UrlMappings*')
 }
 

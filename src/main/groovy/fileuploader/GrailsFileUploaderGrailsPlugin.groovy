@@ -14,7 +14,7 @@ class GrailsFileUploaderGrailsPlugin {
 
     def version = '3.0.1'
     def grailsVersion = '3.1.4 > *'
-    def groupId = 'com.cc.plugins'
+    def groupId = 'com.causecode.plugins'
     def pluginExcludes = [
         'grails-app/views/error.gsp',
         'src/templates',
