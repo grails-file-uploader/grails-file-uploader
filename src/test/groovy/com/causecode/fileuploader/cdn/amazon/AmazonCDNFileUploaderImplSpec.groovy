@@ -19,6 +19,9 @@ import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import spock.lang.Specification
 
+/**
+ * This class contains unit test cases for AmazonCDNFileUploaderImpl class.
+ */
 @TestMixin(GrailsUnitTestMixin)
 class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSetup {
 
@@ -29,48 +32,48 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
     }
 
     void "test Amazon Cloud Storage for upload failure"() {
-        given: "A file instance"
-        File file = getFileInstance()
+        given: 'A file instance'
+        File fileInstance = getFileInstance('./temp/test.txt')
 
-        and: "Mocked method"
+        and: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.putObject(_, _, _) >> { throw new HttpResponseException('Test exception', null, null) }
         amazonCDNFileUploaderImpl.client = clientInstance
 
-        when: "uploadFile method is called"
-        amazonCDNFileUploaderImpl.uploadFile("dummyContainer", file, "test", false, 3600l)
+        when: 'uploadFile method is called'
+        amazonCDNFileUploaderImpl.uploadFile('dummyContainer', fileInstance, 'test', false, 3600L)
 
-        then: "Method should throw UploadFailureException"
+        then: 'Method should throw UploadFailureException'
         UploadFailureException e = thrown()
-        e.message == "Could not upload file test to container dummyContainer"
+        e.message == 'Could not upload file test to container dummyContainer'
 
         cleanup:
-        file.delete()
+        fileInstance.delete()
     }
 
     @DirtiesRuntime
     void "test Amazon Cloud Storage for upload success"() {
-        given: "A file instance"
-        File file = getFileInstance()
+        given: 'A file instance'
+        File fileInstance = getFileInstance('./temp/test.txt')
 
-        and: "Mocked method"
+        and: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.putObject(_, _, _) >> { return 'test values' }
         amazonCDNFileUploaderImpl.client = clientInstance
 
-        when: "uploadFile method is called"
-        boolean result = amazonCDNFileUploaderImpl.uploadFile("dummyContainer", file, "test", false, 3600l)
+        when: 'uploadFile method is called'
+        boolean result = amazonCDNFileUploaderImpl.uploadFile('dummyContainer', fileInstance, 'test', false, 3600L)
 
-        then: "Method should return true"
+        then: 'Method should return true'
         result
 
         cleanup:
-        file.delete()
+        fileInstance.delete()
     }
 
     @DirtiesRuntime
     void "test makeFilePublic method for failure case"() {
-        given: "Mocked methods"
+        given: 'Mocked methods'
         AccessControlList.metaClass.addPermission = { URI groupGranteeURI, String permission ->
             return
         }
@@ -79,30 +82,30 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         clientInstance.getObject(_, _, _) >> { return new S3ObjectImpl() }
         amazonCDNFileUploaderImpl.client = clientInstance
 
-        when: "makeFilePublic method is called"
+        when: 'makeFilePublic method is called'
         boolean result = amazonCDNFileUploaderImpl.makeFilePublic('dummy', 'test')
 
-        then: "Method returns false as response"
+        then: 'Method returns false as response'
         !result
     }
 
     @DirtiesRuntime
     void "test updatePreviousFileMetaData for update failure"() {
-        given: "Mocked method"
+        given: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.copyObject(_, _, _, _, _) >> { throw new KeyNotFoundException() }
         amazonCDNFileUploaderImpl.client = clientInstance
 
-        when: "updatePreviousFileMetaData method is called"
+        when: 'updatePreviousFileMetaData method is called'
         amazonCDNFileUploaderImpl.updatePreviousFileMetaData('dummy', 'test', true, 3600L)
 
-        then: "No Exception is thrown"
+        then: 'No Exception is thrown'
         noExceptionThrown()
     }
 
     @DirtiesRuntime
     void "test containerExists method for successFul execution"() {
-        given: "Mocked methods"
+        given: 'Mocked methods'
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.bucketExists(_) >> { return true }
         amazonCDNFileUploaderImpl.client = clientInstance
