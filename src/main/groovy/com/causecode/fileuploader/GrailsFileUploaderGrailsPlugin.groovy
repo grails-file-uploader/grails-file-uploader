@@ -18,7 +18,7 @@ class GrailsFileUploaderGrailsPlugin {
     def pluginExcludes = [
         'grails-app/views/error.gsp',
         'src/templates',
-        '**/com/causecode/fileuploaderUrlMappings*/**'
+        '**/com/causecode/fileuploader/UrlMappings*/**'
     ]
 
     def author = 'Federico Hofman'

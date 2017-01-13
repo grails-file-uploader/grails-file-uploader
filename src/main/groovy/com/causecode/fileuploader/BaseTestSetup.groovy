@@ -7,10 +7,6 @@
  */
 package com.causecode.fileuploader
 
-import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
-import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
-import org.apache.commons.fileupload.disk.DiskFileItem
-
 /**
  * This class contains common setup that can be used in unit, functional and integration test cases.
  * It helps in getting data maps or instances for any domain so that we don't have to repeat the creation of data
@@ -62,41 +58,5 @@ trait BaseTestSetup {
         File file = new File(filePath)
         file.createNewFile()
         file << 'This is a test document.'
-    }
-
-    // To be used in FileUploaderServiceSpec
-    DiskFileItem getFileItem(File fileInstance) {
-        DiskFileItem fileItem = new DiskFileItem('file', 'text/plain', false, fileInstance.name,
-                (int) fileInstance.length() , fileInstance.parentFile)
-        fileItem.outputStream
-        return fileItem
-    }
-
-    void mockGetFileNameAndExtensions() {
-        FileGroup.metaClass.getFileNameAndExtensions = { def file, String customFileName ->
-            return [fileName: 'test.txt', fileExtension: 'txt', customFileName: 'unit-test', empty: false,
-                    fileSize: 38L]
-        }
-    }
-
-    void mockExistMethod(boolean boolResult) {
-        File.metaClass.exists = {
-            return boolResult
-        }
-    }
-
-    boolean mockAuthenticateMethod() {
-        AmazonCDNFileUploaderImpl.metaClass.authenticate = {
-            return true
-        }
-    }
-
-    void mockGetPermanentURL() {
-        Closure getPermanentURL = { String containerName, String fileName ->
-            return 'http://fixedURL.com'
-        }
-
-        AmazonCDNFileUploaderImpl.metaClass.getPermanentURL = getPermanentURL
-        GoogleCDNFileUploaderImpl.metaClass.getPermanentURL = getPermanentURL
     }
 }

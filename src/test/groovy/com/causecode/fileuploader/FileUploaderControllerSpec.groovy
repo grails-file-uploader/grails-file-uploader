@@ -19,6 +19,7 @@ import spock.lang.Specification
 @Mock([UFile])
 class FileUploaderControllerSpec extends Specification implements BaseTestSetup {
 
+    // Note: Not a database query. Calling list action in FileUploaderController.
     @SuppressWarnings(['GrailsMaxForListQueries'])
     void "test list action to get UFile realted information"() {
         given: 'An instance of UFile'

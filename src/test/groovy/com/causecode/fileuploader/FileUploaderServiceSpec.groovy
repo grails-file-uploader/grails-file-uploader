@@ -9,9 +9,6 @@ package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
-import com.causecode.fileuploader.cdn.google.GoogleCredentials
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -21,43 +18,12 @@ import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * This file contains unit test cases for FileUploaderService class.
  */
-@TestFor(FileUploaderService)
-@Mock([UFile, UFileMoveHistory])
-class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
-
-    void setup() {
-        GoogleCredentials.metaClass.getStorage = { ->
-            return
-        }
-
-        AmazonCDNFileUploaderImpl.metaClass.close = { ->
-            return true
-        }
-
-        GoogleCDNFileUploaderImpl.metaClass.close = { ->
-            return true
-        }
-
-        Closure getTemporaryURL = { String containerName, String fileName, long expiration ->
-            return 'http://fixedURL.com'
-        }
-
-        Closure uploadFile = { String containerName, File file, String fileName, boolean makePublic, long maxAge ->
-            return true
-        }
-
-        AmazonCDNFileUploaderImpl.metaClass.getTemporaryURL = getTemporaryURL
-        GoogleCDNFileUploaderImpl.metaClass.getTemporaryURL = getTemporaryURL
-
-        AmazonCDNFileUploaderImpl.metaClass.uploadFile = uploadFile
-        GoogleCDNFileUploaderImpl.metaClass.uploadFile = uploadFile
-    }
+class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
     @DirtiesRuntime
     void "test isPublicGroup for various file groups"() {
@@ -506,6 +472,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
     }
 
     @DirtiesRuntime
+    // Note: Creating test file for testing delete method call.
     @SuppressWarnings(['JavaIoPackageAccess'])
     void "test deleteFileForUFile method for LOCAL file"() {
         given: 'A UFile and a File instance'
@@ -552,7 +519,7 @@ class FileUploaderServiceSpec extends Specification implements BaseTestSetup {
         UFile uFileInstance = getUFileInstance(1)
         getUFileInstance(2)
 
-        when: 'deleteFile method is called and File is nt found'
+        when: 'deleteFile method is called and File is not found'
         def result = service.deleteFile(null)
 
         then: 'Method returns false'
