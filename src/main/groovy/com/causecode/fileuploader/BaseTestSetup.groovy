@@ -54,8 +54,8 @@ trait BaseTestSetup {
     }
 
     // Remember to add cleanup block to delete new file after calling this method.
-    File getFileInstance() {
-        File file = new File('./temp/test.txt')
+    File getFileInstance(String filePath) {
+        File file = new File(filePath)
         file.createNewFile()
         file << 'This is a test document.'
     }
