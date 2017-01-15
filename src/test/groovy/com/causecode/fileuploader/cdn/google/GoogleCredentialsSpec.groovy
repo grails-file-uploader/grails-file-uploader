@@ -15,6 +15,9 @@ import grails.util.Holders
 import spock.lang.Specification
 import spock.lang.Unroll
 
+/**
+ * This class contains unit test cases for GoogleCredentials class
+ */
 @TestMixin(GrailsUnitTestMixin)
 class GoogleCredentialsSpec extends Specification {
 
@@ -30,14 +33,14 @@ class GoogleCredentialsSpec extends Specification {
     }
 
     void "test getStorage method when authentication fails"() {
-        given: "Config object is set to null"
+        given: 'Config object is set to null'
         GoogleCredentials googleCredentials = new GoogleCredentials()
         Holders.grailsApplication.config.fileuploader.storageProvider.google = null
 
-        when: "getStorage method is called"
-        googleCredentials.getStorage()
+        when: 'getStorage method is called'
+        googleCredentials.storage
 
-        then: "Method should throw StorageConfigurationException"
+        then: 'Method should throw StorageConfigurationException'
         StorageConfigurationException exception = thrown()
         exception.message == 'GCS Authentication failed due to bad configuration'
     }
@@ -78,7 +81,8 @@ class GoogleCredentialsSpec extends Specification {
         exception.message == 'Project Id is required for storage provider Google.'
     }
 
-    void 'test authenticaton by reading path of json file from config object'() {
+    @SuppressWarnings(['JavaIoPackageAccess'])
+    void 'test authentication by reading path of json file from config object'() {
         given: 'auth variable is set to point to testkey.json file'
         File file = new File('')
         String testFilePath = file.absolutePath +
@@ -101,7 +105,7 @@ class GoogleCredentialsSpec extends Specification {
     }
 
     @Unroll
-    void 'test authenticaton by reading path of json file from config object when path is #filePath'() {
+    void 'test authentication by reading path of json file from config object when path is #filePath'() {
         given: 'auth is set to blank/incorrect path'
         Holders.grailsApplication.config.fileuploader.storageProvider.google = [:]
         Holders.grailsApplication.config.fileuploader.storageProvider.google.authFile = filePath
@@ -151,11 +155,12 @@ class GoogleCredentialsSpec extends Specification {
     }
 
     void "test authenticateUsingEnvironmentVariable method"() {
-        when: "authenticateUsingEnvironmentVariable method is called"
+        when: 'authenticateUsingEnvironmentVariable method is called'
         GoogleCredentials googleCredentials = new GoogleCredentials()
         googleCredentials.authenticateUsingEnvironmentVariable()
 
         then: 'Authentication should fail and exception is thrown'
-        IllegalArgumentException e = thrown()
+        IllegalArgumentException e = thrown(IllegalArgumentException)
+        e.message.contains('A project ID is required for this service but could not be determined from the builder or')
     }
 }

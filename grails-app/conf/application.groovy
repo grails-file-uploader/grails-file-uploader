@@ -5,32 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-
 import com.causecode.fileuploader.*
-import com.causecode.fileuploader.util.*
-
-grails{
-    profile = 'web-plugin'
-    codegen{
-        defaultPackage = 'grails.file.uploader'
-    }
-}
-
-info{
-    app{
-        name = '@info.app.name@'
-        version = '@info.app.version@'
-        grailsVersion = '@info.app.grailsVersion@'
-    }
-}
-
-spring {
-    groovy{
-        template {
-            checkTemplateLocation = false
-        }
-    }
-}
 
 fileuploader {
     groups {

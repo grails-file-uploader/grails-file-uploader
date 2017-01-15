@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package fileuploader
+package com.causecode.fileuploader
 
 /**
  * This class is used for defining plugin related settings.
@@ -18,7 +18,7 @@ class GrailsFileUploaderGrailsPlugin {
     def pluginExcludes = [
         'grails-app/views/error.gsp',
         'src/templates',
-        '**/UrlMappings*/**'
+        '**/com/causecode/fileuploader/UrlMappings*/**'
     ]
 
     def author = 'Federico Hofman'

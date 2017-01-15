@@ -16,9 +16,10 @@ import com.causecode.fileuploader.GoogleStorageException
 import com.causecode.fileuploader.UploadFailureException
 import grails.test.runtime.DirtiesRuntime
 import spock.lang.Specification
-import spock.util.mop.ConfineMetaClassChanges
 
-@ConfineMetaClassChanges([Blob, GoogleCDNFileUploaderImpl, GoogleCredentials])
+/**
+ * This class contains unit test cases for GoogleCDNFileUploaderImpl class
+ */
 class GoogleCDNFileUploaderImplSpec extends Specification {
 
     GoogleCDNFileUploaderImpl googleCDNFileUploaderImpl
@@ -31,15 +32,15 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
     }
 
     void mockGetBlobMethod() {
-        GoogleCDNFileUploaderImpl.metaClass.getBlob = { String containerName, String fileName ->
+        googleCDNFileUploaderImpl.metaClass.getBlob = { String containerName, String fileName ->
             return new Blob(googleCDNFileUploaderImpl.gStorage,
-                    new BlobInfo.BuilderImpl(new BlobId("dummyContainer", "testFile", 2l)))
+                    new BlobInfo.BuilderImpl(new BlobId('dummyContainer', 'testFile', 2L)))
         }
     }
 
-    boolean mockDeleteMethod() {
+    boolean mockDeleteMethod(boolean boolResult) {
         Blob.metaClass.delete = { Blob.BlobSourceOption... options ->
-            return true
+            return boolResult
         }
     }
 
@@ -57,73 +58,71 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
 
     @DirtiesRuntime
     void "test getBlob method for various cases"() {
-        when: "Server fails to get Blob"
+        when: 'Server fails to get Blob'
         mockGetMethodOfStorageThrowException()
         googleCDNFileUploaderImpl.getBlob('dummy', 'test')
 
-        then: "Method throws exception"
+        then: 'Method throws exception'
         GoogleStorageException exception = thrown()
         exception.message == 'Could not find file test'
 
-        when: "Server finds Blob"
+        when: 'Server finds Blob'
         mockGetMethodOfStorage()
         googleCDNFileUploaderImpl.getBlob('dummy', 'test')
 
-        then: "No exception is thrown"
+        then: 'No exception is thrown'
         noExceptionThrown()
     }
 
     @DirtiesRuntime
     void "test Google Cloud Storage for delete failure"() {
-        given: "mocked methods for Blob class"
-        Blob.metaClass.delete = { Blob.BlobSourceOption... options ->
-            return false
-        }
-
+        given: 'mocked methods for Blob class'
+        mockDeleteMethod(false)
         mockGetBlobMethod()
 
-        when: "deleteFile() method is called"
-        googleCDNFileUploaderImpl.deleteFile("dummyContainer", "testFile")
+        when: 'deleteFile() method is called'
+        googleCDNFileUploaderImpl.deleteFile('dummyContainer', 'testFile')
 
-        then: "It should throw GoogleStorageException exception"
-        GoogleStorageException e = thrown()
-        e.message == "Could not delete file testFile from container dummyContainer"
+        then: 'It should throw GoogleStorageException exception'
+        GoogleStorageException e = thrown(GoogleStorageException)
+        e.message == 'Could not delete file testFile from container dummyContainer'
     }
 
     @DirtiesRuntime
     void "test Google Cloud Storage for successful deletion"() {
-        given: "mocked method for Blob class"
-        mockDeleteMethod()
+        given: 'mocked method for Blob class'
+        mockDeleteMethod(true)
         mockGetBlobMethod()
 
-        when: "deleteFile() method is called"
-        googleCDNFileUploaderImpl.deleteFile("dummyContainer", "testFile")
+        when: 'deleteFile() method is called'
+        googleCDNFileUploaderImpl.deleteFile('dummyContainer', 'testFile')
 
-        then: "No exception is thrown"
+        then: 'No exception is thrown'
         noExceptionThrown()
     }
 
     @DirtiesRuntime
+    @SuppressWarnings(['JavaIoPackageAccess'])
     void "test Google Cloud Storage for upload failure"() {
-        given: "A file instance and mocked 'of' method of class BlobId"
+        given: 'A file instance and mocked \'of\' method of class BlobId'
         File file = new File('test.txt')
         file.createNewFile()
         file << 'This is a test document.'
 
-        and: "Mocked methods"
+        and: 'Mocked methods'
         BlobId.metaClass.of = { String containerName, String fileName ->
-            return new BlobId("dummyContainer", "test", 2l)
+            return new BlobId('dummyContainer', 'test', 2L)
         }
         Storage storageInstance = Mock(Storage)
-        storageInstance.create(_, _) >> { throw new StorageException(1, "Test exception") }
+        storageInstance.create(_, _) >> { throw new StorageException(1, 'Test exception') }
         googleCDNFileUploaderImpl.gStorage = storageInstance
 
-        when: "uploadFile() method  is called"
-        googleCDNFileUploaderImpl.uploadFile("dummyContainer", file, "test", false, 3600l)
+        when: 'uploadFile() method  is called'
+        googleCDNFileUploaderImpl.uploadFile('dummyContainer', file, 'test', false, 3600L)
 
-        then: "it should throw UploadFailureException"
+        then: 'it should throw UploadFailureException'
         UploadFailureException e = thrown()
-        e.message == "Could not upload file test to container dummyContainer"
+        e.message == 'Could not upload file test to container dummyContainer'
 
         cleanup:
         BlobId.metaClass = null
@@ -132,35 +131,36 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
 
     @DirtiesRuntime
     void "test Google Cloud Storage for create Container failure"() {
-        given: "Mocked method"
+        given: 'Mocked method'
         Storage storageInstance = Mock(Storage)
-        storageInstance.create(_) >> { throw new StorageException(1, "Test exception") }
+        storageInstance.create(_) >> { throw new StorageException(1, 'Test exception') }
         googleCDNFileUploaderImpl.gStorage = storageInstance
 
-        when: "createContainer() method is called"
-        googleCDNFileUploaderImpl.createContainer("dummyContainer")
+        when: 'createContainer() method is called'
+        googleCDNFileUploaderImpl.createContainer('dummyContainer')
 
-        then: "it should throw GoogleStorageException exception"
+        then: 'it should throw GoogleStorageException exception'
         GoogleStorageException e = thrown()
-        e.message == "Could not create container."
+        e.message == 'Could not create container.'
     }
 
     @DirtiesRuntime
+    @SuppressWarnings(['JavaIoPackageAccess'])
     void "test uploadFile method for successful upload"() {
-        given: "A file instance and mocked 'of' method of class BlobId"
+        given: 'A file instance and mocked \'of\' method of class BlobId'
         File file = new File('test.txt')
         file.createNewFile()
         file << 'This is a test document.'
 
-        and: "Mocked method"
+        and: 'Mocked method'
         Storage storageInstance = Mock(Storage)
         storageInstance.create(_, _) >> { return null }
         googleCDNFileUploaderImpl.gStorage = storageInstance
 
-        when: "uploadFile method is called"
-        boolean result = googleCDNFileUploaderImpl.uploadFile("dummyContainer", file, "test", false, 3600l)
+        when: 'uploadFile method is called'
+        boolean result = googleCDNFileUploaderImpl.uploadFile('dummyContainer', file, 'test', false, 3600L)
 
-        then: "Method should return true"
+        then: 'Method should return true'
         result
 
         cleanup:
@@ -169,60 +169,60 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
 
     @DirtiesRuntime
     void "test makeFilePublic method"() {
-        expect: "Following must be true"
+        expect: 'Following must be true'
         !googleCDNFileUploaderImpl.makeFilePublic('dummyContainer', 'test')
     }
 
     @DirtiesRuntime
     void "test getPermanentURL method"() {
-        when: "getPermanentURL method is called"
+        when: 'getPermanentURL method is called'
         String result = googleCDNFileUploaderImpl.getPermanentURL('dummyContainer', 'test')
 
-        then: "No exception is thrown and method returns null"
+        then: 'No exception is thrown and method returns null'
         notThrown(Exception)
         result == null
     }
 
     @DirtiesRuntime
     void "test getTemporaryURL method to return a temporary url"() {
-        when: "getTemporaryURL method is called"
+        when: 'getTemporaryURL method is called'
         String result = googleCDNFileUploaderImpl.getTemporaryURL('dummyContainer', 'test', 3600L)
 
-        then: "No exception is thrown and method returns null"
+        then: 'No exception is thrown and method returns null'
         noExceptionThrown()
         result == null
     }
 
     @DirtiesRuntime
     void "test createContainer method for successful execution"() {
-        given: "Mocked method"
+        given: 'Mocked method'
         Storage storageInstance = Mock(Storage)
         storageInstance.create(_) >> { return }
         googleCDNFileUploaderImpl.gStorage = storageInstance
 
-        when: "createContainer method is called"
+        when: 'createContainer method is called'
         boolean result = googleCDNFileUploaderImpl.createContainer('dummy')
 
-        then: "No exception is thrown and method returns true"
+        then: 'No exception is thrown and method returns true'
         noExceptionThrown()
         result
     }
 
     @DirtiesRuntime
     void "test containerExist method for various cases"() {
-        when: "Server fails to get container"
+        when: 'Server fails to get container'
         mockGetMethodOfStorageThrowException()
         googleCDNFileUploaderImpl.containerExists('dummy')
 
-        then: "Method throws exception"
+        then: 'Method throws exception'
         GoogleStorageException exception = thrown()
         exception.message == 'Could not find container dummy'
 
-        when: "Server finds container"
+        when: 'Server finds container'
         mockGetMethodOfStorage()
         boolean result = googleCDNFileUploaderImpl.containerExists('dummy')
 
-        then: "No exception is thrown and method returns true"
+        then: 'No exception is thrown and method returns true'
         noExceptionThrown()
         result
     }

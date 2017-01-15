@@ -5,6 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
+package com.causecode.fileuploader
 
 /**
  * This class is used for mapping requests to controllers and views.

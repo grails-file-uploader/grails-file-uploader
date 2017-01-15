@@ -11,19 +11,22 @@ import grails.test.mixin.TestFor
 import spock.lang.Specification
 import spock.lang.Unroll
 
+/**
+ * This is unit test file for UFileMoveHistory class.
+ */
 @TestFor(UFileMoveHistory)
 class UFileMoveHistorySpec extends Specification implements BaseTestSetup {
 
     @Unroll
     void "test getValue method for various values"() {
-        given: "An instance of MoveStatus"
+        given: 'An instance of MoveStatus'
         MoveStatus moveStatusInstance
 
-        when: "getValue method is called"
+        when: 'getValue method is called'
         moveStatusInstance = val
-        def result = moveStatusInstance.getValue()
+        def result = moveStatusInstance.value
 
-        then: "The result should match the expected value"
+        then: 'The result should match the expected value'
         result == expValue
 
         where:
