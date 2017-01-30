@@ -9,6 +9,8 @@ package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
+import grails.buildtestdata.mixin.Build
+import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -23,6 +25,8 @@ import spock.lang.Unroll
 /**
  * This file contains unit test cases for FileUploaderService class.
  */
+@TestFor(FileUploaderService)
+@Build([UFile, UFileMoveHistory])
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
     @DirtiesRuntime
@@ -39,9 +43,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test moveFilesToCDN method for successfully moving a file"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         File fileInstance = getFileInstance('./temp/test.txt')
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
 
         and: 'Mocked method'
         FileUploaderService.metaClass.getFileFromURL = { String url, String filename ->
@@ -176,10 +179,9 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test moveFilesToCDN method for making a file public while moving and error occurs"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = getUFileInstance(1)
-        uFileInstance.type = UFileType.CDN_PUBLIC
+        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC)
         File fileInstance = getFileInstance('./temp/test.txt')
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
+        assert uFileInstance.type == UFileType.CDN_PUBLIC
 
         and: 'Mocked method'
         FileUploaderService.metaClass.getFileFromURL = { String url, String filename ->
@@ -202,9 +204,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test moveFilesToCDN method for making a file public while moving and no error occurs"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         File fileInstance = getFileInstance('./temp/test.txt')
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
 
         and: 'Mocked method'
         FileUploaderService.metaClass.getFileFromURL = { String url, String filename ->
@@ -215,7 +216,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         when: 'moveFilesToCDN method is called'
         assert uFileInstance.provider == CDNProvider.GOOGLE
-        assert uFileInstance.type == UFileType.LOCAL
         service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON, true)
 
         then: 'File would be made public'
@@ -229,7 +229,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test moveFilesToCDN method for failure cases"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
         File fileInstance = getFileInstance('./temp/test.txt')
 
         when: 'moveFilesToCDN method is called and file does not exist'
@@ -275,7 +275,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFile.metaClass.static.withCriteria = { Closure closure ->
             assert closure != null
             new JsonBuilder() closure
-            return getUFileInstance(1)
+            return UFile.build()
         }
 
         AmazonCDNFileUploaderImpl.metaClass.updatePreviousFileMetaData = { String containerName, String fileName,
@@ -307,7 +307,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test cloneFile method for various cases"() {
         given: 'An instance of UFile and File'
-        UFile ufIleInstance = getUFileInstance(1)
+        UFile ufIleInstance = UFile.build(name: 'test-file-1')
         File fileInstance = getFileInstance('./temp/test.txt')
 
         and: 'Mocked method'
@@ -336,9 +336,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test cloneFile method for LOCAL type file"() {
         given: 'An instance of UFile and File'
-        UFile ufIleInstance = getUFileInstance(1)
+        UFile ufIleInstance = UFile.build(name: 'test-file-1', path: 'http://unittest.com/test')
         File fileInstance = getFileInstance('./temp/test.txt')
-        ufIleInstance.path = 'http://causecode.com/test'
 
         and: 'Mocked method'
         FileUploaderService.metaClass.saveFile = { String group, def file, String customFileName = '',
@@ -365,7 +364,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test resolvePath for various cases"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
 
         when: 'resolvePath method is called and invalid params are passed'
         def result = service.resolvePath(null)
@@ -392,7 +391,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     void "test fileForUFile method when UFile is public type"() {
         given: 'An instance of File and UFile'
         File fileInstance = getFileInstance('./temp/test.txt')
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
 
         and: 'Mocked methods'
         FileUploaderService.metaClass.getFileFromURL = { String url, String filename ->
@@ -407,7 +406,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         def result = service.fileForUFile(uFileInstance, null)
 
         then: 'Method should return a file and downloads for the file should increase'
-        uFileInstance.downloads == 2
+        uFileInstance.downloads == 1
         result != null
 
         cleanup:
@@ -417,9 +416,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test deleteFileForUFile method for various cases"() {
         given: 'A UFile instance'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
         File fileInstance = getFileInstance('./temp/test.txt')
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
 
         and: 'Mocked method'
         File.metaClass.delete = {
@@ -448,8 +446,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test deleteFileForUFile method for PUBLIC file"() {
         given: 'A UFile instance'
-        UFile uFileInstance = getUFileInstance(1)
-        uFileInstance.type = UFileType.CDN_PUBLIC
+        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC)
+        assert uFileInstance.type == UFileType.CDN_PUBLIC
 
         and: 'Mocked method'
         GoogleCDNFileUploaderImpl.metaClass.deleteFile = { String containerName, String fileName ->
@@ -476,10 +474,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @SuppressWarnings(['JavaIoPackageAccess'])
     void "test deleteFileForUFile method for LOCAL file"() {
         given: 'A UFile and a File instance'
-        UFile uFileInstance = getUFileInstance(1)
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/testDir/test.txt'
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL, path: './temp/testDir/test.txt')
         new File('./temp/testDir').mkdir()
-        uFileInstance.type = UFileType.LOCAL
 
         and: 'Mocked method'
         mockExistMethod(true)
@@ -497,8 +493,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test deleteFileForUFile method for LOCAL file when parent folder not empty"() {
         given: 'A UFile and a File instance'
-        UFile uFileInstance = getUFileInstance(1)
-        uFileInstance.type = UFileType.LOCAL
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
 
         and: 'Mocked method'
         mockExistMethod(true)
@@ -516,8 +511,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test deleteFile method for various cases"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
-        getUFileInstance(2)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
+        UFile.build(type: UFileType.LOCAL)
 
         when: 'deleteFile method is called and File is not found'
         def result = service.deleteFile(null)
@@ -630,7 +625,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test moveFailedFilesToCDN for various cases"() {
         given: 'Instances of UFileMoveHistory'
-        UFileMoveHistory uFileMoveHistoryInstance = getUFileMoveHistoryInstance(1)
+        UFileMoveHistory uFileMoveHistoryInstance = UFileMoveHistory.build(fromCDN: CDNProvider.RACKSPACE,
+                toCDN: CDNProvider.GOOGLE, status: MoveStatus.FAILURE, ufile: UFile.build())
 
         FileUploaderService.metaClass.moveFilesToCDN = { List<UFile> uFileList, CDNProvider toCDNProvider,
             boolean makePublic = false ->
@@ -659,7 +655,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @DirtiesRuntime
     void "test ufileById method for various cases"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
         Locale locale = LocaleContextHolder.locale
 
         and: 'Mocked method'
@@ -685,7 +681,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     void "test fileForUFile method when file does not exist"() {
         given: 'An instance of File and UFile'
         File fileInstance = getFileInstance('./temp/test.txt')
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
 
         and: 'Mocked methods'
         FileUploaderService.metaClass.getFileFromURL = { String url, String filename ->

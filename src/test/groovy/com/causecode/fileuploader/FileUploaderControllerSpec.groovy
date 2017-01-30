@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -15,15 +16,15 @@ import spock.lang.Specification
 /**
  * This is unit test file for FileUploaderController class.
  */
+@Build(UFile)
 @TestFor(FileUploaderController)
-@Mock([UFile])
 class FileUploaderControllerSpec extends Specification implements BaseTestSetup {
 
     // Note: Not a database query. Calling list action in FileUploaderController.
     @SuppressWarnings(['GrailsMaxForListQueries'])
     void "test list action to get UFile realted information"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
 
         when: 'list action is hit'
         controller.params.id = uFileInstance.id
@@ -47,7 +48,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
     void "test download action for various cases"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         File fileInstance = getFileInstance('./temp/test.txt')
 
         and: 'Mocked fileUploaderService methods'
@@ -79,7 +80,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
     void  "test show action for various cases"() {
         given: 'A fileInstance and a uFileInstance'
         File fileInstance = getFileInstance('./temp/test.txt')
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
 
         when: 'show method is called and UFile instance is not found'
         controller.params.id = 2
@@ -105,7 +106,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.show()
 
         then: 'Server responds with success'
-        controller.response.contentType == 'image/jpg'
+        controller.response.contentType == 'image/extension'
         controller.response.status == 200
 
         cleanup:
@@ -114,7 +115,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
     void "test moveToCloud action for various cases"() {
         given: 'An instance ofUFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         controller.request.json = ([provider: 'GOOGLE', ufileIds: '1'] as JSON).toString()
 
         and: 'Mocked method'

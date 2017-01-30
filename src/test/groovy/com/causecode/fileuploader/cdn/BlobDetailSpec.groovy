@@ -9,18 +9,18 @@ package com.causecode.fileuploader.cdn
 
 import com.causecode.fileuploader.BaseTestSetup
 import com.causecode.fileuploader.UFile
-import grails.test.mixin.Mock
+import grails.buildtestdata.mixin.Build
 import spock.lang.Specification
 
 /**
  * This class contains unit test cases for BlobDetail class
  */
-@Mock([UFile])
+@Build(UFile)
 class BlobDetailSpec extends Specification implements BaseTestSetup {
 
     void "test BlobDetails class methods"() {
         given: 'An instance of BlobDetails'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         BlobDetail blobDetailInstance = new BlobDetail('test', null, uFileInstance, 'tag')
 
         when: 'getRemoteBlobName method is called'

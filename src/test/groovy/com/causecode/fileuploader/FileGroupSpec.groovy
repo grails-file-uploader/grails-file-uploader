@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.buildtestdata.mixin.Build
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -18,7 +19,7 @@ import spock.lang.Specification
 /**
  * This is Unit test file for FileGroup class.
  */
-@Mock([UFile])
+@Build(UFile)
 @TestMixin(GrailsUnitTestMixin)
 class FileGroupSpec extends Specification implements BaseTestSetup {
 
@@ -84,7 +85,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
     @DirtiesRuntime
     void "test scopeFileName when containerName does not exist"() {
         given: 'An instance of FileGroup class'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         FileGroup fileGroupInstance = new FileGroup('testGoogle')
         Map fileGroupMap = [fileName: 'test']
 
