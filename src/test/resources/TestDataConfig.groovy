@@ -10,7 +10,7 @@ import com.causecode.fileuploader.CDNProvider
 import com.causecode.fileuploader.UFileType
 
 /**
- * This file contains Test data configurations which is going to be used by test-data-config plugin.
+ * This file contains Test data configurations which is going to be used by build-test-data plugin.
  */
 
 // Defining default values to be used while creating a UFile instance.
