@@ -10,8 +10,6 @@ package com.causecode.fileuploader
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCredentials
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import org.apache.commons.fileupload.disk.DiskFileItem
 import spock.lang.Specification
 
@@ -19,8 +17,6 @@ import spock.lang.Specification
  * This class contains base setup and utility methods to mock service method calls, to be used in
  * FileUploaderServiceSpec class.
  */
-@TestFor(FileUploaderService)
-@Mock([UFile, UFileMoveHistory])
 class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTestSetup {
 
     void setup() {

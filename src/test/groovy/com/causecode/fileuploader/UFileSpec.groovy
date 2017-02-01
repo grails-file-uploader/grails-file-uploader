@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.buildtestdata.mixin.Build
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.util.Environment
@@ -16,12 +17,13 @@ import spock.lang.Specification
  * This class contains unit test cases for UFile class.
  */
 @TestFor(UFile)
+@Build(UFile)
 @Mock([FileUploaderService])
 class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test isFileExists method for various cases"() {
         given: 'An instance of UFile'
-        UFile ufileInstance = getUFileInstance(1)
+        UFile ufileInstance = UFile.build()
         ufileInstance.path = System.getProperty('user.dir') + '/temp'
 
         when: 'isFileExists method is called and file exists'
@@ -40,7 +42,7 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test canMoveToCdn method for various cases"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
 
         when: 'canMoveToCDN method is called and UFile type is LOCAL'
         boolean result = uFileInstance.canMoveToCDN()
@@ -58,7 +60,7 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test searchLink method to get path"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         uFileInstance.type = UFileType.CDN_PUBLIC
 
         when: 'searchLink method is called and UFile is PUBLIC type'
@@ -70,7 +72,7 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test afterDelete method"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = getUFileInstance(1)
+        UFile uFileInstance = UFile.build()
         uFileInstance.type = UFileType.CDN_PUBLIC
         uFileInstance.provider = CDNProvider.RACKSPACE
 
