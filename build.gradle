@@ -23,7 +23,7 @@ buildscript {
     }
 }
 
-version "3.0.2"
+version "3.0.3"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -76,6 +76,7 @@ dependencies {
     * Dependencies which were needed for the application/plugin.
     */
 
+    testCompile "org.grails.plugins:build-test-data:3.0.1"
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
     compile "com.google.code.gson:gson:2.5" // To resolve guice dependency.
     provided "org.grails.plugins:quartz:2.0.8"
