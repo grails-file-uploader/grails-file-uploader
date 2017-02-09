@@ -8,10 +8,8 @@
 package com.causecode.fileuploader
 
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.runtime.DirtiesRuntime
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import spock.lang.Specification
@@ -82,7 +80,6 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         resultPath.contains('./temp')
     }
 
-    @DirtiesRuntime
     void "test scopeFileName when containerName does not exist"() {
         given: 'An instance of FileGroup class'
         UFile uFileInstance = UFile.build()

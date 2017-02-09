@@ -96,9 +96,11 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
         when: 'Environment is set as Production'
         containerName = 'test'
-        Environment.metaClass.static.getCurrent = { ->
+        GroovyMock(Environment, global: true)
+        1 * Environment.current >> {
             return Environment.PRODUCTION
         }
+
         result = UFile.containerName(containerName)
 
         then: 'Method returns containerName'
