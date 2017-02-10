@@ -10,8 +10,10 @@ package com.causecode.fileuploader
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
+import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import spock.lang.Specification
 
 /**
@@ -123,5 +125,46 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         then: 'Method should throw StorageConfigurationException'
         StorageConfigurationException e = thrown()
         e.message == 'file too big'
+    }
+
+    void "test getFileNameAndExtensions method when file belongs to CommonsMultipartFile class"() {
+        given: 'Instances of CommonsMultipartFile and FileGroup class'
+        File fileInstance = getFileInstance('./temp/test.txt')
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
+
+        when: 'getFileNameAndExtensions method is called'
+        Map result = fileGroupInstance.getFileNameAndExtensions(commonsMultipartFileInstance, 'testLocal.txt')
+
+        then: 'Method returns a valid map'
+        result.fileName == 'testLocal.txt'
+        result.customFileName == 'testLocal.txt'
+        result.empty == true
+        result.fileSize == 0L
+
+        cleanup:
+        fileInstance.delete()
+    }
+
+    void "test getCdnProvider method to return provider name"() {
+        given: 'An instance of FileGroup class'
+        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+
+        expect: 'Method to return correct CDn provider for this group'
+        fileGroupInstance.cdnProvider == CDNProvider.GOOGLE
+    }
+
+    void "test getLocalSystemPath method to return localPath"() {
+        given: 'An instance of FileGroup class'
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        Map fileProperties = [fileName: 'test', fileExtension: 'txt']
+
+        when: 'getLocalSystemPath method is called'
+        String localPath = fileGroupInstance.getLocalSystemPath('', fileProperties, 0L)
+
+        then: 'Method returns a valid local path'
+        localPath == './temp/0/test.txt'
     }
 }

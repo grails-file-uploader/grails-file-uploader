@@ -10,7 +10,6 @@ package com.causecode.fileuploader
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCredentials
-import org.apache.commons.fileupload.disk.DiskFileItem
 import spock.lang.Specification
 
 /**
@@ -19,43 +18,35 @@ import spock.lang.Specification
  */
 class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTestSetup {
 
+    AmazonCDNFileUploaderImpl amazonCDNFileUploaderInstance
+
+    GoogleCDNFileUploaderImpl googleCDNFileUploaderImplMock
+    AmazonCDNFileUploaderImpl amazonCDNFileUploaderImplMock
+    GoogleCredentials googleCredentialsMock
+    FileGroup fileGroupMock
+
     void setup() {
-        GoogleCredentials.metaClass.getStorage = { ->
+        amazonCDNFileUploaderInstance = new AmazonCDNFileUploaderImpl()
+        googleCDNFileUploaderImplMock = GroovyMock(GoogleCDNFileUploaderImpl, global: true)
+        amazonCDNFileUploaderImplMock = GroovyMock(AmazonCDNFileUploaderImpl, global: true)
+        googleCredentialsMock = GroovyMock(GoogleCredentials, global: true)
+        fileGroupMock = GroovyMock(FileGroup, global: true)
+
+        googleCredentialsMock.storage >> {
             return
         }
 
-        AmazonCDNFileUploaderImpl.metaClass.close = { ->
-            return true
+        amazonCDNFileUploaderImplMock.close() >> {
+            return
         }
 
-        GoogleCDNFileUploaderImpl.metaClass.close = { ->
-            return true
+        googleCredentialsMock.close() >> {
+            return
         }
-
-        Closure getTemporaryURL = { String containerName, String fileName, long expiration ->
-            return 'http://fixedURL.com'
-        }
-
-        Closure uploadFile = { String containerName, File file, String fileName, boolean makePublic, long maxAge ->
-            return true
-        }
-
-        AmazonCDNFileUploaderImpl.metaClass.getTemporaryURL = getTemporaryURL
-        GoogleCDNFileUploaderImpl.metaClass.getTemporaryURL = getTemporaryURL
-
-        AmazonCDNFileUploaderImpl.metaClass.uploadFile = uploadFile
-        GoogleCDNFileUploaderImpl.metaClass.uploadFile = uploadFile
-    }
-
-    DiskFileItem getFileItem(File fileInstance) {
-        DiskFileItem fileItem = new DiskFileItem('file', 'text/plain', false, fileInstance.name,
-                (int) fileInstance.length() , fileInstance.parentFile)
-        fileItem.outputStream
-        return fileItem
     }
 
     void mockGetFileNameAndExtensions() {
-        FileGroup.metaClass.getFileNameAndExtensions = { def file, String customFileName ->
+        fileGroupMock.getFileNameAndExtensions(_, _) >> {
             return [fileName: 'test.txt', fileExtension: 'txt', customFileName: 'unit-test', empty: false,
                     fileSize: 38L]
         }
@@ -67,18 +58,48 @@ class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTest
         }
     }
 
+    void mockFileDeleteMethod(boolean boolResult) {
+        File.metaClass.delete = {
+            return boolResult
+        }
+    }
+
     boolean mockAuthenticateMethod() {
-        AmazonCDNFileUploaderImpl.metaClass.authenticate = {
+        new AmazonCDNFileUploaderImpl() >> amazonCDNFileUploaderImplMock
+        amazonCDNFileUploaderImplMock.authenticate() >> {
             return true
         }
     }
 
     void mockGetPermanentURL() {
-        Closure getPermanentURL = { String containerName, String fileName ->
-            return 'http://fixedURL.com'
-        }
+        amazonCDNFileUploaderImplMock.getPermanentURL(_, _) >> 'http://fixedURL.com'
+        googleCDNFileUploaderImplMock.getPermanentURL(_, _) >> 'http://fixedURL.com'
+    }
 
-        AmazonCDNFileUploaderImpl.metaClass.getPermanentURL = getPermanentURL
-        GoogleCDNFileUploaderImpl.metaClass.getPermanentURL = getPermanentURL
+    void mockGetTemporaryURL() {
+        amazonCDNFileUploaderImplMock.getTemporaryURL(_, _, _) >> 'http://fixedURL.com'
+        googleCDNFileUploaderImplMock.getTemporaryURL(_, _, _) >> 'http://fixedURL.com'
+        amazonCDNFileUploaderImplMock.getPermanentURL(_, _) >> 'http://fixedURL.com'
+        googleCDNFileUploaderImplMock.getPermanentURL(_, _) >> 'http://fixedURL.com'
+    }
+
+    void mockUploadFileMethod(boolean value) {
+        amazonCDNFileUploaderImplMock.uploadFile(_, _, _, _, _) >> value
+        googleCDNFileUploaderImplMock.uploadFile(_, _, _, _, _) >> value
+    }
+
+    void mockGetProviderInstance(String provider) {
+        service.metaClass.getProviderInstance = { String providerName ->
+            provider == 'google' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
+        }
+    }
+
+    void mockFileGroupConstructor(String storageTypes) {
+        new FileGroup(_) >> { String group ->
+            fileGroupMock.groupName = group
+            fileGroupMock.groupConfig >> [storageTypes: storageTypes]
+
+            return fileGroupMock
+        }
     }
 }

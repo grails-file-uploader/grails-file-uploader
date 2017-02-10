@@ -14,6 +14,7 @@ import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageException
 import com.causecode.fileuploader.GoogleStorageException
 import com.causecode.fileuploader.UploadFailureException
+import grails.test.runtime.DirtiesRuntime
 import spock.lang.Specification
 
 /**
@@ -81,6 +82,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         noExceptionThrown()
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for delete failure"() {
         given: 'mocked methods for Blob class'
         mockGetBlobMethod()
@@ -94,6 +96,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         e.message == 'Could not delete file testFile from container dummyContainer'
     }
 
+    @DirtiesRuntime
     void "test Google Cloud Storage for successful deletion"() {
         given: 'mocked method for Blob class'
         mockGetBlobMethod()
