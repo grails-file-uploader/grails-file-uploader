@@ -10,7 +10,7 @@ package com.causecode.fileuploader
 import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.springframework.context.MessageSource
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 
 /**
  * A utility class which performs operations on properties of a file.
@@ -49,7 +49,7 @@ class FileGroup {
             receivedFileName = file.name
             fileSize = file.size()
         } else {
-            if (file instanceof CommonsMultipartFile) {    // Means instance is of Spring's CommonsMultipartFile.
+            if (file instanceof MultipartFile) {    // Means instance is of Spring's MultipartFile.
                 def uploaderFile = file
                 contentType = uploaderFile?.contentType
                 empty = uploaderFile?.isEmpty()

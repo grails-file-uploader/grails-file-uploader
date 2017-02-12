@@ -15,7 +15,7 @@ import grails.util.Holders
 import groovy.io.FileType
 import org.springframework.context.MessageSource
 import org.springframework.dao.DataIntegrityViolationException
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 import java.nio.channels.FileChannel
 import org.apache.commons.validator.UrlValidator
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
@@ -107,7 +107,7 @@ class FileUploaderService {
                 */
                 tempFile = file
             } else {
-                if (file instanceof CommonsMultipartFile) {
+                if (file instanceof MultipartFile) {
                     tempFile = new File(newTemporaryDirectoryPath +
                             "${fileData.fileName}.${fileData.fileExtension}")
 
@@ -182,7 +182,7 @@ class FileUploaderService {
         if (file instanceof File) {
             file.renameTo(new File(path))
         } else {
-            if (file instanceof CommonsMultipartFile) {
+            if (file instanceof MultipartFile) {
                 file.transferTo(new File(path))
             }
         }

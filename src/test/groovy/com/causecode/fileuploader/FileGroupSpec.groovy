@@ -10,11 +10,13 @@ package com.causecode.fileuploader
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Specification
+
+import javax.servlet.http.Part
 
 /**
  * This is Unit test file for FileGroup class.
@@ -127,16 +129,15 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         e.message == 'file too big'
     }
 
-    void "test getFileNameAndExtensions method when file belongs to CommonsMultipartFile class"() {
-        given: 'Instances of CommonsMultipartFile and FileGroup class'
+    void "test getFileNameAndExtensions method when file belongs to StandardMultipartFile class"() {
+        given: 'Instances of StandardMultipartFile and FileGroup class'
         File fileInstance = getFileInstance('./temp/test.txt')
-        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
-        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+        MultipartFile standardMultipartFile = new StandardMultipartFile(Mock(Part), 'test.txt')
 
         FileGroup fileGroupInstance = new FileGroup('testLocal')
 
         when: 'getFileNameAndExtensions method is called'
-        Map result = fileGroupInstance.getFileNameAndExtensions(commonsMultipartFileInstance, 'testLocal.txt')
+        Map result = fileGroupInstance.getFileNameAndExtensions(standardMultipartFile, 'testLocal.txt')
 
         then: 'Method returns a valid map'
         result.fileName == 'testLocal.txt'
