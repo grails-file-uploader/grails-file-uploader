@@ -10,8 +10,10 @@ package com.causecode.fileuploader
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
+import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Specification
@@ -129,15 +131,27 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         e.message == 'file too big'
     }
 
-    void "test getFileNameAndExtensions method when file belongs to StandardMultipartFile class"() {
-        given: 'Instances of StandardMultipartFile and FileGroup class'
+    void "test getFileNameAndExtensions method when file belongs to MultipartFile"() {
+        given: 'Instances of StandardMultipartFile, CommonsMultipartFile and FileGroup class'
         File fileInstance = getFileInstance('./temp/test.txt')
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
         MultipartFile standardMultipartFile = new StandardMultipartFile(Mock(Part), 'test.txt')
 
         FileGroup fileGroupInstance = new FileGroup('testLocal')
 
-        when: 'getFileNameAndExtensions method is called'
-        Map result = fileGroupInstance.getFileNameAndExtensions(standardMultipartFile, 'testLocal.txt')
+        when: 'getFileNameAndExtensions method is called for CommonsMultipartFile'
+        Map result = fileGroupInstance.getFileNameAndExtensions(commonsMultipartFileInstance, 'testLocal.txt')
+
+        then: 'Method returns a valid map'
+        result.fileName == 'testLocal.txt'
+        result.customFileName == 'testLocal.txt'
+        result.empty == true
+        result.fileSize == 0L
+
+        when: 'getFileNameAndExtensions method is called for StandardMultipartFile'
+        result = fileGroupInstance.getFileNameAndExtensions(standardMultipartFile, 'testLocal.txt')
 
         then: 'Method returns a valid map'
         result.fileName == 'testLocal.txt'

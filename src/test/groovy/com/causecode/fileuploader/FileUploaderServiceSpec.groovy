@@ -12,10 +12,12 @@ import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Unroll
@@ -571,8 +573,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     }
 
     void "test saveFile method for various cases"() {
-        given: 'An instance of File'
+        given: 'Instances of CommonsMultipartFile and StandardMultipartFile'
         File fileInstance = getFileInstance('./temp/test.txt')
+
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
         MultipartFile standardMultipartFile = new StandardMultipartFile(Mock(Part), 'test.txt')
 
         and: 'Mocked methods'
@@ -582,7 +588,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockGetFileNameAndExtensions()
         mockUploadFileMethod(true)
         mockGetProviderInstance('google')
-        3 * fileGroupMock.cdnProvider >> {
+        5 * fileGroupMock.cdnProvider >> {
             return
         } >> {
             return CDNProvider.GOOGLE
@@ -590,7 +596,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         when: 'saveFile is called and provider is not specified'
         mockGetFileNameAndExtensions()
-        service.saveFile('testGoogle', standardMultipartFile, 'test')
+        service.saveFile('testGoogle', commonsMultipartFileInstance, 'test')
 
         then: 'Method should throw StorageConfigurationException'
         StorageConfigurationException e = thrown()
@@ -598,7 +604,15 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         when: 'saveFile method is hit'
         mockUploadFileMethod(true)
-        def result = service.saveFile('testGoogle', standardMultipartFile, 'test')
+        def result = service.saveFile('testGoogle', commonsMultipartFileInstance, 'test')
+
+        then: 'Method should return instance of UFile'
+        result.fileGroup == 'testGoogle'
+        result.type == UFileType.CDN_PUBLIC
+
+        when: 'saveFile method is hit and file belongs to StandardMultiartFile'
+        mockUploadFileMethod(true)
+        result = service.saveFile('testGoogle', standardMultipartFile, 'test')
 
         then: 'Method should return instance of UFile'
         result.fileGroup == 'testGoogle'
@@ -611,7 +625,9 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     void "test saveFile when provider is LOCAL"() {
         given: 'File instance'
         File fileInstance = getFileInstance('./temp/test.txt')
-        MultipartFile standardMultipartFile = new StandardMultipartFile(Mock(Part), 'test.txt')
+
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
 
         and: 'Mocked methods'
         mockFileGroupConstructor('LOCAL')
@@ -632,7 +648,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         result.id != null
 
         when: 'saveFile method is called and error occurs while saving file'
-        result = service.saveFile('testLocal', standardMultipartFile, 'test')
+        result = service.saveFile('testLocal', commonsMultipartFileInstance, 'test')
 
         then: 'File would not be saved'
         result.id == null
