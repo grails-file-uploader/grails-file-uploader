@@ -7,6 +7,8 @@
  */
 package com.causecode.fileuploader
 
+import org.apache.commons.fileupload.disk.DiskFileItem
+
 /**
  * This class contains common setup that can be used in unit, functional and integration test cases.
  *
@@ -21,5 +23,13 @@ trait BaseTestSetup {
         File file = new File(filePath)
         file.createNewFile()
         file << 'This is a test document.'
+    }
+
+    DiskFileItem getDiskFileItemInstance(File fileInstance) {
+        DiskFileItem fileItem = new DiskFileItem('file', 'text/plain', false, fileInstance.name,
+                (int) fileInstance.length() , fileInstance.parentFile)
+        fileItem.outputStream
+
+        return fileItem
     }
 }

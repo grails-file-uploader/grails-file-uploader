@@ -8,13 +8,17 @@
 package com.causecode.fileuploader
 
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.runtime.DirtiesRuntime
+import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Specification
+
+import javax.servlet.http.Part
 
 /**
  * This is Unit test file for FileGroup class.
@@ -82,7 +86,6 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         resultPath.contains('./temp')
     }
 
-    @DirtiesRuntime
     void "test scopeFileName when containerName does not exist"() {
         given: 'An instance of FileGroup class'
         UFile uFileInstance = UFile.build()
@@ -126,5 +129,57 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         then: 'Method should throw StorageConfigurationException'
         StorageConfigurationException e = thrown()
         e.message == 'file too big'
+    }
+
+    void "test getFileNameAndExtensions method when file belongs to MultipartFile"() {
+        given: 'Instances of StandardMultipartFile, CommonsMultipartFile and FileGroup class'
+        File fileInstance = getFileInstance('./temp/test.txt')
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
+        MultipartFile standardMultipartFile = new StandardMultipartFile(Mock(Part), 'test.txt')
+
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
+
+        when: 'getFileNameAndExtensions method is called for CommonsMultipartFile'
+        Map result = fileGroupInstance.getFileNameAndExtensions(commonsMultipartFileInstance, 'testLocal.txt')
+
+        then: 'Method returns a valid map'
+        result.fileName == 'testLocal.txt'
+        result.customFileName == 'testLocal.txt'
+        result.empty == true
+        result.fileSize == 0L
+
+        when: 'getFileNameAndExtensions method is called for StandardMultipartFile'
+        result = fileGroupInstance.getFileNameAndExtensions(standardMultipartFile, 'testLocal.txt')
+
+        then: 'Method returns a valid map'
+        result.fileName == 'testLocal.txt'
+        result.customFileName == 'testLocal.txt'
+        result.empty == true
+        result.fileSize == 0L
+
+        cleanup:
+        fileInstance.delete()
+    }
+
+    void "test getCdnProvider method to return provider name"() {
+        given: 'An instance of FileGroup class'
+        FileGroup fileGroupInstance = new FileGroup('testGoogle')
+
+        expect: 'Method to return correct CDn provider for this group'
+        fileGroupInstance.cdnProvider == CDNProvider.GOOGLE
+    }
+
+    void "test getLocalSystemPath method to return localPath"() {
+        given: 'An instance of FileGroup class'
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        Map fileProperties = [fileName: 'test', fileExtension: 'txt']
+
+        when: 'getLocalSystemPath method is called'
+        String localPath = fileGroupInstance.getLocalSystemPath('', fileProperties, 0L)
+
+        then: 'Method returns a valid local path'
+        localPath == './temp/0/test.txt'
     }
 }

@@ -11,11 +11,9 @@ import com.causecode.fileuploader.BaseTestSetup
 import com.causecode.fileuploader.UploadFailureException
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.runtime.DirtiesRuntime
 import org.jclouds.aws.s3.AWSS3Client
 import org.jclouds.blobstore.KeyNotFoundException
 import org.jclouds.http.HttpResponseException
-import org.jclouds.s3.domain.AccessControlList
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import spock.lang.Specification
 
@@ -51,7 +49,6 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         fileInstance.delete()
     }
 
-    @DirtiesRuntime
     void "test Amazon Cloud Storage for upload success"() {
         given: 'A file instance'
         File fileInstance = getFileInstance('./temp/test.txt')
@@ -71,13 +68,8 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         fileInstance.delete()
     }
 
-    @DirtiesRuntime
     void "test makeFilePublic method for failure case"() {
         given: 'Mocked methods'
-        AccessControlList.metaClass.addPermission = { URI groupGranteeURI, String permission ->
-            return
-        }
-
         AWSS3Client clientInstance = Mock(AWSS3Client)
         clientInstance.getObject(_, _, _) >> { return new S3ObjectImpl() }
         amazonCDNFileUploaderImpl.client = clientInstance
@@ -89,7 +81,6 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         !result
     }
 
-    @DirtiesRuntime
     void "test updatePreviousFileMetaData for update failure"() {
         given: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
@@ -103,7 +94,6 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         noExceptionThrown()
     }
 
-    @DirtiesRuntime
     void "test containerExists method for successFul execution"() {
         given: 'Mocked methods'
         AWSS3Client clientInstance = Mock(AWSS3Client)
