@@ -23,7 +23,7 @@ buildscript {
     }
 }
 
-version "3.0.3"
+version "3.0.5"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -64,6 +64,8 @@ dependencies {
     compile "org.grails.plugins:cache"
     compile "org.grails.plugins:scaffolding"
 
+    //CauseCode dependencies
+    compile 'com.causecode.plugins:mongo-update-embedded:0.0.6'
     profile "org.grails.profiles:web-plugin"
 
     provided "org.grails:grails-plugin-services"
@@ -71,7 +73,7 @@ dependencies {
 
     provided "com.h2database:h2"
     testCompile "org.grails:grails-plugin-testing"
-
+    
     /*
     * Dependencies which were needed for the application/plugin.
     */
