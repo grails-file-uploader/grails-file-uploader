@@ -7,6 +7,8 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.embedded.EmUFile
+import grails.buildtestdata.mixin.Build
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.util.Environment
@@ -14,6 +16,7 @@ import spock.lang.Specification
 
 @TestFor(UFile)
 @Mock([FileUploaderService])
+@Build(UFile)
 class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test isFileExists method for various cases"() {
@@ -57,6 +60,8 @@ class UFileSpec extends Specification implements BaseTestSetup {
         given: "An instance of UFile"
         UFile uFileInstance = getUFileInstance(1)
         uFileInstance.type = UFileType.CDN_PUBLIC
+        
+        assert uFileInstance.id
 
         when: "searchLink method is called and UFile is PUBLIC type"
         String result = uFileInstance.searchLink()
@@ -98,5 +103,23 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
         then: "Method returns containerName"
         result == 'test'
+    }
+    
+    void "test getEmbeddedInstance method for valid fields in EmUFile instance"() {
+        given: 'An instance of UFile'
+        UFile uFileInstance = UFile.build(expiresOn: new Date(), extension: 'jpg', name: 'test file', downloads: 1)
+        
+        assert uFileInstance.embeddedInstance.validate()
+        
+        when: 'getEmbeddedInstance method is called'
+        EmUFile emUFile = uFileInstance.embeddedInstance
+        
+        then: 'Fields of embedded instance should exist and match with created UFile'
+        emUFile.instanceId == uFileInstance.id
+        emUFile.name == uFileInstance.name
+        emUFile.expiresOn == uFileInstance.expiresOn
+        emUFile.downloads == uFileInstance.downloads
+        emUFile.path == uFileInstance.path
+        emUFile.extension == uFileInstance.extension
     }
 }

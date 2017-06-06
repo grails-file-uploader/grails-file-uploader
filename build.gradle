@@ -28,7 +28,7 @@ plugins {
     id 'nebula.maven-publish' version '4.4.4'
 }
 
-version "3.0.1"
+version "3.0.5"
 group "com.causecode.plugins"
 
 apply plugin:"eclipse"
@@ -72,6 +72,10 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
+    
+    //CauseCode dependencies
+    compile 'com.causecode.plugins:mongo-update-embedded:0.0.6'
+    
     // The commented dependencies were shipped with Grails 3.2.0 and are not required for this plugin.
 	//provided "org.codehaus.groovy:groovy-ant"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
@@ -80,6 +84,7 @@ dependencies {
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+    testCompile 'org.grails.plugins:build-test-data:3.0.1'
 
 
     /*
