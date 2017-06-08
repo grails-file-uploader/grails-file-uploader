@@ -110,7 +110,7 @@ class UFile implements Serializable {
      */
     EmUFile getEmbeddedInstance() {
         return new EmUFile([instanceId: this.id, downloads: this.downloads, expiresOn: this.expiresOn,
-            extension: this.extension, name: this.name, path: this.path])
+                extension: this.extension, name: this.name, path: this.path])
     }
 }
 

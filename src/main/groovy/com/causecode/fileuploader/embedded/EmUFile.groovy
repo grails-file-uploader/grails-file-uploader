@@ -14,25 +14,25 @@ import com.causecode.mongo.embeddable.EmbeddableDomain
  */
 class EmUFile implements EmbeddableDomain {
 
-	Long instanceId
-	int downloads
+    Long instanceId
+    int downloads
 
-	Date expiresOn
+    Date expiresOn
 
-	String extension
-	String name
-	String path
+    String extension
+    String name
+    String path
 
-	static constraints = {
-		expiresOn nullable: true
-	}
+    static constraints = { 
+        expiresOn nullable: true
+    }
 
-	EmUFile(Map params) {
-		this.instanceId = params.instanceId
-		this.downloads = params.downloads
-		this.expiresOn = params.expiresOn
-		this.extension = params.extension
-		this.name = params.name
-		this.path = params.path
-	}
+    EmUFile(Map params) {
+        this.instanceId = params.instanceId
+        this.downloads = params.downloads
+        this.expiresOn = params.expiresOn
+        this.extension = params.extension
+        this.name = params.name
+        this.path = params.path
+    }
 }
