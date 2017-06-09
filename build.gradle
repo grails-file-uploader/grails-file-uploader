@@ -18,12 +18,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.causecode.plugins:gradle-code-quality:0.0.3"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.6"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
-version "3.0.4"
+version "3.0.5"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -40,6 +40,14 @@ ext {
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    maven {
+        credentials {
+            username mavenUser
+            password mavenPassword
+        } 
+        url "http://maven.causecode.com" 
+    }
+    mavenCentral()
 }
 
 dependencyManagement {
@@ -54,7 +62,7 @@ dependencies {
     * While porting to a new grails version, create a blank plugin and replace the default dependencies with the new ones.
     */
 
-	compile "org.springframework.boot:spring-boot-starter-logging"
+    compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -63,7 +71,8 @@ dependencies {
     compile "org.grails:grails-web-boot"
     compile "org.grails.plugins:cache"
     compile "org.grails.plugins:scaffolding"
-
+    //CauseCode Dependencies
+    compile 'com.causecode.plugins:mongo-update-embedded:0.0.6'
     profile "org.grails.profiles:web-plugin"
 
     provided "org.grails:grails-plugin-services"
