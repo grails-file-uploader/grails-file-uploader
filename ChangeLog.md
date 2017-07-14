@@ -1,5 +1,9 @@
 # Change Log
 
+## Version 3.0.6
+
+1. Adding a renew action to be triggered in case the job fails
+
 ## Version 2.4.3
 
 1. Added support for configurable public URL for Amazon S3

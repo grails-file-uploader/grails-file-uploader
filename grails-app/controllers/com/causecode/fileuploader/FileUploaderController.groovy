@@ -7,11 +7,15 @@
  */
 package com.causecode.fileuploader
 
+import org.springframework.security.access.annotation.Secured
+
 /**
  * Provides default CRUD end point.
  */
 @SuppressWarnings('ReturnNullFromCatchBlock')
 class FileUploaderController {
+
+    static namespace = 'v1'
 
     FileUploaderService fileUploaderService
 
@@ -116,5 +120,12 @@ class FileUploaderController {
         flash.message = message
 
         render true
+    }
+
+    @Secured('ROLE_ADMIN')
+    def renew() {
+        fileUploaderService.renewTemporaryURL()
+
+        return true
     }
 }
