@@ -23,7 +23,7 @@ class EmUFile implements EmbeddableDomain {
     String name
     String path
 
-    static constraints = { 
+    static constraints = {
         expiresOn nullable: true
     }
 

@@ -131,4 +131,27 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         noExceptionThrown()
         controller.response.status == 200
     }
+
+    void "test renew action"() {
+        given: 'Mocked fileUploaderService methods'
+        FileUploaderService fileUploaderService = Mock(FileUploaderService)
+        2 * fileUploaderService.renewTemporaryURL() >> {} >> {
+            throw new ProviderNotFoundException("Provider missing.")
+        }
+        controller.fileUploaderService = fileUploaderService
+
+        when: 'renew action is executed successfully'
+        boolean result  = controller.renew()
+
+        then: 'No exception is thrown and controller returns true'
+        noExceptionThrown()
+        result
+
+        when: "renew action is not executed successfully"
+        result = controller.renew()
+
+        then: "result must be false"
+        controller.response.status == 404
+        !result
+    }
 }
