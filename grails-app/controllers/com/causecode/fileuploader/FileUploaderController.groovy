@@ -124,7 +124,14 @@ class FileUploaderController {
 
     @Secured('ROLE_ADMIN')
     def renew() {
-        fileUploaderService.renewTemporaryURL()
+        try {
+            fileUploaderService.renewTemporaryURL()
+        } catch (ProviderNotFoundException e) {
+            log.error e.message
+            response.setStatus(404)
+
+            return false
+        }
 
         return true
     }

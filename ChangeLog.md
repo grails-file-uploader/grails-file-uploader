@@ -2,7 +2,7 @@
 
 ## Version 3.0.6
 
-1. Adding a renew action to be triggered in case the job fails
+1. Added a renew action to be triggered in case the job fails
 
 ## Version 2.4.3
 
