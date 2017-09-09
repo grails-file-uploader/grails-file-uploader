@@ -44,8 +44,8 @@ repositories {
         credentials {
             username mavenUser
             password mavenPassword
-        } 
-        url "http://maven.causecode.com" 
+        }
+        url "http://maven.causecode.com"
     }
     mavenCentral()
 }
@@ -111,7 +111,7 @@ dependencies {
         exclude module: 'http-client'
     }
     compile("com.google.guava:guava:19.0")
-    compile("com.google.cloud:google-cloud-storage:0.5.1") {
+    compile("com.google.cloud:google-cloud-storage:1.4.0") {
         exclude module: 'guice'
         exclude module: 'http-client'
     }
@@ -164,7 +164,7 @@ grailsPublish {
     desc = "Full plugin description"
     developers = [johndoe:"John Doe"]
     portalUser = ""
-    portalPassword = ""    
+    portalPassword = ""
 }
 
 ccJacocoExt {
