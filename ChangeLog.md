@@ -2,8 +2,11 @@
 
 ## Version 3.0.7
 
-1. Upgraded `google-cloud-storage` dependency version to `1.4.0`.
+1. Upgraded `google-cloud-storage` dependency version to `1.4.0`. [#9](https://bitbucket.org/causecode/grails-file-uploader/issues/9/upgrade-google-cloud-storage-dependency-to)
 2. Made changes in `GoogleCDNFileUploaderImpl` and `GoogleCredentials` files as per the `google-cloud-storage` API.
+3. Renamed the method `setAuthCredentialsAndAuthenticate` to `setCredentialsAndAuthenticate` in class `GoogleCredentials`.
+It now accepts a [`com.google.auth.Credentials`](https://github.com/google/google-auth-library-java/blob/master/credentials/java/com/google/auth/Credentials.java) object as an argument. Before the change it was accepting
+`com.google.cloud.AuthCredentials`, which no longer exists.
 
 ## Version 3.0.6
 
