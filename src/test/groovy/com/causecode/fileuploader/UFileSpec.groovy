@@ -118,11 +118,13 @@ class UFileSpec extends Specification implements BaseTestSetup {
         EmUFile emUFile = uFileInstance.embeddedInstance
 
         then: 'Fields of embedded instance should exist and match with created UFile'
-        emUFile.instanceId == uFileInstance.id
-        emUFile.name == uFileInstance.name
-        emUFile.expiresOn == uFileInstance.expiresOn
-        emUFile.downloads == uFileInstance.downloads
-        emUFile.path == uFileInstance.path
-        emUFile.extension == uFileInstance.extension
+        emUFile.with {
+            instanceId == uFileInstance.id
+            name == uFileInstance.name
+            expiresOn == uFileInstance.expiresOn
+            downloads == uFileInstance.downloads
+            path == uFileInstance.path
+            extension == uFileInstance.extension
+        }
     }
 }

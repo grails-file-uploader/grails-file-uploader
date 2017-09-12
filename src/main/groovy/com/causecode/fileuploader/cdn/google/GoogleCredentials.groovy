@@ -8,9 +8,9 @@
 package com.causecode.fileuploader.cdn.google
 
 import com.causecode.fileuploader.StorageConfigurationException
-import com.google.auth.oauth2.OAuth2Utils
+import com.google.auth.Credentials
 import com.google.auth.oauth2.ServiceAccountCredentials
-import com.google.cloud.AuthCredentials
+import com.google.cloud.http.HttpTransportOptions
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import grails.util.Holders
@@ -22,10 +22,11 @@ import groovy.util.logging.Slf4j
  * Authenticates the GCS in 3 ways,
  *
  * 1. Using direct credential values from Config object (File is not required in this case)
- * 2. Using config object to create AuthCredentials (Reading JSON key file's path from config object)
+ * 2. Using config object to create {@link Credentials} (Reading JSON key file's path from config object)
  * 3. Using default authentication (Reading JSON key file's path from environment variable)
  *
  * @author Nikhil Sharma
+ * @author Hardik Modha
  * @since 2.5.2
  */
 @Slf4j
@@ -72,33 +73,33 @@ class GoogleCredentials {
      * Authenticates using the GOOGLE_APPLICATION_CREDENTIALS environment variable.
      *
      * @throws IllegalArgumentException
-     * @return Object Instance of Storage
+     * @return Object Instance of {@link Storage}
      *
      * @author Nikhil Sharma
+     * @author Hardik Modha
      * @since 2.5.2
      */
     Storage authenticateUsingEnvironmentVariable() throws IllegalArgumentException {
-        StorageOptions storageOptions = StorageOptions.defaultInstance()
-
-        return storageOptions.service()
+        return StorageOptions.defaultInstance.service
     }
 
     /**
-     * Returns the Storage instance by authenticating with the provided AuthCredentials instance.
+     * Returns the Storage instance by authenticating with the provided {@link Credentials} instance.
      *
-     * @param authCredentials Object Instance of AuthCredentials
+     * @param credentials Object Instance of {@link Credentials}
      * @throws IllegalArgumentException
      * @return Object Instance of Storage
      *
      * @author Nikhil Sharma
+     * @author Hardik Modha
      * @since 2.5.2
      */
-    Storage setAuthCredentialsAndAuthenticate(AuthCredentials authCredentials) throws IllegalArgumentException {
-        StorageOptions.Builder builder = StorageOptions.builder()
-        builder.authCredentials(authCredentials)
-        builder.projectId(this.projectId)
+    Storage setCredentialsAndAuthenticate(Credentials credentials) throws IllegalArgumentException {
+        StorageOptions.Builder builder = StorageOptions.newBuilder()
+        builder.setCredentials(credentials)
+        builder.setProjectId(this.projectId)
 
-        return builder.build().service()
+        return builder.build().service
     }
 
     /**
@@ -109,6 +110,7 @@ class GoogleCredentials {
      * @return Object Instance of Storage
      *
      * @author Nikhil Sharma
+     * @author Hardik Modha
      * @since 2.5.2
      */
     Storage authenticateUsingKeyFileFromConfig() throws IOException, IllegalArgumentException {
@@ -118,13 +120,13 @@ class GoogleCredentials {
             throw new IllegalArgumentException('JSON Key file path for storage provider Google not found.')
         }
 
-        AuthCredentials authCredentials = AuthCredentials.createForJson(new FileInputStream(keyFilePath))
+        Credentials credentials = ServiceAccountCredentials.fromStream(new FileInputStream(keyFilePath))
 
-        return setAuthCredentialsAndAuthenticate(authCredentials)
+        return setCredentialsAndAuthenticate(credentials)
     }
 
     /**
-     * Creates a Map from fields of this class required for AuthCredentials.
+     * Creates a Map from fields of this class required for {@link Credentials}.
      *
      * @return Map A Map that is parsed for retrieving credentials.
      *
@@ -152,19 +154,17 @@ class GoogleCredentials {
      * @since 2.5.2
      */
     Storage authenticateUsingValuesFromConfig() throws IOException, NullPointerException, IllegalArgumentException {
-        ServiceAccountCredentials serviceAccountCredentials = ServiceAccountCredentials.fromJson(credentialsMap,
-                OAuth2Utils.HTTP_TRANSPORT)
+        Credentials credentials = ServiceAccountCredentials.fromJson(credentialsMap,
+                HttpTransportOptions.newBuilder().build().httpTransportFactory)
 
-        AuthCredentials authCredentials = new AuthCredentials.ServiceAccountAuthCredentials(serviceAccountCredentials)
-
-        return setAuthCredentialsAndAuthenticate(authCredentials)
+        return setCredentialsAndAuthenticate(credentials)
     }
 
     /**
      * Authenticates the GCS in 3 ways,
      *
      * 1. Using direct credential values from Config object (File is not required in this case)
-     * 2. Using config object to create AuthCredentials (Reading JSON key file's path from config object)
+     * 2. Using config object to create {@link Credentials} (Reading JSON key file's path from config object)
      * 3. Using default authentication (Reading JSON key file's path from environment variable)
      *
      * @throws StorageConfigurationException
