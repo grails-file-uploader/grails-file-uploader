@@ -27,6 +27,7 @@ import javax.activation.MimetypesFileTypeMap
  * This class is used for all the Google Cloud Storage operations.
  *
  * @author Nikhil Sharma
+ * @author Hardik Modha
  * @since 2.4.9
  */
 @Slf4j
@@ -90,7 +91,7 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
             throw new GoogleStorageException('Could not create container.', e)
         }
 
-        log.debug "Container with name ${bucket.name()} successfully created."
+        log.debug "Container with name ${bucket.name} successfully created."
 
         return true
     }
@@ -110,7 +111,7 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
     String getPermanentURL(String containerName, String fileName) {
         Blob blob = getBlob(containerName, fileName)
 
-        return blob?.mediaLink()
+        return blob?.mediaLink
     }
 
     @Override
@@ -131,7 +132,7 @@ class GoogleCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
         String contentType = new MimetypesFileTypeMap().getContentType(fileName)
 
         BlobId blobId = BlobId.of(containerName, fileName)
-        BlobInfo blobInfo = BlobInfo.builder(blobId).contentType(contentType).build()
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build()
 
         try {
             gStorage.create(blobInfo, file.bytes)
