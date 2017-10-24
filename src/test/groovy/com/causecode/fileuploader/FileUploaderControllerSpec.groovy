@@ -11,6 +11,7 @@ import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * This is unit test file for FileUploaderController class.
@@ -152,5 +153,36 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         then: 'result must be false'
         controller.response.status == 404
         !result
+    }
+
+    void "test moveFilesToGoogleCDN action"() {
+        given: 'Mocked fileUploaderService method call'
+        FileUploaderService fileUploaderService = Mock(FileUploaderService)
+        3 * fileUploaderService.moveToNewCDN(_, _) >> {
+            return false
+        } >> {
+            throw new StorageException('No space available.')
+        } >> {
+            return true
+        }
+        controller.fileUploaderService = fileUploaderService
+
+        when: 'moveFilesToGoogleCDN endpoint is hit and service method call returns false'
+        boolean result = controller.moveFilesToGoogleCDN()
+
+        then: 'Server returns false'
+        !result
+
+        when: 'moveFilesToGoogleCDN endpoint is hit and service method throws Exception'
+        result = controller.moveFilesToGoogleCDN()
+
+        then: 'Server returns false'
+        !result
+
+        when: 'moveFilesToGoogleCDN endpoint is hit and files are moved successfully'
+        result = controller.moveFilesToGoogleCDN()
+
+        then: 'Server returns true'
+        result
     }
 }

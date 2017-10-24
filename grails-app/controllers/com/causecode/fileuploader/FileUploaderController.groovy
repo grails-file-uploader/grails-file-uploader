@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.util.Environment
 import org.springframework.security.access.annotation.Secured
 
 /**
@@ -134,5 +135,29 @@ class FileUploaderController {
         }
 
         return true
+    }
+
+    @Secured('ROLE_ADMIN')
+    def moveFilesToGoogleCDN() {
+        log.debug 'Moving files to Google CDN...'
+
+        String containerName = grailsApplication.config.fileuploader.groups.container
+
+        if (Environment.current == Environment.DEVELOPMENT) {
+            containerName = containerName + "-development"
+        }
+
+        log.debug "Move to container $containerName"
+
+        boolean filesMovedSuccessfully
+
+        try {
+            filesMovedSuccessfully = fileUploaderService.moveToNewCDN(CDNProvider.GOOGLE, containerName)
+        } catch (ProviderNotFoundException | StorageException e) {
+            log.debug 'Error moving files to Google CDN', e
+            filesMovedSuccessfully = false
+        }
+
+        return filesMovedSuccessfully
     }
 }

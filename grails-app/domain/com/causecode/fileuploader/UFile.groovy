@@ -7,7 +7,6 @@
  */
 package com.causecode.fileuploader
 
-import com.causecode.fileuploader.embedded.EmUFile
 import grails.util.Environment
 import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
@@ -103,14 +102,6 @@ class UFile implements Serializable {
         }
 
         return containerName
-    }
-
-    /**
-     * Method to get Embedded Instance of UFile
-     */
-    EmUFile getEmbeddedInstance() {
-        return new EmUFile([instanceId: this.id, downloads: this.downloads, expiresOn: this.expiresOn,
-                extension: this.extension, name: this.name, path: this.path])
     }
 }
 
