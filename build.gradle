@@ -71,15 +71,12 @@ dependencies {
     compile "org.grails:grails-web-boot"
     compile "org.grails.plugins:cache"
     compile "org.grails.plugins:scaffolding"
-    //CauseCode Dependencies
-    compile 'com.causecode.plugins:mongo-update-embedded:0.0.6'
     profile "org.grails.profiles:web-plugin"
 
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
 
     provided "com.h2database:h2"
-    testCompile 'org.grails.plugins:mongodb'
     testCompile "org.grails:grails-plugin-testing"
 
     /*
