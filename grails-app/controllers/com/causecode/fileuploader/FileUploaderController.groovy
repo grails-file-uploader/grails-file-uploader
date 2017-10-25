@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.util.Environment
 import org.springframework.security.access.annotation.Secured
 
 /**
@@ -134,5 +135,28 @@ class FileUploaderController {
         }
 
         return true
+    }
+
+    @Secured('ROLE_ADMIN')
+    def moveFilesToGoogleCDN() {
+        log.debug 'Moving files to Google CDN...'
+
+        String containerName = grailsApplication.config.fileuploader.groups.container
+
+        if (Environment.current == Environment.DEVELOPMENT) {
+            containerName = containerName + '-development'
+        }
+
+        log.debug "Move to container $containerName"
+
+        boolean haveFilesMoved
+
+        try {
+            haveFilesMoved = fileUploaderService.moveToNewCDN(CDNProvider.GOOGLE, containerName)
+        } catch (ProviderNotFoundException | StorageException e) {
+            log.debug 'Error moving files to Google CDN', e
+        }
+
+        return haveFilesMoved
     }
 }
