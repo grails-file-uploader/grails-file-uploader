@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -11,6 +11,7 @@ import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * This is unit test file for FileUploaderController class.
@@ -152,5 +153,27 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         then: 'result must be false'
         controller.response.status == 404
         !result
+    }
+
+    @Unroll
+    void "test moveFilesToGoogleCDN action when status from server is #receivedStatus"() {
+        given: 'Mocked fileUploaderService method call'
+        FileUploaderService fileUploaderServiceMock = Mock(FileUploaderService)
+        if (receivedStatus == 'someExceptionOccurred') {
+            fileUploaderServiceMock.moveToNewCDN(_, _) >> { throw new StorageException('No space available.') }
+        }
+        fileUploaderServiceMock.moveToNewCDN(_, _) >> receivedStatus
+        controller.fileUploaderService = fileUploaderServiceMock
+
+        when: 'moveFilesToGoogleCDN endpoint is hit and service method call returns false'
+        boolean result = controller.moveFilesToGoogleCDN()
+
+        then: 'Server should return expected result value'
+        noExceptionThrown()
+        result == expectedResult
+
+        where:
+        receivedStatus << [false, 'someExceptionOccurred', true]
+        expectedResult << [false, false, true]
     }
 }
