@@ -3,11 +3,11 @@
 ## Version 3.0.8 [24-Oct-2017]
 
 ### Added
-1. Admin accessible endpoint `moveFilesToGoogleCDN` to migrate files from AWS to Google cloud.
+- Admin accessible endpoint `moveFilesToGoogleCDN` in FileUploderController to migrate files from AWS to Google cloud.
 
 ### Removed
-1. EmUfile class. This should be added in the installing app.
-2. Removed mongodb dependencies.
+- EmUfile class. This should be added in the installing app.
+- Mongodb dependencies.
 
 ## Version 3.0.7
 

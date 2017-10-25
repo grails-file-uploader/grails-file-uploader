@@ -415,7 +415,7 @@ class FileUploaderService {
     File getFileFromURL(String url, String filename) {
         String path = newTemporaryDirectoryPath
 
-        File file = new File(path + filename)
+        File file = new File(path + filename.replaceAll('/', '-'))
         FileOutputStream fileOutputStream = new FileOutputStream(file)
         try {
             fileOutputStream.write(new URL(url).bytes)

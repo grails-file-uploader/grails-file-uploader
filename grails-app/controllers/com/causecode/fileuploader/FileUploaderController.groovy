@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -149,15 +149,14 @@ class FileUploaderController {
 
         log.debug "Move to container $containerName"
 
-        boolean filesMovedSuccessfully
+        boolean haveFilesMoved
 
         try {
-            filesMovedSuccessfully = fileUploaderService.moveToNewCDN(CDNProvider.GOOGLE, containerName)
+            haveFilesMoved = fileUploaderService.moveToNewCDN(CDNProvider.GOOGLE, containerName)
         } catch (ProviderNotFoundException | StorageException | IOException e) {
             log.debug 'Error moving files to Google CDN', e
-            filesMovedSuccessfully = false
         }
 
-        return filesMovedSuccessfully
+        return haveFilesMoved
     }
 }
