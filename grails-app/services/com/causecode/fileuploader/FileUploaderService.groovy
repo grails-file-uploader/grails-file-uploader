@@ -412,7 +412,7 @@ class FileUploaderService {
      * @param url The URL from which file to be retrieved
      * @param filename Name of the file
      */
-    File getFileFromURL(String url, String filename) {
+    File getFileFromURL(String url, String filename) throws IOException {
         String path = newTemporaryDirectoryPath
 
         File file = new File(path + filename.replaceAll('/', '-'))
@@ -506,9 +506,8 @@ class FileUploaderService {
         boolean isSuccess = true
         List<UFile> uFileUploadFailureList = []
 
-        uFileList
-            .findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }
-            .each { uFile ->
+        uFileList.findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }.each { uFile ->
+            try {
                 fileName = getNewFileNameFromUFile(uFile)
 
                 if (uFile.type == UFileType.LOCAL) {
@@ -518,6 +517,11 @@ class FileUploaderService {
                         downloadedFile = getFileFromURL(uFile.path, uFile.name)
                     }
                 }
+            } catch (IOException e) {
+                log.debug 'Error getting file from URL ', e
+
+                return
+            }
 
             if (!downloadedFile.exists()) {
                 log.debug "Downloaded file doesn't not exist."
