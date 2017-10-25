@@ -153,7 +153,7 @@ class FileUploaderController {
 
         try {
             filesMovedSuccessfully = fileUploaderService.moveToNewCDN(CDNProvider.GOOGLE, containerName)
-        } catch (ProviderNotFoundException | StorageException e) {
+        } catch (ProviderNotFoundException | StorageException | IOException e) {
             log.debug 'Error moving files to Google CDN', e
             filesMovedSuccessfully = false
         }
