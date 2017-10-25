@@ -144,7 +144,7 @@ class FileUploaderController {
         String containerName = grailsApplication.config.fileuploader.groups.container
 
         if (Environment.current == Environment.DEVELOPMENT) {
-            containerName = containerName + "-development"
+            containerName = containerName + '-development'
         }
 
         log.debug "Move to container $containerName"

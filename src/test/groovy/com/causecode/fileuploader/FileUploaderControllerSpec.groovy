@@ -11,7 +11,6 @@ import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
 import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
  * This is unit test file for FileUploaderController class.
