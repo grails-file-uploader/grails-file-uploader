@@ -76,7 +76,7 @@ class UFile implements Serializable {
     }
 
     String getFullName() {
-        name + '.' + extension
+        name.endsWith('.' + extension) ? name : name + '.' + extension
     }
 
     @Override
