@@ -45,7 +45,7 @@ repositories {
             username mavenUser
             password mavenPassword
         }
-        url "http://maven.causecode.com"
+        url "https://nexus.causecode.com/repository/maven-releases/"
     }
     mavenCentral()
 }
@@ -178,8 +178,4 @@ ccJacocoExt {
 
 jar {
     exclude('**/UrlMappings*')
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
 }
