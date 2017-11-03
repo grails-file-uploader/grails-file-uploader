@@ -2,9 +2,17 @@
 
 ## Version 3.0.8 [24-Oct-2017]
 
+### Changed
+- Upgraded `gradle-code-quality` version to `1.0.0`.
+- Updated `maven` server url in `build.gradle`.
+- Updated Gradle Wrapper version from `3.0` to `3.4.1`.
+
 ### Added
 - Admin accessible endpoint `moveFilesToGoogleCDN` in FileUploderController to migrate files from AWS to Google cloud.
 
+- ####CircleCI configuration
+   - `.circleci/config.yml` for build automation using `CircleCI`.
+   -  `mavenCredsSetup.sh` for generating `gradle.properties` during the CircleCI build.
 ### Removed
 - EmUfile class. This should be added in the installing app.
 - Mongodb dependencies.
