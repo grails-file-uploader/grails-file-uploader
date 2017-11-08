@@ -13,12 +13,12 @@ buildscript {
                 username mavenUser
                 password mavenPassword
             }
-            url "http://maven.causecode.com"
+            url "https://nexus.causecode.com/repository/maven-releases/"
         }
         mavenCentral()
     }
     dependencies {
-        classpath "com.causecode.plugins:gradle-code-quality:0.0.8"
+        classpath "com.causecode.plugins:gradle-code-quality:1.0.0"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
@@ -45,7 +45,7 @@ repositories {
             username mavenUser
             password mavenPassword
         }
-        url "http://maven.causecode.com"
+        url "https://nexus.causecode.com/repository/maven-releases/"
     }
     mavenCentral()
 }
@@ -144,7 +144,7 @@ project.publishing {
                 username mavenPublishUser
                 password mavenPublishPassword
             }
-            url "http://maven-upload.causecode.com"
+            url "https://nexus.causecode.com/repository/maven-releases/"
         }
     }
 }
@@ -179,4 +179,3 @@ ccJacocoExt {
 jar {
     exclude('**/UrlMappings*')
 }
-
