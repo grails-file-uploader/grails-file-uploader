@@ -124,7 +124,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         fileGroupInstance.messageSource = testInstance
 
         when: 'validateFileSize method is called'
-        fileGroupInstance.validateFileSize(fileGroupMap, locale)
+        fileGroupInstance.validateFileSize(fileGroupMap.fileSize, locale)
 
         then: 'Method should throw StorageConfigurationException'
         StorageConfigurationException e = thrown()
@@ -181,5 +181,24 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
 
         then: 'Method returns a valid local path'
         localPath == './temp/0/test.txt'
+    }
+
+    @SuppressWarnings('JavaIoPackageAccess')
+    void "test getLocalSystemPath method when it fails to create a new directory"() {
+        given: 'An instance of FileGroup class'
+        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        Map fileProperties = [fileName: 'test', fileExtension: 'txt']
+
+        and: 'Mocked mkdir method to return false'
+        File file = GroovyMock(File, global: true)
+        new File(_) >> file
+        file.mkdirs() >> false
+
+        when: 'getLocalSystemPath method is called'
+        fileGroupInstance.getLocalSystemPath('', fileProperties, 0L)
+
+        then: 'StorageConfigurationException will be thrown'
+        StorageConfigurationException exception = thrown()
+        exception.message == 'FileUploader plugin couldn\'t create directories: [./temp/0/]'
     }
 }

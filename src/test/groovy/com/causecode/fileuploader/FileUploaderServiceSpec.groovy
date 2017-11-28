@@ -28,9 +28,11 @@ import javax.servlet.http.Part
 /**
  * This file contains unit test cases for FileUploaderService class.
  */
+// Suppressed Methods counts since this class contains more than 30 methods.
 @ConfineMetaClassChanges([FileUploaderService, File])
 @TestFor(FileUploaderService)
 @Build([UFile, UFileMoveHistory])
+@SuppressWarnings('MethodCount')
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
     void "test isPublicGroup for various file groups"() {
@@ -264,6 +266,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         service.metaClass.getFileFromURL = { String url, String filename ->
             return fileInstance
         }
+
         mockExistMethod(false)
 
         def failedUploadList = service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON)
@@ -361,7 +364,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
     void "test cloneFile method for LOCAL type file"() {
         given: 'An instance of UFile and File'
-        UFile ufIleInstance = UFile.build(name: 'test-file-1', path: 'http://unittest.com/test')
+        UFile ufIleInstance = UFile.build(name: 'test-file-1', path: 'http://unittest.com')
         File fileInstance = getFileInstance('./temp/test.txt')
 
         and: 'Mocked method'
@@ -550,6 +553,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         service.metaClass.getProviderInstance = { String name ->
             return null
         }
+
         when: 'renewTemporaryURL method is called'
         def result = service.renewTemporaryURL()
 
@@ -617,6 +621,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'Method should return instance of UFile'
         result.fileGroup == 'testGoogle'
         result.type == UFileType.CDN_PUBLIC
+
+        when: 'saveFile method is hit without a file'
+        result = service.saveFile('testGoogle', null, 'test')
+
+        then: 'Method should return null'
+        result == null
 
         cleanup:
         fileInstance.delete()
@@ -764,6 +774,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         fileGroupMock.validateFileSize(_, _) >> {
             throw new StorageConfigurationException('File too big.')
         }
+
         service.saveFile('testGoogle', fileInstance)
 
         then: 'Method throws StorageConfigurationException'
@@ -772,5 +783,78 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         cleanup:
         fileInstance.delete()
+    }
+
+    void "test moveFilesToCDN method when exception occurred while getting file from URL"() {
+        given: 'An instance of UFile and File'
+        UFile uFileInstance = UFile.build()
+        File fileInstance = getFileInstance('./temp/test.txt')
+
+        and: 'Mocked method'
+        service.metaClass.getFileFromURL = { String url, String filename ->
+            throw new IOException('Error getting file from URL')
+        }
+
+        mockGetProviderInstance('google')
+
+        mockUploadFileMethod(true)
+
+        when: 'moveFilesToCDN method is called'
+        assert uFileInstance.provider == CDNProvider.GOOGLE
+        service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON)
+
+        then: 'File won\'t be moved'
+        uFileInstance.provider == CDNProvider.GOOGLE
+
+        cleanup:
+        fileInstance.delete()
+    }
+
+    void "Test renewTemporaryURL method in FileUploaderService class for forceAll=false and provider=mongodb"() {
+        given: 'an instances of UFile class'
+        UFile uFileInstance4 = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
+                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date(),
+                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
+
+        assert UFile.count() == 1
+
+        Holders.flatConfig['fileuploader.persistence.provider'] = 'mongodb'
+
+        and: 'Mocked AmazonCDNFileUploaderImpl\'s methods'
+        mockAuthenticateMethod()
+        mockGetTemporaryURL()
+
+        and: 'Mocked getProviderInstance method'
+        service.metaClass.getProviderInstance = { String providerName ->
+            return amazonCDNFileUploaderInstance
+        }
+
+        and: 'Mocked withCriteria and getContainerName method'
+        GroovyMock(UFile, global: true)
+        UFile.withCriteria(_) >> { Closure closure ->
+            assert closure != null
+            new JsonBuilder() closure
+
+            return [uFileInstance4]
+        }
+
+        UFile.containerName(_) >> Holders.flatConfig["fileuploader.groups.${uFileInstance4.fileGroup}.container"]
+
+        when: 'renewTemporaryURL method is called'
+        service.renewTemporaryURL()
+        String uFilePath = uFileInstance4.path
+
+        then: 'It should only change image path of uFileInstance4'
+        uFilePath != 'https://xyz/abc'
+
+        when: 'renewTemporaryURL method is called'
+        uFileInstance4.path = 'https://xyz/abc'
+        uFileInstance4.save(flush: true)
+
+        assert uFileInstance4.path == 'https://xyz/abc'
+        service.renewTemporaryURL(true)
+
+        then: 'It should renew the image path of all the Instance'
+        uFileInstance4.path != 'https://xyz/abc'
     }
 }

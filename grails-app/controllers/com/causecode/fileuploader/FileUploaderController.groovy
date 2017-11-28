@@ -118,6 +118,7 @@ class FileUploaderController {
         if (uFileUploadFailureList) {
             message += "list of failed ufiles are: $uFileUploadFailureList"
         }
+
         flash.message = message
 
         render true
@@ -141,7 +142,7 @@ class FileUploaderController {
     def moveFilesToGoogleCDN() {
         log.debug 'Moving files to Google CDN...'
 
-        String containerName = grailsApplication.config.fileuploader.groups.container
+        String containerName = grailsApplication.config.fileuploader.groups.testGoogle.container
 
         if (Environment.current == Environment.DEVELOPMENT) {
             containerName = containerName + '-development'

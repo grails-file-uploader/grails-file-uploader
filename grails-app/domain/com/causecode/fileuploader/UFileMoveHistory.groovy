@@ -38,6 +38,8 @@ class UFileMoveHistory {
     CDNProvider toCDN
     MoveStatus status
     String details
+
+    Date dateCreated
 }
 
 @ToString

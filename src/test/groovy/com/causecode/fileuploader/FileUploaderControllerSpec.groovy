@@ -10,6 +10,7 @@ package com.causecode.fileuploader
 import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
+import grails.util.Environment
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -138,6 +139,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         2 * fileUploaderService.renewTemporaryURL() >> { } >> {
             throw new ProviderNotFoundException('Provider missing.')
         }
+
         controller.fileUploaderService = fileUploaderService
 
         when: 'renew action is executed successfully'
@@ -162,8 +164,15 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         if (receivedStatus == 'someExceptionOccurred') {
             fileUploaderServiceMock.moveToNewCDN(_, _) >> { throw new StorageException('No space available.') }
         }
+
         fileUploaderServiceMock.moveToNewCDN(_, _) >> receivedStatus
         controller.fileUploaderService = fileUploaderServiceMock
+
+        and: 'Mocked current environment'
+        GroovyMock(Environment, global: true)
+        Environment.current >> {
+            return Environment.DEVELOPMENT
+        }
 
         when: 'moveFilesToGoogleCDN endpoint is hit and service method call returns false'
         boolean result = controller.moveFilesToGoogleCDN()
@@ -173,7 +182,30 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         result == expectedResult
 
         where:
-        receivedStatus << [false, 'someExceptionOccurred', true]
-        expectedResult << [false, false, true]
+        receivedStatus << [false, 'someExceptionOccurred', true, false]
+        expectedResult << [false, false, true, false]
+    }
+
+    @SuppressWarnings('JavaIoPackageAccess')
+    void  "test show action error occur while serving image to response"() {
+        given: 'A fileInstance and a uFileInstance'
+        UFile uFileInstance = UFile.build()
+
+        and: 'Mocked File Instance to throw an Exception when getBytes method is called'
+        File file = GroovyMock(File, global: true)
+        new File(_) >> file
+        file.exists() >> true
+        file.bytes >> {
+            throw new IOException('Error serving image to response')
+        }
+
+        when: 'show method is called and UFile instance is not found'
+        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
+        controller.params.id = uFileInstance.id
+        def result = controller.show()
+
+        then: 'Server responds with 404 error'
+        result == null
+        controller.response.status == 200
     }
 }

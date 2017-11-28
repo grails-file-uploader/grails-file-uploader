@@ -88,7 +88,7 @@ class FileUploaderService {
         }
 
         fileGroupInstance.allowedExtensions(fileData, locale, group)
-        fileGroupInstance.validateFileSize(fileData, locale)
+        fileGroupInstance.validateFileSize(fileData.fileSize, locale)
 
         // If group specific storage type is not defined then use the common storage type
         String storageTypes = fileGroupInstance.groupConfig.storageTypes ?: fileGroupInstance.config.storageTypes
@@ -170,6 +170,7 @@ class FileUploaderService {
         } finally {
             fileUploaderInstance?.close()
         }
+
         return path
     }
 
@@ -217,6 +218,7 @@ class FileUploaderService {
             } finally {
                 fileUploaderInstance?.close()
             }
+
             return true
         }
 
@@ -225,6 +227,7 @@ class FileUploaderService {
             log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
             return false
         }
+
         File timestampFolder = file.parentFile
 
         if (file.delete()) {
@@ -234,6 +237,7 @@ class FileUploaderService {
             timestampFolder.eachFile(FileType.FILES) {
                 numFilesInParentFolder++
             }
+
             if (numFilesInParentFolder == 0) {
                 timestampFolder.delete()
             } else {
@@ -253,6 +257,7 @@ class FileUploaderService {
         if (ufile) {
             return ufile
         }
+
         String msg = messageSource.getMessage('fileupload.download.nofile', [idUfile] as Object[], locale)
         throw new FileNotFoundException(msg)
     }
@@ -347,6 +352,7 @@ class FileUploaderService {
         if (ufileInstance.type == UFileType.LOCAL) {
             return "/file-uploader/show/$ufileInstance.id"
         }
+
         if (ufileInstance.type == UFileType.CDN_PUBLIC || ufileInstance.type == UFileType.CDN_PRIVATE) {
             return ufileInstance.path
         }
@@ -364,7 +370,7 @@ class FileUploaderService {
                 return
             }
 
-            UFile.withCriteria {
+            List<UFile> ufile = UFile.withCriteria {
                 eq('type', UFileType.CDN_PUBLIC)
                 eq('provider', cdnProvider)
 
@@ -373,6 +379,7 @@ class FileUploaderService {
                 } else {
                     isNotNull('expiresOn')
                 }
+
                 if (!forceAll) {
                     or {
                         lt('expiresOn', new Date())
@@ -380,8 +387,11 @@ class FileUploaderService {
                         between('expiresOn', new Date(), new Date() + 1)
                     }
                 }
+
                 maxResults(100)
-            }.each { UFile ufileInstance ->
+            }
+
+            ufile.each { UFile ufileInstance ->
                 log.debug "Renewing URL for $ufileInstance"
 
                 long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
@@ -390,9 +400,6 @@ class FileUploaderService {
                         ufileInstance.fullName, expirationPeriod)
                 ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
                 NucleusUtils.save(ufileInstance, true)
-                if (ufileInstance.hasErrors()) {
-                    log.debug "Error saving new URL for $ufileInstance"
-                }
 
                 log.debug "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
             }
@@ -422,6 +429,7 @@ class FileUploaderService {
         } catch (FileNotFoundException e) {
             log.info "URL ${url} not found"
         }
+
         fileOutputStream.close()
 
         // Delete the temporary file when JVM exited since the base file is not required after upload
@@ -457,6 +465,7 @@ class FileUploaderService {
             amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.container,
                     uFileInstance.fullName, makePublic, expirationPeriod)
         }
+
         amazonFileUploaderInstance.close()
     }
 
@@ -483,6 +492,7 @@ class FileUploaderService {
         if (!toCDNProvider || !containerName) {
             return false
         }
+
         moveFilesToCDN(UFile.findAllByTypeNotEqual(UFileType.LOCAL), toCDNProvider, makePublic)
         return true
     }
@@ -510,17 +520,11 @@ class FileUploaderService {
             try {
                 fileName = getNewFileNameFromUFile(uFile)
 
-                if (uFile.type == UFileType.LOCAL) {
-                    downloadedFile = new File(uFile.path)
-                } else {
-                    if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
-                        downloadedFile = getFileFromURL(uFile.path, uFile.name)
-                    }
-                }
+                downloadedFile = getDownloadedFile(uFile)
             } catch (IOException e) {
                 log.debug 'Error getting file from URL ', e
 
-                return
+                return false
             }
 
             if (!downloadedFile.exists()) {
@@ -554,12 +558,7 @@ class FileUploaderService {
                 log.debug message, e
             }
 
-            UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-            uFileHistory.moveCount++
-            uFileHistory.lastUpdated = new Date()
-            uFileHistory.toCDN = toCDNProvider
-            uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
-            uFileHistory.details = message
+            UFileMoveHistory uFileHistory = createUfileMoveHistory(uFile, toCDNProvider, message)
 
             if (isSuccess) {
                 log.debug "File moved: ${uFile.name}"
@@ -577,10 +576,36 @@ class FileUploaderService {
                 uFileHistory.status = MoveStatus.FAILURE
                 uFileUploadFailureList << uFile
             }
+
             NucleusUtils.save(uFileHistory, true)
         }
 
         return uFileUploadFailureList
+    }
+
+    private File getDownloadedFile(UFile uFile) {
+        File downloadedFile
+
+        if (uFile.type == UFileType.LOCAL) {
+            downloadedFile = new File(uFile.path)
+        } else {
+            if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
+                downloadedFile = getFileFromURL(uFile.path, uFile.name)
+            }
+        }
+
+        return downloadedFile
+    }
+
+    private UFileMoveHistory createUfileMoveHistory(UFile uFile, CDNProvider toCDNProvider, String message) {
+        UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
+        uFileHistory.moveCount++
+        uFileHistory.lastUpdated = new Date()
+        uFileHistory.toCDN = toCDNProvider
+        uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
+        uFileHistory.details = message
+
+        return uFileHistory
     }
 
     /**

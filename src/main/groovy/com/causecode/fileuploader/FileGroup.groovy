@@ -67,6 +67,7 @@ class FileGroup {
         } else {
             fileName = customFileName ?: fileName
         }
+
         /**
          * Convert all white space to underscore and hyphens to underscore to differentiate
          * different data on filename created below.
@@ -103,13 +104,13 @@ class FileGroup {
      * @throws StorageConfigurationException
      *
      */
-    def validateFileSize(Map fileDataMap, Locale locale) {
+    def validateFileSize(Long fileSize, Locale locale) {
         /**
          * If maxSize config exists
          */
         if (this.groupConfig.maxSize) {
             def maxSizeInKb = ((int) (this.groupConfig.maxSize)) / 1024
-            if (fileDataMap.fileSize > this.groupConfig.maxSize) { //if filesize is bigger than allowed
+            if (fileSize > this.groupConfig.maxSize) { //if filesize is bigger than allowed
                 log.debug "FileUploader plugin received a file bigger than allowed. Max file size is ${maxSizeInKb} kb"
                 def msg = messageSource.getMessage('fileupload.upload.fileBiggerThanAllowed',
                         [maxSizeInKb] as Object[], locale)
@@ -141,7 +142,10 @@ class FileGroup {
         // Make sure the directory exists
         if (!new File(localPath).exists()) {
             if (!new File(localPath).mkdirs()) {
-                log.error "FileUploader plugin couldn't create directories: [${path}]"
+                log.error "FileUploader plugin couldn't create directories: [${localPath}]"
+
+                throw new StorageConfigurationException("FileUploader plugin couldn't " +
+                        "create directories: [${localPath}]")
             }
         }
 
