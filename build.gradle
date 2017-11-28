@@ -189,3 +189,7 @@ ccJacocoExt {
 jar {
     exclude('**/UrlMappings*')
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWrapperVersion
+}
