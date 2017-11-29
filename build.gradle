@@ -177,6 +177,7 @@ ccJacocoExt {
 
     coverageVerificationExcludes =[
        'com.causecode.fileuploader.FileUploaderService',
+       'com.causecode.fileuploader.FileUploaderService._deleteFileForUFile_closure1',
        'com.causecode.fileuploader.DailyJob*',
        'com.causecode.fileuploader.FileUploaderTagLib*',
        'com.causecode.fileuploader.FileUploaderBootStrap*',

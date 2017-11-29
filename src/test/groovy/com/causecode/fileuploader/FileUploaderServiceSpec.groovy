@@ -499,8 +499,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     @SuppressWarnings(['JavaIoPackageAccess'])
     void "test deleteFileForUFile method for LOCAL file"() {
         given: 'A UFile and a File instance'
-        UFile uFileInstance = UFile.build(type: UFileType.LOCAL, path: './temp/testDir/test.txt')
-        new File('./temp/testDir').mkdir()
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL, path: '/tmp/testDir/test.txt')
+        new File('/tmp/testDir').mkdir()
 
         and: 'Mocked method'
         mockExistMethod(true)
