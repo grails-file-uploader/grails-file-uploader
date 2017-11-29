@@ -117,7 +117,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
     @FreshRuntime
     void "test AmazonCDNFileUploaderImpl for various methods"() {
         given: 'Mocked Authenticate method'
-        AmazonCDNFileUploaderImpl mockedAuthenticate = [ authenticate: { ->
+        [ authenticate: { ->
 
             BlobStore blobStoreMock = Mock(BlobStore)
             blobStoreMock.createContainerInLocation(_, _) >> true
@@ -129,10 +129,11 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
                 s3Object.metadata.uri = new URI('https://www.xyz.com')
                 return s3Object
             }
+
             amazonCDNFileUploaderImpl.client = awss3ClientMock
 
             return true
-        }] as AmazonCDNFileUploaderImpl
+        } ] as AmazonCDNFileUploaderImpl
 
         when: 'Overridden createContainer method is called'
         boolean result = amazonCDNFileUploaderImpl.createContainer('abcde')
