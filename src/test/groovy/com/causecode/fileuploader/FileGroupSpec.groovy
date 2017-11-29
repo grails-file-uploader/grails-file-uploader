@@ -133,7 +133,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
 
     void "test getFileNameAndExtensions method when file belongs to MultipartFile"() {
         given: 'Instances of StandardMultipartFile, CommonsMultipartFile and FileGroup class'
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
         DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
         CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
 

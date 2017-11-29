@@ -177,7 +177,6 @@ ccJacocoExt {
 
     coverageVerificationExcludes =[
        'com.causecode.fileuploader.FileUploaderService',
-       'com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl',
        'com.causecode.fileuploader.DailyJob*',
        'com.causecode.fileuploader.FileUploaderTagLib*',
        'com.causecode.fileuploader.FileUploaderBootStrap*',

@@ -370,7 +370,7 @@ class FileUploaderService {
                 return
             }
 
-            List<UFile> ufile = UFile.withCriteria {
+            UFile.withCriteria {
                 eq('type', UFileType.CDN_PUBLIC)
                 eq('provider', cdnProvider)
 
@@ -389,9 +389,7 @@ class FileUploaderService {
                 }
 
                 maxResults(100)
-            }
-
-            ufile.each { UFile ufileInstance ->
+            }.each { UFile ufileInstance ->
                 log.debug "Renewing URL for $ufileInstance"
 
                 long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)

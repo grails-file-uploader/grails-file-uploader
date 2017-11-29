@@ -182,7 +182,7 @@ class GoogleCredentials {
             log.debug 'Authentication using direct config values failed.', e
 
             try {
-                    return authenticateUsingKeyFileFromConfig()
+                return authenticateUsingKeyFileFromConfig()
             } catch (IllegalArgumentException | IOException e1) {
                 log.debug 'Authentication by reading file from path defined in config failed.', e1
 

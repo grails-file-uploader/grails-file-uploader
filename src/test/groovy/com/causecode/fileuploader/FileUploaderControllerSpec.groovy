@@ -50,7 +50,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
     void "test download action for various cases"() {
         given: 'An instance of UFile and File'
         UFile uFileInstance = UFile.build()
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked fileUploaderService methods'
         FileUploaderService fileUploaderService = Mock(FileUploaderService)
@@ -75,7 +75,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.response.contentType == 'application/octet-stream'
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void  "test show action for various cases"() {
@@ -111,7 +111,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.response.status == 200
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void "test moveToCloud action for various cases"() {
@@ -204,7 +204,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.params.id = uFileInstance.id
         def result = controller.show()
 
-        then: 'Server responds with 404 error'
+        then: 'Server responds with status 200'
         result == null
         controller.response.status == 200
     }

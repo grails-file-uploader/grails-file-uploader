@@ -36,7 +36,7 @@ class GoogleCredentialsSpec extends Specification {
     void "test getStorage method when authentication fails for authenticateUsingEnvironmentVariable() method"() {
         given: 'Config object is set to null'
         GoogleCredentials googleCredentials = new GoogleCredentials()
-        Holders.grailsApplication.config.fileuploader.storageProvider.google = [:]
+        Holders.grailsApplication.config.fileuploader.storageProvider.google = null
 
         and: 'Mocked StorageOptions getDefaultInstance method'
         GroovyMock(StorageOptions, global: true)
@@ -206,7 +206,6 @@ class GoogleCredentialsSpec extends Specification {
         File file = new File('')
         String testFilePath = file.absolutePath +
                 '/src/test/groovy/com/causecode/fileuploader/cdn/google/testkey.json'
-        file.delete()
 
         GoogleCredentials googleCredentials = new GoogleCredentials()
 
@@ -223,5 +222,8 @@ class GoogleCredentialsSpec extends Specification {
         then: 'Storage instance will be returned'
         noExceptionThrown()
         storage != null
+
+        cleanup:
+        file.delete()
     }
 }

@@ -11,9 +11,14 @@ import com.causecode.fileuploader.BaseTestSetup
 import com.causecode.fileuploader.UploadFailureException
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
+import grails.test.runtime.FreshRuntime
+import grails.util.Holders
 import org.jclouds.aws.s3.AWSS3Client
+import org.jclouds.blobstore.BlobStore
 import org.jclouds.blobstore.KeyNotFoundException
 import org.jclouds.http.HttpResponseException
+import org.jclouds.s3.domain.S3Object
+import org.jclouds.s3.domain.internal.MutableObjectMetadataImpl
 import org.jclouds.s3.domain.internal.S3ObjectImpl
 import spock.lang.Specification
 
@@ -31,7 +36,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
 
     void "test Amazon Cloud Storage for upload failure"() {
         given: 'A file instance'
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
@@ -46,12 +51,12 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         e.message == 'Could not upload file test to container dummyContainer'
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void "test Amazon Cloud Storage for upload success"() {
         given: 'A file instance'
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
         AWSS3Client clientInstance = Mock(AWSS3Client)
@@ -65,7 +70,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
         result
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void "test makeFilePublic method for failure case"() {
@@ -107,5 +112,54 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
     void "test getTemporaryUrl method to get temporary url of a file"() {
         expect:
         amazonCDNFileUploaderImpl.getTemporaryURL('testGoogle', 'test', 1L) != null
+    }
+
+    @FreshRuntime
+    void "test AmazonCDNFileUploaderImpl for various methods"() {
+        given: 'Mocked Authenticate method'
+        AmazonCDNFileUploaderImpl mockedAuthenticate = [ authenticate: { ->
+
+            BlobStore blobStoreMock = Mock(BlobStore)
+            blobStoreMock.createContainerInLocation(_, _) >> true
+            amazonCDNFileUploaderImpl.blobStore = blobStoreMock
+
+            AWSS3Client awss3ClientMock = Mock(AWSS3Client)
+            awss3ClientMock.getObject(_, _, _) >> {
+                S3Object s3Object = new S3ObjectImpl( new MutableObjectMetadataImpl())
+                s3Object.metadata.uri = new URI('https://www.xyz.com')
+                return s3Object
+            }
+            amazonCDNFileUploaderImpl.client = awss3ClientMock
+
+            return true
+        }] as AmazonCDNFileUploaderImpl
+
+        when: 'Overridden createContainer method is called'
+        boolean result = amazonCDNFileUploaderImpl.createContainer('abcde')
+
+        then: 'true will be returned'
+        result
+        noExceptionThrown()
+
+        when: 'Overridden deleteFile method is called'
+        amazonCDNFileUploaderImpl.deleteFile('abcd', 'abcd')
+
+        then: 'No exception will be thrown'
+        noExceptionThrown()
+
+        when: 'Overridden getPermanentURL method is called'
+        String result1 = amazonCDNFileUploaderImpl.getPermanentURL('abce', 'abce')
+
+        then: 'It will return the URL as String'
+        result1 == 'https://www.xyz.com'
+
+        when: 'Config does not contain key and secret'
+        Holders.config['fileuploader.storageProvider.amazon.AmazonKey'] = null
+        Holders.config['fileuploader.storageProvider.amazon.AmazonSecret'] = null
+        AmazonCDNFileUploaderImpl amazonCDNFileUploader = new AmazonCDNFileUploaderImpl()
+
+        then: 'Null will be stored in accessKey and accessSecret'
+        amazonCDNFileUploader.accessKey == null
+        amazonCDNFileUploader.accessSecret == null
     }
 }

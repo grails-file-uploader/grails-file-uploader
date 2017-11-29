@@ -142,7 +142,7 @@ class FileUploaderController {
     def moveFilesToGoogleCDN() {
         log.debug 'Moving files to Google CDN...'
 
-        String containerName = grailsApplication.config.fileuploader.groups.testGoogle.container
+        String containerName = grailsApplication.config.fileuploader.groups.container
 
         if (Environment.current == Environment.DEVELOPMENT) {
             containerName = containerName + '-development'
