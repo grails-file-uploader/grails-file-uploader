@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Version 3.0.9 [28-Nov-2017]
+
+### Database changes
+- Added dateCreated and lastUpdated field in UFile and UFileMoveHistory domain.
+
 ## Version 3.0.8 [24-Oct-2017]
 
 ### Changed

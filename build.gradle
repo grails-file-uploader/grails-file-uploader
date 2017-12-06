@@ -23,7 +23,7 @@ buildscript {
     }
 }
 
-version "3.0.8"
+version "3.0.9"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -174,8 +174,22 @@ ccJacocoExt {
             '**/*Exception*/**',
             '**/DailyJob*/**',
     ]
+
+    coverageVerificationExcludes =[
+       'com.causecode.fileuploader.FileUploaderService',
+       'com.causecode.fileuploader.FileUploaderService._deleteFileForUFile_closure1',
+       'com.causecode.fileuploader.DailyJob*',
+       'com.causecode.fileuploader.FileUploaderTagLib*',
+       'com.causecode.fileuploader.FileUploaderBootStrap*',
+       'com.causecode.fileuploader.UploadFailureException*',
+       'com.causecode.fileuploader.Application*'
+   ]
 }
 
 jar {
     exclude('**/UrlMappings*')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWrapperVersion
 }

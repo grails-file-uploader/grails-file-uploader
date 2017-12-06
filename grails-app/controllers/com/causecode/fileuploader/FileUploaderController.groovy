@@ -118,6 +118,7 @@ class FileUploaderController {
         if (uFileUploadFailureList) {
             message += "list of failed ufiles are: $uFileUploadFailureList"
         }
+
         flash.message = message
 
         render true

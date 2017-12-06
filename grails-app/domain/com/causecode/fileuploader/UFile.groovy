@@ -36,6 +36,9 @@ class UFile implements Serializable {
 
     UFileType type
 
+    Date dateCreated
+    Date lastUpdated
+
     static transients = ['serialVersionUID']
 
     static constraints = {
@@ -45,6 +48,8 @@ class UFile implements Serializable {
         name blank: false
         fileGroup blank: false
         provider nullable: true
+        dateCreated bindable: false
+        lastUpdated bindable: false
     }
 
     static mapping = {
