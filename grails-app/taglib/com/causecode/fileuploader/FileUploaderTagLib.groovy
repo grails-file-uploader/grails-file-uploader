@@ -148,6 +148,7 @@ class FileUploaderTagLib {
             log.error 'No Ufile instance found to resolve path for tag fileuploader:resolvePath'
             return
         }
+
         UFile ufileInstance = attrs.instance ?: UFile.get(attrs.id)
         out << fileUploaderService.resolvePath(ufileInstance)
     }
@@ -157,6 +158,7 @@ class FileUploaderTagLib {
             log.error 'No Ufile instance found to resolve path for tag fileuploader:img'
             return
         }
+
         UFile ufileInstance = attrs.remove('instance') ?: UFile.get(attrs.remove('id'))
         attrs.uri = fileUploaderService.resolvePath(ufileInstance)
 

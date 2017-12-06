@@ -9,6 +9,7 @@ package com.causecode.fileuploader.cdn.google
 
 import com.google.cloud.storage.Storage
 import com.causecode.fileuploader.StorageConfigurationException
+import com.google.cloud.storage.StorageOptions
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.util.Holders
@@ -32,10 +33,16 @@ class GoogleCredentialsSpec extends Specification {
         Holders.grailsApplication.config.fileuploader.storageProvider.google = storageProviderGoogle
     }
 
-    void "test getStorage method when authentication fails"() {
+    void "test getStorage method when authentication fails for authenticateUsingEnvironmentVariable() method"() {
         given: 'Config object is set to null'
         GoogleCredentials googleCredentials = new GoogleCredentials()
         Holders.grailsApplication.config.fileuploader.storageProvider.google = null
+
+        and: 'Mocked StorageOptions getDefaultInstance method'
+        GroovyMock(StorageOptions, global: true)
+        StorageOptions.defaultInstance >> {
+            throw new IllegalArgumentException('GCS Authentication failed due to bad configuration')
+        }
 
         when: 'getStorage method is called'
         googleCredentials.storage
@@ -154,7 +161,14 @@ class GoogleCredentialsSpec extends Specification {
         storage != null
     }
 
-    void "test authenticateUsingEnvironmentVariable method"() {
+    void "test authenticateUsingEnvironmentVariable method for failure case"() {
+        given: 'Mocked StorageOptions getDefaultInstance method'
+        GroovyMock(StorageOptions, global: true)
+        StorageOptions.defaultInstance >> {
+            throw new IllegalArgumentException('A project ID is required for this service but could not ' +
+                    'be determined from the builder or')
+        }
+
         when: 'authenticateUsingEnvironmentVariable method is called'
         GoogleCredentials googleCredentials = new GoogleCredentials()
         googleCredentials.authenticateUsingEnvironmentVariable()
@@ -162,5 +176,54 @@ class GoogleCredentialsSpec extends Specification {
         then: 'Authentication should fail and exception is thrown'
         IllegalArgumentException e = thrown(IllegalArgumentException)
         e.message.contains('A project ID is required for this service but could not be determined from the builder or')
+    }
+
+    void "test authenticateUsingEnvironmentVariable method for success case"() {
+        when: 'authenticateUsingEnvironmentVariable method is called'
+        GoogleCredentials googleCredentials = new GoogleCredentials()
+        Storage storage = googleCredentials.authenticateUsingEnvironmentVariable()
+
+        then: 'Storage instance will be returned'
+        noExceptionThrown()
+        storage != null
+    }
+
+    void "test getStorage method for success case"() {
+        given: 'An instance of GoogleCredentials'
+        GoogleCredentials googleCredentials = new GoogleCredentials()
+
+        when: 'getStorage method is called'
+        Storage storage = googleCredentials.storage
+
+        then: 'Storage instance will be returned'
+        noExceptionThrown()
+        storage != null
+    }
+
+    @SuppressWarnings('JavaIoPackageAccess')
+    void "test getStorage method when authenticateUsingKeyFileFromConfig method is called"() {
+        given: 'An instance of File, and Config object is set to null'
+        File file = new File('')
+        String testFilePath = file.absolutePath +
+                '/src/test/groovy/com/causecode/fileuploader/cdn/google/testkey.json'
+
+        GoogleCredentials googleCredentials = new GoogleCredentials()
+
+        Holders.grailsApplication.config.fileuploader.storageProvider.google.client_id = null
+        Holders.grailsApplication.config.fileuploader.storageProvider.google.client_email = null
+        Holders.grailsApplication.config.fileuploader.storageProvider.google.private_key = null
+        Holders.grailsApplication.config.fileuploader.storageProvider.google.private_key_id = null
+
+        Holders.grailsApplication.config.fileuploader.storageProvider.google.authFile = testFilePath
+
+        when: 'getStorage method is called'
+        Storage storage = googleCredentials.storage
+
+        then: 'Storage instance will be returned'
+        noExceptionThrown()
+        storage != null
+
+        cleanup:
+        file.delete()
     }
 }

@@ -155,6 +155,7 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
         } catch (HttpResponseException e) {
             throw new UploadFailureException(fileName, containerName, e)
         }
+
         return true
     }
 

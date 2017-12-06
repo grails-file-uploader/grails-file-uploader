@@ -25,6 +25,8 @@ class UFileMoveHistory {
         status(nullable: false)
         fromCDN(nullable: false)
         toCDN(nullable: false)
+        dateCreated(bindable: false)
+        lastUpdated(bindable: false)
     }
 
     static mapping = {
@@ -33,11 +35,14 @@ class UFileMoveHistory {
 
     UFile ufile
     int moveCount
-    Date lastUpdated
     CDNProvider fromCDN
     CDNProvider toCDN
     MoveStatus status
     String details
+
+    Date dateCreated
+    Date lastUpdated
+
 }
 
 @ToString
