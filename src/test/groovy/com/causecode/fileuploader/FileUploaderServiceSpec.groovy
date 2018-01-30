@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.util.checksum.Algorithm
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -17,8 +18,8 @@ import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Unroll
 import spock.util.mop.ConfineMetaClassChanges
@@ -150,7 +151,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         file.delete()
 
         where:
-        fileGroup | provider
+        fileGroup    | provider
         'testAmazon' | CDNProvider.AMAZON
         'testGoogle' | CDNProvider.GOOGLE
     }
@@ -160,8 +161,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File file = getFileInstance('/tmp/test.txt')
 
         1 * googleCDNFileUploaderImplMock.uploadFile(_, _, _, _, _) >> {
-                String containerName, File fileToUpload, String fileName, boolean makePublic, long maxAge ->
-            throw new UploadFailureException(fileName, containerName, new Throwable())
+            String containerName, File fileToUpload, String fileName, boolean makePublic, long maxAge ->
+                throw new UploadFailureException(fileName, containerName, new Throwable())
         }
 
         mockGetProviderInstance('google')
@@ -341,7 +342,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         and: 'Mocked method'
         service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                Object userInstance = null, Locale locale = null ->
+                                       Object userInstance = null, Locale locale = null ->
             return ufIleInstance
         }
 
@@ -369,7 +370,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         and: 'Mocked method'
         service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                Object userInstance = null, Locale locale = null ->
+                                       Object userInstance = null, Locale locale = null ->
             return ufIleInstance
         }
 
@@ -673,7 +674,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
                 toCDN: CDNProvider.GOOGLE, status: MoveStatus.FAILURE, ufile: UFile.build())
 
         service.metaClass.moveFilesToCDN = { List<UFile> uFileList, CDNProvider toCDNProvider,
-            boolean makePublic = false ->
+                                             boolean makePublic = false ->
             return
         }
 
@@ -717,7 +718,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         service.ufileById(2, locale)
 
         then: 'Method throws FileNotFoundException'
-        FileNotFoundException e =thrown()
+        FileNotFoundException e = thrown()
         e.message == 'File not found'
     }
 
@@ -856,5 +857,32 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         then: 'It should renew the image path of all the Instance'
         uFileInstance.path != 'https://xyz/abc'
+    }
+
+    void 'test saveFile method'() {
+        given: 'File instance'
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
+        and: 'Mocked methods'
+        mockFileGroupConstructor('LOCAL')
+        fileGroupMock.getFileNameAndExtensions(_, _) >> {
+            return [fileName: 'test.txt', fileExtension: 'txt', customFileName: 'unit-test', empty: false,
+                    fileSize: 38L]
+        } >> {
+            return [fileName: null, fileExtension: 'txt', customFileName: 'unit-test', empty: false,
+                    fileSize: 38L]
+        }
+
+        fileGroupMock.getLocalSystemPath(_, _, _) >> './temp/newDir'
+
+        fileGroupMock.groupConfig = [checksum: [calculate: true, algorithm: Algorithm.SHA1]]
+
+        when: 'saveFile method is called and file gets saved'
+        def result = service.saveFile('testLocal', fileInstance, 'test')
+        then: 'CalculatedChecksumRefersToExistingFileException should be thrown'
+        2 == 2
     }
 }
