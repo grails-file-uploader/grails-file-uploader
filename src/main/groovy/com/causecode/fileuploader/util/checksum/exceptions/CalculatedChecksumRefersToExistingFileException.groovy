@@ -5,7 +5,7 @@ package com.causecode.fileuploader.util.checksum.exceptions
  * @author Milan Savaliya
  */
 class CalculatedChecksumRefersToExistingFileException extends RuntimeException {
-    def CalculatedChecksumRefersToExistingFileException(GString gString) {
+    CalculatedChecksumRefersToExistingFileException(GString gString) {
         super(gString.toString())
     }
 }
