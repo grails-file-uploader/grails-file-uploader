@@ -8,6 +8,7 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.util.checksum.Algorithm
+import com.causecode.fileuploader.util.checksum.exceptions.CalculatedChecksumRefersToExistingFileException
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -860,29 +861,31 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     }
 
     void 'test saveFile method'() {
-        given: 'File instance'
+        given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
+        println fileInstance.exists()
 
-        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
-        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
-
-        and: 'Mocked methods'
-        mockFileGroupConstructor('LOCAL')
-        fileGroupMock.getFileNameAndExtensions(_, _) >> {
-            return [fileName: 'test.txt', fileExtension: 'txt', customFileName: 'unit-test', empty: false,
-                    fileSize: 38L]
-        } >> {
-            return [fileName: null, fileExtension: 'txt', customFileName: 'unit-test', empty: false,
-                    fileSize: 38L]
+        and: 'Mocked method'
+        mockAuthenticateMethod()
+        mockGetFileNameAndExtensions()
+        mockUploadFileMethod(true)
+        mockExistMethod(true)
+        service.metaClass.getProviderInstance = { String providerName ->
+            providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
-        fileGroupMock.getLocalSystemPath(_, _, _) >> './temp/newDir'
+        new FileGroup(_) >> fileGroupMock
+        fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+        fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: Algorithm.SHA1]]
 
-        fileGroupMock.groupConfig = [checksum: [calculate: true, algorithm: Algorithm.SHA1]]
+        and: 'The saveFile method has been already called'
+        UFile ufileInstancefile = service.saveFile('testGoogle', fileInstance, 'test')
 
-        when: 'saveFile method is called and file gets saved'
-        def result = service.saveFile('testLocal', fileInstance, 'test')
-        then: 'CalculatedChecksumRefersToExistingFileException should be thrown'
-        2 == 2
+        when: 'saveFile method gets called again on the file with same content'
+        service.metaClass.getUFileByChecksumAndAlgorithm = { String val, String val2 -> return new UFile() }
+        ufileInstancefile = service.saveFile('testGoogle', fileInstance, 'test')
+        then: 'CalculatedChecksumRefersToExistingFileException must be thrown'
+        thrown(CalculatedChecksumRefersToExistingFileException)
     }
 }
+

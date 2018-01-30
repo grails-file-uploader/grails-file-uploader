@@ -1,5 +1,7 @@
 package com.causecode.fileuploader.util.checksum.beans
 
+import groovy.mock.interceptor.MockFor
+import org.springframework.web.multipart.MultipartFile
 import spock.lang.Specification
 
 /**
@@ -25,17 +27,20 @@ class SimpleFileInputBeanImplSpec extends Specification {
     void "test constructor"() {
         when: 'given an null object'
         new SimpleFileInputBeanImpl(null)
+        then: 'expect a IllegalArgumentException'
+        thrown(IllegalArgumentException)
+
+        when: 'given an not exists file instance'
+        new SimpleFileInputBeanImpl(new File('/tmp/text.txt'))
         then: 'expect a FileNotFoundException'
         thrown(FileNotFoundException)
-
-        expect: 'a valid instance of SimpleFileInputBeanImpl'
-        fileInputBean != null
     }
 
     void 'test getName method'() {
         when: 'Proper file instance with name provided'
         String filename = 'somename.txt'
-        File file = new File("/${filename}")
+        File file = new File("/tmp/${filename}")
+        file.createNewFile()
         FileInputBean fileInputBean = new SimpleFileInputBeanImpl(file)
         then: 'getname must return valid filename'
         fileInputBean.getName() == filename
@@ -71,5 +76,10 @@ class SimpleFileInputBeanImplSpec extends Specification {
         def inputStream = fileInputBean.getInputStream()
         inputStream.getBytes().length == 0
         inputStream.close()
+    }
+
+    void 'test isExists method'(){
+        expect: 'True when File exists'
+        fileInputBean.isExists() == true
     }
 }

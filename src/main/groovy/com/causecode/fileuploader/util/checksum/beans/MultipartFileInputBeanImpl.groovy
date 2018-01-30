@@ -16,7 +16,9 @@ class MultipartFileInputBeanImpl implements FileInputBean {
     }
 
     private void validateInputs() {
-        if (this.multipartFile == null) throw new FileNotFoundException("File not found")
+        if (this.multipartFile == null) {
+            throw new IllegalArgumentException("Multipart Instance can not be null")
+        }
     }
 
     @Override
@@ -52,5 +54,10 @@ class MultipartFileInputBeanImpl implements FileInputBean {
     @Override
     InputStream getInputStream() throws IOException {
         return this.multipartFile.getInputStream()
+    }
+
+    @Override
+    boolean isExists() {
+        return true
     }
 }

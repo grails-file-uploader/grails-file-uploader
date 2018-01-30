@@ -20,8 +20,8 @@ class MultipartFileInputBeanImplSpec extends Specification {
     void "test constructor"() {
         when: 'given an null object'
         new MultipartFileInputBeanImpl(null)
-        then: 'expect a FileNotFoundException'
-        thrown(FileNotFoundException)
+        then: 'expect a IllegalArgumentException'
+        thrown(IllegalArgumentException)
 
         expect: 'a valid instance of SimpleFileInputBeanImpl'
         new MultipartFileInputBeanImpl(Mock(MultipartFile)) != null
@@ -99,11 +99,22 @@ class MultipartFileInputBeanImplSpec extends Specification {
         given: 'mocked getInputStream method of the fileInputBean'
         def multipartFile = new MockFor(MultipartFile)
         def inputStream = Mock(InputStream)
-        multipartFile.demand.getInputStream { return  inputStream }
+        multipartFile.demand.getInputStream { return inputStream }
         def file = multipartFile.proxyInstance()
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'supplied inputstream instance'
         fileInputBean.getInputStream() == inputStream
+    }
+
+    void 'test isExists method'(){
+        given: 'mocked getInputStream method of the fileInputBean'
+        def multipartFile = new MockFor(MultipartFile)
+        multipartFile.demand.isExists { return true }
+        def file = multipartFile.proxyInstance()
+        def fileInputBean = new MultipartFileInputBeanImpl(file)
+
+        expect: 'supplied inputstream instance'
+        fileInputBean.isExists()
     }
 }

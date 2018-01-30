@@ -13,7 +13,11 @@ class SimpleFileInputBeanImpl implements FileInputBean {
     }
 
     private void validateInputs() {
-        if (this.file == null) throw new FileNotFoundException("File not found")
+        if (this.file == null) {
+            throw new IllegalArgumentException("File instance can not be null")
+        }
+
+        if (!this.file.exists()) throw new FileNotFoundException("File not found")
     }
 
     @Override
@@ -33,7 +37,7 @@ class SimpleFileInputBeanImpl implements FileInputBean {
 
     @Override
     boolean isEmpty() {
-        return this.file.exists()
+        return this.file.size() == 0
     }
 
     @Override
@@ -49,5 +53,10 @@ class SimpleFileInputBeanImpl implements FileInputBean {
     @Override
     InputStream getInputStream() throws IOException {
         return new FileInputStream(this.file)
+    }
+
+    @Override
+    boolean isExists() {
+        return this.file.exists()
     }
 }

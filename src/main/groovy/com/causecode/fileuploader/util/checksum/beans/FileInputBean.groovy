@@ -54,4 +54,10 @@ interface FileInputBean {
      * @throws IOException in case of access errors (if the temporary store fails)
      */
     InputStream getInputStream() throws IOException
+
+    /**
+     * Method to check if file exists on disk or not
+     * @return
+     */
+    boolean isExists()
 }
