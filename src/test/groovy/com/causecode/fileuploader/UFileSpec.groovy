@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -7,7 +7,6 @@
  */
 package com.causecode.fileuploader
 
-import com.causecode.fileuploader.embedded.EmUFile
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -106,25 +105,5 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
         then: 'Method returns containerName'
         result == 'test'
-    }
-
-    void "test getEmbeddedInstance method for valid fields in EmUFile instance"() {
-        given: 'An instance of UFile'
-        UFile uFileInstance = UFile.build(expiresOn: new Date(), extension: 'jpg', name: 'test file', downloads: 1)
-
-        assert uFileInstance.embeddedInstance.validate()
-
-        when: 'getEmbeddedInstance method is called'
-        EmUFile emUFile = uFileInstance.embeddedInstance
-
-        then: 'Fields of embedded instance should exist and match with created UFile'
-        emUFile.with {
-            instanceId == uFileInstance.id
-            name == uFileInstance.name
-            expiresOn == uFileInstance.expiresOn
-            downloads == uFileInstance.downloads
-            path == uFileInstance.path
-            extension == uFileInstance.extension
-        }
     }
 }

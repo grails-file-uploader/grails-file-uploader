@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -10,7 +10,9 @@ package com.causecode.fileuploader
 import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
+import grails.util.Environment
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * This is unit test file for FileUploaderController class.
@@ -48,7 +50,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
     void "test download action for various cases"() {
         given: 'An instance of UFile and File'
         UFile uFileInstance = UFile.build()
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked fileUploaderService methods'
         FileUploaderService fileUploaderService = Mock(FileUploaderService)
@@ -73,7 +75,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.response.contentType == 'application/octet-stream'
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void  "test show action for various cases"() {
@@ -109,7 +111,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         controller.response.status == 200
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void "test moveToCloud action for various cases"() {
@@ -137,6 +139,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         2 * fileUploaderService.renewTemporaryURL() >> { } >> {
             throw new ProviderNotFoundException('Provider missing.')
         }
+
         controller.fileUploaderService = fileUploaderService
 
         when: 'renew action is executed successfully'
@@ -152,5 +155,57 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
         then: 'result must be false'
         controller.response.status == 404
         !result
+    }
+
+    @Unroll
+    void "test moveFilesToGoogleCDN action when status from server is #receivedStatus"() {
+        given: 'Mocked fileUploaderService method call'
+        FileUploaderService fileUploaderServiceMock = Mock(FileUploaderService)
+        if (receivedStatus == 'someExceptionOccurred') {
+            fileUploaderServiceMock.moveToNewCDN(_, _) >> { throw new StorageException('No space available.') }
+        }
+
+        fileUploaderServiceMock.moveToNewCDN(_, _) >> receivedStatus
+        controller.fileUploaderService = fileUploaderServiceMock
+
+        and: 'Mocked current environment'
+        GroovyMock(Environment, global: true)
+        Environment.current >> {
+            return Environment.DEVELOPMENT
+        }
+
+        when: 'moveFilesToGoogleCDN endpoint is hit and service method call returns false'
+        boolean result = controller.moveFilesToGoogleCDN()
+
+        then: 'Server should return expected result value'
+        noExceptionThrown()
+        result == expectedResult
+
+        where:
+        receivedStatus << [false, 'someExceptionOccurred', true, false]
+        expectedResult << [false, false, true, false]
+    }
+
+    @SuppressWarnings('JavaIoPackageAccess')
+    void  "test show action error occur while serving image to response"() {
+        given: 'A fileInstance and a uFileInstance'
+        UFile uFileInstance = UFile.build()
+
+        and: 'Mocked File Instance to throw an Exception when getBytes method is called'
+        File file = GroovyMock(File, global: true)
+        new File(_) >> file
+        file.exists() >> true
+        file.bytes >> {
+            throw new IOException('Error serving image to response')
+        }
+
+        when: 'show method is called and UFile instance is not found'
+        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
+        controller.params.id = uFileInstance.id
+        def result = controller.show()
+
+        then: 'Server responds with status 200'
+        result == null
+        controller.response.status == 200
     }
 }

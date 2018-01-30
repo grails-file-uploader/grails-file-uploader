@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -7,7 +7,6 @@
  */
 package com.causecode.fileuploader
 
-import com.causecode.fileuploader.embedded.EmUFile
 import grails.util.Environment
 import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
@@ -45,6 +44,9 @@ class UFile implements Serializable {
 
     UFileType type
 
+    Date dateCreated
+    Date lastUpdated
+
     static transients = ['serialVersionUID']
 
     static constraints = {
@@ -56,6 +58,8 @@ class UFile implements Serializable {
         provider nullable: true
         checksum nullable: true
         checksumAlgorithm nullable: true
+        dateCreated bindable: false
+        lastUpdated bindable: false
     }
 
     static mapping = {
@@ -92,7 +96,7 @@ class UFile implements Serializable {
     }
 
     String getFullName() {
-        name + '.' + extension
+        name.endsWith('.' + extension) ? name : name + '.' + extension
     }
 
     @Override
@@ -105,7 +109,7 @@ class UFile implements Serializable {
      * appended if the current environment is not the Production environment. This is used to keep the containers
      * separate for all environment.
      *
-     * @param containerName Name of the Amazon fileInputBean container or Google bucket.
+     * @param containerName Name of the Amazon file container or Google bucket.
      * @return Modified container name as described above.
      */
     static String containerName(String containerName) {
@@ -119,14 +123,6 @@ class UFile implements Serializable {
 
         return containerName
     }
-
-    /**
-     * Method to get Embedded Instance of UFile
-     */
-    EmUFile getEmbeddedInstance() {
-        return new EmUFile([instanceId: this.id, downloads: this.downloads, expiresOn: this.expiresOn,
-                            extension : this.extension, name: this.name, path: this.path])
-    }
 }
 
 @SuppressWarnings(['GrailsDomainHasEquals'])
@@ -137,7 +133,6 @@ enum UFileType {
     LOCAL(3)
 
     final int id
-
     UFileType(int id) {
         this.id = id
     }
@@ -157,7 +152,6 @@ enum CDNProvider {
     LOCAL(4)
 
     final int id
-
     CDNProvider(int id) {
         this.id = id
     }

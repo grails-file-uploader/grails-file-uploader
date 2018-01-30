@@ -71,7 +71,7 @@ class FileUploaderService {
      *
      * @param group
      * @param file
-     * @param customFileName Custom fileInputBean name without extension.
+     * @param customFileName Custom file name without extension.
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
@@ -107,7 +107,7 @@ class FileUploaderService {
         }
 
         fileGroupInstance.allowedExtensions(fileData, locale, group)
-        fileGroupInstance.validateFileSize(fileData, locale)
+        fileGroupInstance.validateFileSize(fileData.fileSize, locale)
 
         // If group specific storage type is not defined then use the common storage type
         String storageTypes = fileGroupInstance.groupConfig.storageTypes ?: fileGroupInstance.config.storageTypes
@@ -121,7 +121,7 @@ class FileUploaderService {
             File tempFile
 
             if (file instanceof File) {
-                /* No need to transfer a fileInputBean of type File since its already in a temporary location.
+                /* No need to transfer a file of type File since its already in a temporary location.
                 * (Saves resource utilization)
                 */
                 tempFile = file
@@ -134,7 +134,7 @@ class FileUploaderService {
                 }
             }
 
-            // Delete the temporary fileInputBean when JVM exited since the base fileInputBean is not required after upload
+            // Delete the temporary file when JVM exited since the base file is not required after upload
             tempFile.deleteOnExit()
 
             cdnProvider = fileGroupInstance.cdnProvider
@@ -150,7 +150,7 @@ class FileUploaderService {
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
 
-            // Move fileInputBean
+            // Move file
             log.debug "Moving [$fileData.fileName] to [${path}]."
             moveFile(file, path)
         }
@@ -167,12 +167,12 @@ class FileUploaderService {
         return ufile
     }
 
-/**
- * Method is used to upload fileInputBean to cloud provider. Then it gets the path of uploaded fileInputBean
- * @params fileData , fileGroupInstance, tempFile
- * @return path of uploaded fileInputBean
- *
- */
+    /**
+     * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
+     * @params fileData, fileGroupInstance, tempFile
+     * @return path of uploaded file
+     *
+     */
     String uploadFileToCloud(Map fileData, FileGroup fileGroupInstance, File tempFile) {
         CDNFileUploader fileUploaderInstance
         String path
@@ -194,12 +194,13 @@ class FileUploaderService {
         } finally {
             fileUploaderInstance?.close()
         }
+
         return path
     }
 
     /**
-     * Method is used to move fileInputBean from temp directory to another.
-     * @params fileInstance , path
+     * Method is used to move file from temp directory to another.
+     * @params fileInstance, path
      *
      */
     void moveFile(def file, String path) {
@@ -230,7 +231,7 @@ class FileUploaderService {
     }
 
     boolean deleteFileForUFile(UFile ufileInstance) throws ProviderNotFoundException, StorageException {
-        log.debug "Deleting fileInputBean for $ufileInstance"
+        log.debug "Deleting file for $ufileInstance"
 
         if (ufileInstance.type == UFileType.CDN_PRIVATE || ufileInstance.type == UFileType.CDN_PUBLIC) {
 
@@ -241,14 +242,16 @@ class FileUploaderService {
             } finally {
                 fileUploaderInstance?.close()
             }
+
             return true
         }
 
         File file = new File(ufileInstance.path)
         if (!file.exists()) {
-            log.warn "No fileInputBean found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
+            log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
             return false
         }
+
         File timestampFolder = file.parentFile
 
         if (file.delete()) {
@@ -258,13 +261,14 @@ class FileUploaderService {
             timestampFolder.eachFile(FileType.FILES) {
                 numFilesInParentFolder++
             }
+
             if (numFilesInParentFolder == 0) {
                 timestampFolder.delete()
             } else {
                 log.debug "Not deleting ${timestampFolder} as it contains files"
             }
         } else {
-            log.error "Could not delete fileInputBean: ${file}"
+            log.error "Could not delete file: ${file}"
         }
     }
 
@@ -277,13 +281,14 @@ class FileUploaderService {
         if (ufile) {
             return ufile
         }
+
         String msg = messageSource.getMessage('fileupload.download.nofile', [idUfile] as Object[], locale)
         throw new FileNotFoundException(msg)
     }
 
     /**
-     * Access the fileInputBean held by the UFile, incrementing the viewed number, and returning appropriate message if
-     * fileInputBean does not exist.
+     * Access the file held by the UFile, incrementing the viewed number, and returning appropriate message if
+     * file does not exist.
      */
     File fileForUFile(UFile ufileInstance, Locale locale) {
         File file
@@ -369,8 +374,9 @@ class FileUploaderService {
         }
 
         if (ufileInstance.type == UFileType.LOCAL) {
-            return "/fileInputBean-uploader/show/$ufileInstance.id"
+            return "/file-uploader/show/$ufileInstance.id"
         }
+
         if (ufileInstance.type == UFileType.CDN_PUBLIC || ufileInstance.type == UFileType.CDN_PRIVATE) {
             return ufileInstance.path
         }
@@ -397,6 +403,7 @@ class FileUploaderService {
                 } else {
                     isNotNull('expiresOn')
                 }
+
                 if (!forceAll) {
                     or {
                         lt('expiresOn', new Date())
@@ -404,6 +411,7 @@ class FileUploaderService {
                         between('expiresOn', new Date(), new Date() + 1)
                     }
                 }
+
                 maxResults(100)
             }.each { UFile ufileInstance ->
                 log.debug "Renewing URL for $ufileInstance"
@@ -414,9 +422,6 @@ class FileUploaderService {
                         ufileInstance.fullName, expirationPeriod)
                 ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
                 NucleusUtils.save(ufileInstance, true)
-                if (ufileInstance.hasErrors()) {
-                    log.debug "Error saving new URL for $ufileInstance"
-                }
 
                 log.debug "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
             }
@@ -433,22 +438,23 @@ class FileUploaderService {
     /**
      * Retrieves content of the given url and stores it in the temporary directory.
      *
-     * @param url The URL from which fileInputBean to be retrieved
-     * @param filename Name of the fileInputBean
+     * @param url The URL from which file to be retrieved
+     * @param filename Name of the file
      */
-    File getFileFromURL(String url, String filename) {
+    File getFileFromURL(String url, String filename) throws IOException {
         String path = newTemporaryDirectoryPath
 
-        File file = new File(path + filename)
+        File file = new File(path + filename.replaceAll('/', '-'))
         FileOutputStream fileOutputStream = new FileOutputStream(file)
         try {
             fileOutputStream.write(new URL(url).bytes)
         } catch (FileNotFoundException e) {
             log.info "URL ${url} not found"
         }
+
         fileOutputStream.close()
 
-        // Delete the temporary fileInputBean when JVM exited since the base fileInputBean is not required after upload
+        // Delete the temporary file when JVM exited since the base file is not required after upload
         file.deleteOnExit()
 
         return file
@@ -481,6 +487,7 @@ class FileUploaderService {
             amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.container,
                     uFileInstance.fullName, makePublic, expirationPeriod)
         }
+
         amazonFileUploaderInstance.close()
     }
 
@@ -507,6 +514,7 @@ class FileUploaderService {
         if (!toCDNProvider || !containerName) {
             return false
         }
+
         moveFilesToCDN(UFile.findAllByTypeNotEqual(UFileType.LOCAL), toCDNProvider, makePublic)
         return true
     }
@@ -530,21 +538,19 @@ class FileUploaderService {
         boolean isSuccess = true
         List<UFile> uFileUploadFailureList = []
 
-        uFileList
-                .findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }
-                .each { uFile ->
-            fileName = getNewFileNameFromUFile(uFile)
+        uFileList.findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }.each { uFile ->
+            try {
+                fileName = getNewFileNameFromUFile(uFile)
 
-            if (uFile.type == UFileType.LOCAL) {
-                downloadedFile = new File(uFile.path)
-            } else {
-                if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
-                    downloadedFile = getFileFromURL(uFile.path, uFile.name)
-                }
+                downloadedFile = getDownloadedFile(uFile)
+            } catch (IOException e) {
+                log.debug 'Error getting file from URL ', e
+
+                return false
             }
 
             if (!downloadedFile.exists()) {
-                log.debug "Downloaded fileInputBean doesn't not exist."
+                log.debug "Downloaded file doesn't not exist."
                 return
             }
 
@@ -574,12 +580,7 @@ class FileUploaderService {
                 log.debug message, e
             }
 
-            UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
-            uFileHistory.moveCount++
-            uFileHistory.lastUpdated = new Date()
-            uFileHistory.toCDN = toCDNProvider
-            uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
-            uFileHistory.details = message
+            UFileMoveHistory uFileHistory = createUfileMoveHistory(uFile, toCDNProvider, message)
 
             if (isSuccess) {
                 log.debug "File moved: ${uFile.name}"
@@ -593,14 +594,40 @@ class FileUploaderService {
 
                 NucleusUtils.save(uFile, true)
             } else {
-                log.debug "Error in moving fileInputBean: ${fileName}"
+                log.debug "Error in moving file: ${fileName}"
                 uFileHistory.status = MoveStatus.FAILURE
                 uFileUploadFailureList << uFile
             }
+
             NucleusUtils.save(uFileHistory, true)
         }
 
         return uFileUploadFailureList
+    }
+
+    private File getDownloadedFile(UFile uFile) {
+        File downloadedFile
+
+        if (uFile.type == UFileType.LOCAL) {
+            downloadedFile = new File(uFile.path)
+        } else {
+            if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
+                downloadedFile = getFileFromURL(uFile.path, uFile.name)
+            }
+        }
+
+        return downloadedFile
+    }
+
+    private UFileMoveHistory createUfileMoveHistory(UFile uFile, CDNProvider toCDNProvider, String message) {
+        UFileMoveHistory uFileHistory = UFileMoveHistory.findOrCreateByUfile(uFile)
+        uFileHistory.moveCount++
+        uFileHistory.lastUpdated = new Date()
+        uFileHistory.toCDN = toCDNProvider
+        uFileHistory.fromCDN = uFile.provider ?: CDNProvider.LOCAL
+        uFileHistory.details = message
+
+        return uFileHistory
     }
 
     /**

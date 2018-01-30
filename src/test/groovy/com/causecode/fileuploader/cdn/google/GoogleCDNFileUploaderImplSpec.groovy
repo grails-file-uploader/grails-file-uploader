@@ -123,6 +123,7 @@ class GoogleCDNFileUploaderImplSpec extends Specification {
         1 * BlobId.of(_, _) >> {
             return blobIdInstance
         }
+
         Storage storageInstance = Mock(Storage)
         storageInstance.create(_, _) >> { throw new StorageException(1, 'Test exception') }
         googleCDNFileUploaderImpl.gStorage = storageInstance
