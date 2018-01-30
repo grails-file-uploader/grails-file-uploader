@@ -34,6 +34,14 @@ class UFile implements Serializable {
     String fileGroup
     String name
     String path
+    /**
+     * Contains calculated hash value of fileInputBean content
+     */
+    String checksum
+    /**
+     * Algorithm Used to calculate Checksum
+     */
+    String checksumAlgorithm
 
     UFileType type
 
@@ -46,10 +54,17 @@ class UFile implements Serializable {
         name blank: false
         fileGroup blank: false
         provider nullable: true
+        checksum nullable: true
+        checksumAlgorithm nullable: true
     }
 
     static mapping = {
         path sqlType: 'text'
+        /**
+         * Checksum will be used to query UFile.
+         */
+        checksum index: true
+        checksumAlgorithm index: true
     }
 
     def afterDelete() {
@@ -90,7 +105,7 @@ class UFile implements Serializable {
      * appended if the current environment is not the Production environment. This is used to keep the containers
      * separate for all environment.
      *
-     * @param containerName Name of the Amazon file container or Google bucket.
+     * @param containerName Name of the Amazon fileInputBean container or Google bucket.
      * @return Modified container name as described above.
      */
     static String containerName(String containerName) {
@@ -110,7 +125,7 @@ class UFile implements Serializable {
      */
     EmUFile getEmbeddedInstance() {
         return new EmUFile([instanceId: this.id, downloads: this.downloads, expiresOn: this.expiresOn,
-                extension: this.extension, name: this.name, path: this.path])
+                            extension : this.extension, name: this.name, path: this.path])
     }
 }
 
@@ -122,6 +137,7 @@ enum UFileType {
     LOCAL(3)
 
     final int id
+
     UFileType(int id) {
         this.id = id
     }
@@ -141,6 +157,7 @@ enum CDNProvider {
     LOCAL(4)
 
     final int id
+
     CDNProvider(int id) {
         this.id = id
     }

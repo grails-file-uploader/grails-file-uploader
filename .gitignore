@@ -3,6 +3,7 @@
 .project
 !.gitignore # except for .gitignore
 .settings
+/out
 
 *.tmproj
 

@@ -8,18 +8,21 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
+import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.util.FileUploaderUtils
+import com.causecode.fileuploader.util.Time
+import com.causecode.fileuploader.util.checksum.ChecksumValidator
+import com.causecode.fileuploader.util.checksum.exceptions.CalculatedChecksumRefersToExistingFileException
 import com.causecode.util.NucleusUtils
 import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
+import org.apache.commons.validator.UrlValidator
 import org.springframework.context.MessageSource
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.web.multipart.MultipartFile
+
 import java.nio.channels.FileChannel
-import org.apache.commons.validator.UrlValidator
-import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
-import com.causecode.fileuploader.util.Time
 
 /**
  * A service class for all fileUpload related operations.
@@ -68,7 +71,7 @@ class FileUploaderService {
      *
      * @param group
      * @param file
-     * @param customFileName Custom file name without extension.
+     * @param customFileName Custom fileInputBean name without extension.
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
@@ -81,6 +84,22 @@ class FileUploaderService {
         String path
 
         FileGroup fileGroupInstance = new FileGroup(group)
+        ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
+        String checksum = null
+        String algorithm = null
+        if (checksumValidator?.isToCalculateChecksum()) {
+            checksum = checksumValidator.getChecksum(file)
+            algorithm = checksumValidator.getAlgorithm()
+            UFile uFileByChecksumAndAlgorithm = getUFileByChecksumAndAlgorithm(checksum, checksumValidator.getAlgorithm())
+            if (uFileByChecksumAndAlgorithm != null) {
+                throw new CalculatedChecksumRefersToExistingFileException(
+                        "Checksum for file ${file.getName()} is ${checksum} and " +
+                                "that checksum refers to an existing file on server with " +
+                                "UFile id: ${uFileByChecksumAndAlgorithm.id}"
+                )
+            }
+        }
+
         Map fileData = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
 
         if (fileData.empty || !file) {
@@ -102,7 +121,7 @@ class FileUploaderService {
             File tempFile
 
             if (file instanceof File) {
-                /* No need to transfer a file of type File since its already in a temporary location.
+                /* No need to transfer a fileInputBean of type File since its already in a temporary location.
                 * (Saves resource utilization)
                 */
                 tempFile = file
@@ -115,7 +134,7 @@ class FileUploaderService {
                 }
             }
 
-            // Delete the temporary file when JVM exited since the base file is not required after upload
+            // Delete the temporary fileInputBean when JVM exited since the base fileInputBean is not required after upload
             tempFile.deleteOnExit()
 
             cdnProvider = fileGroupInstance.cdnProvider
@@ -131,24 +150,29 @@ class FileUploaderService {
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
 
-            // Move file
+            // Move fileInputBean
             log.debug "Moving [$fileData.fileName] to [${path}]."
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name: fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+        UFile ufile = new UFile([name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
+                                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+
+        if (checksumValidator?.isToCalculateChecksum()) {
+            ufile.checksum = checksum
+            ufile.checksumAlgorithm = algorithm
+        }
         NucleusUtils.save(ufile, true)
 
         return ufile
     }
 
-    /**
-     * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
-     * @params fileData, fileGroupInstance, tempFile
-     * @return path of uploaded file
-     *
-     */
+/**
+ * Method is used to upload fileInputBean to cloud provider. Then it gets the path of uploaded fileInputBean
+ * @params fileData , fileGroupInstance, tempFile
+ * @return path of uploaded fileInputBean
+ *
+ */
     String uploadFileToCloud(Map fileData, FileGroup fileGroupInstance, File tempFile) {
         CDNFileUploader fileUploaderInstance
         String path
@@ -174,8 +198,8 @@ class FileUploaderService {
     }
 
     /**
-     * Method is used to move file from temp directory to another.
-     * @params fileInstance, path
+     * Method is used to move fileInputBean from temp directory to another.
+     * @params fileInstance , path
      *
      */
     void moveFile(def file, String path) {
@@ -206,7 +230,7 @@ class FileUploaderService {
     }
 
     boolean deleteFileForUFile(UFile ufileInstance) throws ProviderNotFoundException, StorageException {
-        log.debug "Deleting file for $ufileInstance"
+        log.debug "Deleting fileInputBean for $ufileInstance"
 
         if (ufileInstance.type == UFileType.CDN_PRIVATE || ufileInstance.type == UFileType.CDN_PUBLIC) {
 
@@ -222,7 +246,7 @@ class FileUploaderService {
 
         File file = new File(ufileInstance.path)
         if (!file.exists()) {
-            log.warn "No file found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
+            log.warn "No fileInputBean found at path [$ufileInstance.path] for ufile [$ufileInstance.id]."
             return false
         }
         File timestampFolder = file.parentFile
@@ -240,7 +264,7 @@ class FileUploaderService {
                 log.debug "Not deleting ${timestampFolder} as it contains files"
             }
         } else {
-            log.error "Could not delete file: ${file}"
+            log.error "Could not delete fileInputBean: ${file}"
         }
     }
 
@@ -258,8 +282,8 @@ class FileUploaderService {
     }
 
     /**
-     * Access the file held by the UFile, incrementing the viewed number, and returning appropriate message if
-     * file does not exist.
+     * Access the fileInputBean held by the UFile, incrementing the viewed number, and returning appropriate message if
+     * fileInputBean does not exist.
      */
     File fileForUFile(UFile ufileInstance, Locale locale) {
         File file
@@ -345,7 +369,7 @@ class FileUploaderService {
         }
 
         if (ufileInstance.type == UFileType.LOCAL) {
-            return "/file-uploader/show/$ufileInstance.id"
+            return "/fileInputBean-uploader/show/$ufileInstance.id"
         }
         if (ufileInstance.type == UFileType.CDN_PUBLIC || ufileInstance.type == UFileType.CDN_PRIVATE) {
             return ufileInstance.path
@@ -409,8 +433,8 @@ class FileUploaderService {
     /**
      * Retrieves content of the given url and stores it in the temporary directory.
      *
-     * @param url The URL from which file to be retrieved
-     * @param filename Name of the file
+     * @param url The URL from which fileInputBean to be retrieved
+     * @param filename Name of the fileInputBean
      */
     File getFileFromURL(String url, String filename) {
         String path = newTemporaryDirectoryPath
@@ -424,7 +448,7 @@ class FileUploaderService {
         }
         fileOutputStream.close()
 
-        // Delete the temporary file when JVM exited since the base file is not required after upload
+        // Delete the temporary fileInputBean when JVM exited since the base fileInputBean is not required after upload
         file.deleteOnExit()
 
         return file
@@ -507,20 +531,20 @@ class FileUploaderService {
         List<UFile> uFileUploadFailureList = []
 
         uFileList
-            .findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }
-            .each { uFile ->
-                fileName = getNewFileNameFromUFile(uFile)
+                .findAll { it.provider != toCDNProvider || it.type == UFileType.LOCAL }
+                .each { uFile ->
+            fileName = getNewFileNameFromUFile(uFile)
 
-                if (uFile.type == UFileType.LOCAL) {
-                    downloadedFile = new File(uFile.path)
-                } else {
-                    if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
-                        downloadedFile = getFileFromURL(uFile.path, uFile.name)
-                    }
+            if (uFile.type == UFileType.LOCAL) {
+                downloadedFile = new File(uFile.path)
+            } else {
+                if (uFile.type == UFileType.CDN_PRIVATE || uFile.type == UFileType.CDN_PUBLIC) {
+                    downloadedFile = getFileFromURL(uFile.path, uFile.name)
                 }
+            }
 
             if (!downloadedFile.exists()) {
-                log.debug "Downloaded file doesn't not exist."
+                log.debug "Downloaded fileInputBean doesn't not exist."
                 return
             }
 
@@ -569,7 +593,7 @@ class FileUploaderService {
 
                 NucleusUtils.save(uFile, true)
             } else {
-                log.debug "Error in moving file: ${fileName}"
+                log.debug "Error in moving fileInputBean: ${fileName}"
                 uFileHistory.status = MoveStatus.FAILURE
                 uFileUploadFailureList << uFile
             }
@@ -611,5 +635,9 @@ class FileUploaderService {
         fullName = fullName.contains('/') ? fullName[(fullName.lastIndexOf('/') + 1)..-1] : fullName
 
         return "${uFile.fileGroup}-${System.currentTimeMillis()}-${fullName}"
+    }
+
+    UFile getUFileByChecksumAndAlgorithm(String checksum, String algorithm) {
+        UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)
     }
 }
