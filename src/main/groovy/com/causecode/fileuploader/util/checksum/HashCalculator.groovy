@@ -15,7 +15,7 @@ trait HashCalculator {
     /**
      * Setter for algorithm
      */
-    void setAlgorithm(Algorithm algorithm){
+    void setAlgorithm(Algorithm algorithm) {
         this.algorithm = algorithm
     }
 
@@ -23,7 +23,7 @@ trait HashCalculator {
      * This method returns an instance of a algorithm which will be used to calculate the checksum
      * @return
      */
-    Algorithm getAlgorithm(){
+    Algorithm getAlgorithm() {
         return this.algorithm
     }
 

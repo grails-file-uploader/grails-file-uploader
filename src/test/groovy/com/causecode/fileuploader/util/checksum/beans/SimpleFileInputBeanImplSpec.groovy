@@ -1,12 +1,11 @@
 package com.causecode.fileuploader.util.checksum.beans
 
-import groovy.mock.interceptor.MockFor
-import org.springframework.web.multipart.MultipartFile
 import spock.lang.Specification
 
 /**
  * @author Milan Savaliya
  */
+@SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
 class SimpleFileInputBeanImplSpec extends Specification {
 
     private final String tempDirPath = '/tmp/'
@@ -14,17 +13,14 @@ class SimpleFileInputBeanImplSpec extends Specification {
     private String fileName
 
     def setup() {
-        fileName = (System.currentTimeMillis() as String) + ".txt"
+        fileName = (System.currentTimeMillis() as String) + '.txt'
         def file = new File(tempDirPath.concat(fileName))
         file.createNewFile()
         file.deleteOnExit()
         fileInputBean = new SimpleFileInputBeanImpl(file)
     }
 
-    def cleanup() {
-    }
-
-    void "test constructor"() {
+    void 'test constructor'() {
         when: 'given an null object'
         new SimpleFileInputBeanImpl(null)
         then: 'expect a IllegalArgumentException'
@@ -38,22 +34,22 @@ class SimpleFileInputBeanImplSpec extends Specification {
 
     void 'test getName method'() {
         when: 'Proper file instance with name provided'
-        String filename = 'somename.txt'
+        String filename = 'fooFile.txt'
         File file = new File("/tmp/${filename}")
         file.createNewFile()
         FileInputBean fileInputBean = new SimpleFileInputBeanImpl(file)
-        then: 'getname must return valid filename'
-        fileInputBean.getName() == filename
+        then: 'getName must return valid filename'
+        fileInputBean.name == filename
     }
 
     void 'test getOriginalFilename method'() {
         expect: 'name of the fileInputBean'
-        fileInputBean.getOriginalFilename() != null
+        fileInputBean.originalFilename != null
     }
 
     void 'test getContentType method'() {
         expect: 'name of the fileInputBean'
-        fileInputBean.getContentType() != null
+        fileInputBean.contentType != null
     }
 
     void 'test isEmpty method'() {
@@ -63,23 +59,23 @@ class SimpleFileInputBeanImplSpec extends Specification {
 
     void 'test getSize method'() {
         expect: 'name of the fileInputBean'
-        fileInputBean.getSize() == 0
+        fileInputBean.size == 0
     }
 
     void 'test getBytes method'() {
         expect: 'name of the fileInputBean'
-        fileInputBean.getBytes().length == 0
+        fileInputBean.bytes.length == 0
     }
 
     void 'test getInputStream method'() {
         expect: 'name of the fileInputBean'
-        def inputStream = fileInputBean.getInputStream()
-        inputStream.getBytes().length == 0
+        def inputStream = fileInputBean.inputStream
+        inputStream.bytes.length == 0
         inputStream.close()
     }
 
-    void 'test isExists method'(){
+    void 'test isExists method'() {
         expect: 'True when File exists'
-        fileInputBean.isExists() == true
+        fileInputBean.isExists()
     }
 }

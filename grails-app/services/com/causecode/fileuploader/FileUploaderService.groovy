@@ -89,12 +89,13 @@ class FileUploaderService {
         String algorithm = null
         if (checksumValidator?.isToCalculateChecksum()) {
             checksum = checksumValidator.getChecksum(file)
-            algorithm = checksumValidator.getAlgorithm()
-            UFile uFileByChecksumAndAlgorithm = getUFileByChecksumAndAlgorithm(checksum, checksumValidator.getAlgorithm())
+            algorithm = checksumValidator.algorithm
+            UFile uFileByChecksumAndAlgorithm = getUFileByChecksumAndAlgorithm(checksum,
+                    checksumValidator.algorithm)
             if (uFileByChecksumAndAlgorithm != null) {
                 throw new CalculatedChecksumRefersToExistingFileException(
-                        "Checksum for file ${file.getName()} is ${checksum} and " +
-                                "that checksum refers to an existing file on server with " +
+                        "Checksum for file ${file.name} is ${checksum} and " +
+                                'that checksum refers to an existing file on server with ' +
                                 "UFile id: ${uFileByChecksumAndAlgorithm.id}"
                 )
             }
@@ -155,15 +156,23 @@ class FileUploaderService {
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+        UFile ufile = new UFile(
+                [
+                name     : fileData.fileName,
+                size: fileData.fileSize,
+                path: path,
+                type: type,
+                extension: fileData.fileExtension,
+                expiresOn: expireOn,
+                fileGroup: group,
+                provider: cdnProvider])
 
         if (checksumValidator?.isToCalculateChecksum()) {
             ufile.checksum = checksum
             ufile.checksumAlgorithm = algorithm
         }
-        NucleusUtils.save(ufile, true)
 
+        NucleusUtils.save(ufile, true)
         return ufile
     }
 

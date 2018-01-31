@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile
  */
 class MultipartFileInputBeanImpl implements FileInputBean {
 
-    private MultipartFile multipartFile
+    private final MultipartFile multipartFile
 
     MultipartFileInputBeanImpl(MultipartFile multipartFile) {
         this.multipartFile = multipartFile
@@ -17,23 +17,24 @@ class MultipartFileInputBeanImpl implements FileInputBean {
 
     private void validateInputs() {
         if (this.multipartFile == null) {
-            throw new IllegalArgumentException("Multipart Instance can not be null")
+            throw new IllegalArgumentException('Multipart Instance can not be null')
         }
+
     }
 
     @Override
     String getName() {
-        return this.multipartFile.getName()
+        return this.multipartFile.name
     }
 
     @Override
     String getOriginalFilename() {
-        return this.multipartFile.getOriginalFilename()
+        return this.multipartFile.originalFilename
     }
 
     @Override
     String getContentType() {
-        return this.multipartFile.getContentType()
+        return this.multipartFile.contentType
     }
 
     @Override
@@ -48,12 +49,12 @@ class MultipartFileInputBeanImpl implements FileInputBean {
 
     @Override
     byte[] getBytes() throws IOException {
-        return this.multipartFile.getBytes()
+        return this.multipartFile.bytes
     }
 
     @Override
     InputStream getInputStream() throws IOException {
-        return this.multipartFile.getInputStream()
+        return this.multipartFile.inputStream
     }
 
     @Override

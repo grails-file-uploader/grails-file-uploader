@@ -14,10 +14,10 @@ import org.springframework.web.multipart.MultipartFile
  */
 class ChecksumValidator {
     private String calculatedChecksum = null
-    private ChecksumConfig checksumConfig
-    private FileGroup fileGroup
+    private final ChecksumConfig checksumConfig
+    private final FileGroup fileGroup
 
-    ChecksumValidator(FileGroup fileGroup){
+    ChecksumValidator(FileGroup fileGroup) {
         this.fileGroup = fileGroup
         this.checksumConfig = getChecksumConfig(fileGroup)
     }
@@ -26,20 +26,23 @@ class ChecksumValidator {
         return this.checksumConfig.calculate
     }
 
-    String getChecksum(def file){
-        if( calculatedChecksum == null ) {
+    String getChecksum(def file) {
+        if (calculatedChecksum == null) {
             calculatedChecksum = this.getChecksumForFile(file)
         }
+
         return calculatedChecksum
     }
 
-    String getAlgorithm(){
+    String getAlgorithm() {
         return this.checksumConfig.algorithm.toString()
     }
 
     private ChecksumConfig getChecksumConfig(FileGroup fileGroup) {
         def checksumPro = fileGroup.groupConfig.checksum
-        if (!checksumPro) return new ChecksumConfig()
+        if (!checksumPro) {
+            return new ChecksumConfig()
+        }
 
         boolean calculate = checksumPro.calculate ?: false
         Algorithm algorithm = checksumPro.algorithm ?: Algorithm.MD5
@@ -52,14 +55,13 @@ class ChecksumValidator {
         return hashCalculator.calculateHash()
     }
 
-
     private FileInputBean getFileInputBeanForFile(def file) {
-        if (file instanceof File) {
+        if (file in File) {
             return new SimpleFileInputBeanImpl(file)
-        } else if (file instanceof MultipartFile) {
+        } else if (file in MultipartFile) {
             return new MultipartFileInputBeanImpl(file)
-        } else {
-            throw new UnRecognizedFileTypeException("${file.class.getName()} is not recognized for FileInputBean")
         }
+
+        throw new UnRecognizedFileTypeException("${file.class.name} is not recognized for FileInputBean")
     }
 }

@@ -17,7 +17,7 @@ class FileHashCalculator implements HashCalculator {
     /**
      * FileInputBean instance
      */
-    private FileInputBean fileInputBean
+    private final FileInputBean fileInputBean
 
     /**
      * Constructs FileHashCalculator instance and throws FileNotFoundException If Input File Is null or not exists
@@ -45,7 +45,10 @@ class FileHashCalculator implements HashCalculator {
      * This Method validates inputs.
      */
     private void validateInputs() throws FileNotFoundException {
-        if (fileInputBean == null ) throw new FileNotFoundException("File not found with")
+        if (fileInputBean == null) {
+            throw new FileNotFoundException('File not found with')
+        }
+
     }
 
     /**
@@ -54,9 +57,9 @@ class FileHashCalculator implements HashCalculator {
      */
     @Override
     String calculateHash() {
-        log.info "Starting checksum calculation For File ${fileInputBean.getName()}"
+        log.info "Starting checksum calculation For File ${fileInputBean.name}"
         def messageDigest = MessageDigest.getInstance(this.algorithm.toString())
-        def hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.fileInputBean.getBytes()))
+        def hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.fileInputBean.bytes))
         log.info "Calculated Checksum is:- ${hexHasString}"
         return hexHasString
     }

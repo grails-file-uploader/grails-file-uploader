@@ -863,7 +863,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
     void 'test saveFile method'() {
         given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
-        println fileInstance.exists()
 
         and: 'Mocked method'
         mockAuthenticateMethod()

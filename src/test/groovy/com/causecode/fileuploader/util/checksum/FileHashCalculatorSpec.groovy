@@ -3,47 +3,42 @@ package com.causecode.fileuploader.util.checksum
 import com.causecode.fileuploader.util.checksum.beans.FileInputBean
 import com.causecode.fileuploader.util.checksum.beans.SimpleFileInputBeanImpl
 import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
- * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
+ * @author Milan Savaliya
  */
+@SuppressWarnings(['JavaIoPackageAccess'])
 class FileHashCalculatorSpec extends Specification {
 
     private final String tempDirPath = '/tmp/'
 
-    def setup() {
-
-    }
-
-    def cleanup() {
-    }
-
-    @Unroll
     void 'test for constructor with file parameter'() {
         when: 'Invalid File Instance is given'
-        def hashCalcy = new FileHashCalculator(getFileInstance(FileInstanceType.NULL))
+        def object = new FileHashCalculator(getFileInstance(FileInstanceType.NULL))
+        object.algorithm
+
         then: 'FileNotFoundException must be thrown'
         thrown(FileNotFoundException)
     }
 
-    void 'test for constructor with file parameter and algorithm pramter'() {
+    void 'test for constructor with file parameter and algorithm parameter'() {
         given: 'Proper File Instance'
         def file = getFileInstance(FileInstanceType.VALID)
+
         and: 'Proper Algorithm Instance'
         def algorithm = Algorithm.SHA1
 
         when: 'Only File instance is supplied in the constructor'
-        def hashCalcy = new FileHashCalculator(file)
+        def hashCalculator = new FileHashCalculator(file)
         then: 'instance must be created and algorithm must be set to default MD5'
-        hashCalcy != null
-        hashCalcy.algorithm == Algorithm.MD5
+        hashCalculator != null
+        hashCalculator.algorithm == Algorithm.MD5
 
         when: 'Valid fileInputBean instance and algorithm instances are given'
-        hashCalcy = new FileHashCalculator(file, algorithm)
+        hashCalculator = new FileHashCalculator(file, algorithm)
         then: 'instance must be created with supplied algorithm'
-        hashCalcy != null
-        hashCalcy.algorithm == algorithm
+        hashCalculator != null
+        hashCalculator.algorithm == algorithm
     }
 
     void 'test calculateHash method'() {
@@ -70,13 +65,13 @@ class FileHashCalculatorSpec extends Specification {
         } else if (fileInstanceType == FileInstanceType.NOT_EXISTS) {
             return new SimpleFileInputBeanImpl(new File(''))
         } else if (fileInstanceType == FileInstanceType.VALID) {
-            def file = new File(tempDirPath.concat(System.currentTimeMillis() as String).concat(".txt"))
+            def file = new File(tempDirPath.concat(System.currentTimeMillis() as String).concat('.txt'))
             file.createNewFile()
             file.deleteOnExit()
             return new SimpleFileInputBeanImpl(file)
-        } else {
-            return null
         }
+
+        return null
 
     }
 }

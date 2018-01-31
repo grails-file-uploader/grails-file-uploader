@@ -15,17 +15,11 @@ import spock.lang.Specification
  */
 @Build(UFile)
 @TestMixin(GrailsUnitTestMixin)
+@SuppressWarnings(['JavaIoPackageAccess'])
 class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
 
-    def setup() {
-    }
-
-    def cleanup() {
-    }
-
     void "test Constructor"() {
-        given: "filegroup instance"
-        File fileInstance = new File('testLocal')
+        given: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
         and: 'invalid checksum config'
         def checksumConfig = null
@@ -44,8 +38,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
     }
 
     void 'test isToCalculateChecksum method'() {
-        given: "filegroup instance"
-        File fileInstance = new File('testLocal')
+        given: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
         and: 'mocked config object'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1,]
@@ -58,17 +51,16 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         given: 'java.io.file instance'
         File fileInstance = new File('/tmp/testLocal.txt')
         fileInstance.createNewFile()
-        fileInstance.write("this is something else")
+        fileInstance.write('Some dummy date in')
         fileInstance.deleteOnExit()
 
-        and: 'filegroup instance'
-        File groupInstanceFile = new File('testLocal')
+        and: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
-
 
         when: 'getChecksum method is called'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1,]
         def instance = new ChecksumValidator(fileGroupInstance)
+
         then: 'expect calculated checksum'
         def checksum = instance.getChecksum(fileInstance)
         checksum != null
@@ -77,11 +69,10 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
 
     void 'test getChecksum method with MultipartFile instance'() {
         given: 'MultipartFile instance'
-        def test = new GrailsMockMultipartFile('testone', 'testone', 'text', [1, 2, 3, 4, 5] as byte[])
+        def test = new GrailsMockMultipartFile('testOne', 'testOne', 'text', [1, 2, 3, 4, 5] as byte[])
 
-        and: 'filegroup instance'
+        and: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
-
 
         when: 'getChecksum method is called'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
@@ -94,33 +85,29 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
     }
 
     void 'test getAlgorithm method'() {
-        given: 'MultipartFile instance'
-        def test = new GrailsMockMultipartFile('testone', 'testone', 'text', [1, 2, 3, 4, 5] as byte[])
-
-        and: 'filegroup instance'
+        given: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
-
 
         when: 'getChecksum method is called'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
         def instance = new ChecksumValidator(fileGroupInstance)
-        def algo = instance.getAlgorithm()
+        def algorithm = instance.algorithm
+
         then: 'expected supplied algorithm instance'
-        algo == Algorithm.SHA1.toString()
+        algorithm == Algorithm.SHA1.toString()
     }
 
     void 'test getFileInputBeanForFile method'() {
-        given: 'MultipartFile instance'
+        given: 'Unknown instance'
         def test = new Object()
 
-        and: 'filegroup instance'
+        and: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
-
 
         when: 'getChecksum method is called'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
         def instance = new ChecksumValidator(fileGroupInstance)
-        def algo = instance.getChecksum(test)
+        instance.getChecksum(test)
         then: 'expected UnRecognizedFileTypeException'
         thrown(UnRecognizedFileTypeException)
     }

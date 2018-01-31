@@ -9,22 +9,16 @@ import spock.lang.Specification
  */
 class MultipartFileInputBeanImplSpec extends Specification {
 
-    private final String tempDirPath = '/tmp/'
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
-
     void "test constructor"() {
         when: 'given an null object'
-        new MultipartFileInputBeanImpl(null)
+        def obj = new MultipartFileInputBeanImpl(null)
+        obj.exists
+
         then: 'expect a IllegalArgumentException'
         thrown(IllegalArgumentException)
 
         expect: 'a valid instance of SimpleFileInputBeanImpl'
-        new MultipartFileInputBeanImpl(Mock(MultipartFile)) != null
+        ((new MultipartFileInputBeanImpl(Mock(MultipartFile))) != null)
     }
 
     void 'test getName method'() {
@@ -36,7 +30,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'Valid fileName'
-        fileInputBean.getName() == fileName
+        fileInputBean.name == fileName
     }
 
     void 'test getOriginalFilename method'() {
@@ -48,7 +42,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'Valid original fileName'
-        fileInputBean.getOriginalFilename() == fileName
+        fileInputBean.originalFilename == fileName
     }
 
     void 'test getContentType method'() {
@@ -59,7 +53,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'Valid content type'
-        fileInputBean.getContentType() == 'TEXT'
+        fileInputBean.contentType == 'TEXT'
     }
 
     void 'test isEmpty method'() {
@@ -81,7 +75,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'supplied size in return'
-        fileInputBean.getSize() == 123456
+        fileInputBean.size == 123456
     }
 
     void 'test getBytes method'() {
@@ -92,7 +86,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'total number of item is equal to supplied array'
-        fileInputBean.getBytes().length == 3
+        fileInputBean.bytes.length == 3
     }
 
     void 'test getInputStream method'() {
@@ -104,10 +98,10 @@ class MultipartFileInputBeanImplSpec extends Specification {
         def fileInputBean = new MultipartFileInputBeanImpl(file)
 
         expect: 'supplied inputstream instance'
-        fileInputBean.getInputStream() == inputStream
+        fileInputBean.inputStream == inputStream
     }
 
-    void 'test isExists method'(){
+    void 'test isExists method'() {
         given: 'mocked getInputStream method of the fileInputBean'
         def multipartFile = new MockFor(MultipartFile)
         multipartFile.demand.isExists { return true }
