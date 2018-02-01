@@ -33,13 +33,11 @@ class UFile implements Serializable {
     String fileGroup
     String name
     String path
-    /**
-     * Contains calculated hash value of fileInputBean content
-     */
+
+    //Contains calculated hash value of file content
     String checksum
-    /**
-     * Algorithm Used to calculate Checksum
-     */
+
+    //Algorithm Used to calculate Checksum
     String checksumAlgorithm
 
     UFileType type
@@ -64,10 +62,10 @@ class UFile implements Serializable {
 
     static mapping = {
         path sqlType: 'text'
-        /**
-         * Checksum will be used to query UFile.
-         */
+
+        //Index on checksum
         checksum index: true
+        //Index on checksumAlgorithm
         checksumAlgorithm index: true
     }
 
@@ -133,6 +131,7 @@ enum UFileType {
     LOCAL(3)
 
     final int id
+
     UFileType(int id) {
         this.id = id
     }
@@ -152,6 +151,7 @@ enum CDNProvider {
     LOCAL(4)
 
     final int id
+
     CDNProvider(int id) {
         this.id = id
     }

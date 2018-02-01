@@ -1,8 +1,18 @@
+/*
+ * Copyright (c) 2018, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
+
 package com.causecode.fileuploader.util.checksum.beans
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
+ * Unit Test Class for SimpleFileInputBeanImpl class
  * @author Milan Savaliya
  */
 @SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
@@ -14,67 +24,79 @@ class SimpleFileInputBeanImplSpec extends Specification {
 
     def setup() {
         fileName = (System.currentTimeMillis() as String) + '.txt'
-        def file = new File(tempDirPath.concat(fileName))
+        File file = new File(tempDirPath.concat(fileName))
         file.createNewFile()
         file.deleteOnExit()
         fileInputBean = new SimpleFileInputBeanImpl(file)
     }
 
-    void 'test constructor'() {
-        when: 'given an null object'
-        new SimpleFileInputBeanImpl(null)
-        then: 'expect a IllegalArgumentException'
-        thrown(IllegalArgumentException)
-
-        when: 'given an not exists file instance'
-        new SimpleFileInputBeanImpl(new File('/tmp/text.txt'))
-        then: 'expect a FileNotFoundException'
-        thrown(FileNotFoundException)
-    }
-
-    void 'test getName method'() {
-        when: 'Proper file instance with name provided'
-        String filename = 'fooFile.txt'
+    private File getFileInstance(String filename) {
         File file = new File("/tmp/${filename}")
         file.createNewFile()
+        file.deleteOnExit()
+        file
+    }
+
+    @Unroll
+    void "test constructor with file object as:- #fileObject"() {
+        when: 'given an null object'
+        new SimpleFileInputBeanImpl(fileObject)
+
+        then: 'expect a IllegalArgumentException'
+        Exception exception = thrown(exceptionToBeThrown)
+        exception.message == exceptionMessage
+
+        where: 'the given values are as following'
+        fileObject           | exceptionToBeThrown      | exceptionMessage
+        null                 | IllegalArgumentException | 'File instance can not be null'
+        new File('text.txt') | FileNotFoundException    | 'File with name text.txt not found'
+    }
+
+    void "test getName method"() {
+        given: 'Proper file instance'
+        String filename = 'fooFile.txt'
+        File file = getFileInstance(filename)
+
+        and: 'Valid FileInputBean instance'
         FileInputBean fileInputBean = new SimpleFileInputBeanImpl(file)
-        then: 'getName must return valid filename'
+
+        expect: 'that getName method returns a valid filename'
         fileInputBean.name == filename
     }
 
-    void 'test getOriginalFilename method'() {
-        expect: 'name of the fileInputBean'
-        fileInputBean.originalFilename != null
+    void "test getOriginalFilename method"() {
+        expect: 'that getOriginalFilename method returns a valid filename'
+        fileInputBean.originalFilename
     }
 
-    void 'test getContentType method'() {
-        expect: 'name of the fileInputBean'
+    void "test getContentType method"() {
+        expect: 'that getContentType method returns a valid content type'
         fileInputBean.contentType != null
     }
 
-    void 'test isEmpty method'() {
-        expect: 'name of the fileInputBean'
+    void "test isEmpty method"() {
+        expect: 'that isEmpty method returns true'
         fileInputBean.isEmpty()
     }
 
-    void 'test getSize method'() {
-        expect: 'name of the fileInputBean'
+    void "test getSize method"() {
+        expect: 'that getSize method returns 0'
         fileInputBean.size == 0
     }
 
-    void 'test getBytes method'() {
-        expect: 'name of the fileInputBean'
+    void "test getBytes method"() {
+        expect: 'that getBytes method returns 0'
         fileInputBean.bytes.length == 0
     }
 
-    void 'test getInputStream method'() {
-        expect: 'name of the fileInputBean'
-        def inputStream = fileInputBean.inputStream
+    void "test getInputStream method"() {
+        expect: 'that getInputStream method returns a valid inputstream object'
+        InputStream inputStream = fileInputBean.inputStream
         inputStream.bytes.length == 0
         inputStream.close()
     }
 
-    void 'test isExists method'() {
+    void "test isExists method"() {
         expect: 'True when File exists'
         fileInputBean.isExists()
     }

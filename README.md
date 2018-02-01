@@ -1,4 +1,4 @@
-# File-Uploader Plugin (Latest 3.0.9)
+# File-Uploader Plugin (Latest 3.1.0)
 
 Supported Grails 3.2.0
 
@@ -54,12 +54,20 @@ fileuploader {
             allowedExtensions = ["xls"]
             path = "./web-app/degree-applications"
             storageTypes = ""
+            checksum {
+                calculate = true
+                algorithm = Algorithm.MD5                
+            }
         }
         userAvatar {
             maxSize = 1024 * 1024 * 2 //256 kbytes
             allowedExtensions = ["jpg","jpeg","gif","png"]
             storageTypes = "CDN"
             container = "anyContainerName"
+            checksum {
+                calculate = false
+                algorithm = Algorithm.SHA1                
+             }
         }
         logo {
             maxSize = 1024 * 1024 * 2 //256 kbytes
@@ -87,3 +95,26 @@ can be overwritten for group level configuration by setting **expirationPeriod**
    ```
    # Google Default Credentials
    export GOOGLE_APPLICATION_CREDENTIALS='/path/to/key.json'
+4. To Enable checksum checks and generation, define configuration as shown in the sample configuration, 
+```
+ groups {
+        degreeApplication {			// Non CDN files, will be stored in local directory.
+            maxSize = 1000 * 1024 //256 kbytes
+            allowedExtensions = ["xls"]
+            path = "./web-app/degree-applications"
+            storageTypes = ""
+            checksum {
+                calculate = true
+                algorithm = Algorithm.MD5                
+            }
+        }
+  }
+
+``` 
+If first flag is set to true, plugin will generate checksum for the uploaded file and try to find a file from database having same checksum. If any such file is found, then plugin will throw an exception.
+Second flag will tell plugin which algorithm to use to calculate the checksum. Currently, possible choices are,
+``` 
+Algorithm.MD5 and,
+Algorithm.SHA1
+```
+Second flag will be ignored if first flag is set to false.

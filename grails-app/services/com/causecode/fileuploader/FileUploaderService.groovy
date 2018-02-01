@@ -75,7 +75,7 @@ class FileUploaderService {
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
-            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException {
+            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException, FileNotFoundException, CalculatedChecksumRefersToExistingFileException {
 
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
@@ -85,18 +85,15 @@ class FileUploaderService {
 
         FileGroup fileGroupInstance = new FileGroup(group)
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
-        String checksum = null
-        String algorithm = null
-        if (checksumValidator?.isToCalculateChecksum()) {
+        String checksum, algorithm
+
+        if (checksumValidator?.calculateChecksum()) {
             checksum = checksumValidator.getChecksum(file)
             algorithm = checksumValidator.algorithm
-            UFile uFileByChecksumAndAlgorithm = getUFileByChecksumAndAlgorithm(checksum,
-                    checksumValidator.algorithm)
-            if (uFileByChecksumAndAlgorithm != null) {
+            if (UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)) {
                 throw new CalculatedChecksumRefersToExistingFileException(
                         "Checksum for file ${file.name} is ${checksum} and " +
-                                'that checksum refers to an existing file on server with ' +
-                                "UFile id: ${uFileByChecksumAndAlgorithm.id}"
+                        'that checksum refers to an existing file on server'
                 )
             }
         }
@@ -158,16 +155,16 @@ class FileUploaderService {
 
         UFile ufile = new UFile(
                 [
-                name     : fileData.fileName,
-                size: fileData.fileSize,
-                path: path,
-                type: type,
-                extension: fileData.fileExtension,
-                expiresOn: expireOn,
-                fileGroup: group,
-                provider: cdnProvider])
+                        name     : fileData.fileName,
+                        size     : fileData.fileSize,
+                        path     : path,
+                        type     : type,
+                        extension: fileData.fileExtension,
+                        expiresOn: expireOn,
+                        fileGroup: group,
+                        provider : cdnProvider])
 
-        if (checksumValidator?.isToCalculateChecksum()) {
+        if (checksumValidator?.calculateChecksum()) {
             ufile.checksum = checksum
             ufile.checksumAlgorithm = algorithm
         }
@@ -178,7 +175,7 @@ class FileUploaderService {
 
     /**
      * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
-     * @params fileData, fileGroupInstance, tempFile
+     * @params fileData , fileGroupInstance, tempFile
      * @return path of uploaded file
      *
      */
@@ -209,7 +206,7 @@ class FileUploaderService {
 
     /**
      * Method is used to move file from temp directory to another.
-     * @params fileInstance, path
+     * @params fileInstance , path
      *
      */
     void moveFile(def file, String path) {
@@ -671,9 +668,5 @@ class FileUploaderService {
         fullName = fullName.contains('/') ? fullName[(fullName.lastIndexOf('/') + 1)..-1] : fullName
 
         return "${uFile.fileGroup}-${System.currentTimeMillis()}-${fullName}"
-    }
-
-    UFile getUFileByChecksumAndAlgorithm(String checksum, String algorithm) {
-        UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)
     }
 }

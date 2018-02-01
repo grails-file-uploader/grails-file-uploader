@@ -342,9 +342,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File fileInstance = getFileInstance('./temp/test.txt')
 
         and: 'Mocked method'
-        service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                                       Object userInstance = null, Locale locale = null ->
-            return ufIleInstance
+        service.metaClass.saveFile = {
+            String group,
+            def file,
+            String customFileName = '',
+            Object userInstance = null,
+            Locale locale = null -> return ufIleInstance
         }
 
         when: 'cloneFile method is called and uFileInstance is missing'
@@ -370,9 +373,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
-        service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                                       Object userInstance = null, Locale locale = null ->
-            return ufIleInstance
+        service.metaClass.saveFile = {
+            String group, def file,
+            String customFileName = '',
+            Object userInstance = null,
+            Locale locale = null ->
+                return ufIleInstance
         }
 
         when: 'cloneFile method is called for valid parameters and UFile is not LOCAL type'
@@ -674,9 +680,10 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFileMoveHistory uFileMoveHistoryInstance = UFileMoveHistory.build(fromCDN: CDNProvider.RACKSPACE,
                 toCDN: CDNProvider.GOOGLE, status: MoveStatus.FAILURE, ufile: UFile.build())
 
-        service.metaClass.moveFilesToCDN = { List<UFile> uFileList, CDNProvider toCDNProvider,
-                                             boolean makePublic = false ->
-            return
+        service.metaClass.moveFilesToCDN = {
+            List<UFile> uFileList,
+            CDNProvider toCDNProvider,
+            boolean makePublic = false -> return
         }
 
         when: 'moveFailedFilesToCDN method is called and failedList containes no UFiles'
@@ -860,31 +867,42 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         uFileInstance.path != 'https://xyz/abc'
     }
 
-    void 'test saveFile method'() {
+    void "test saveFile method"() {
         given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
 
-        and: 'Mocked method'
+        and: 'Mocked authenticate method'
         mockAuthenticateMethod()
+
+        and: 'Mocked getFileNameAndExtensions'
         mockGetFileNameAndExtensions()
+
+        and: 'Mocked uploadFile method'
         mockUploadFileMethod(true)
+
+        and: 'Mocked file.Exists method'
         mockExistMethod(true)
+
+        and: 'Mocked getProviderInstance method'
         service.metaClass.getProviderInstance = { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
+        and: 'Mocked FileGroup Instance'
         new FileGroup(_) >> fileGroupMock
         fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
         fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: Algorithm.SHA1]]
 
-        and: 'The saveFile method has been already called'
-        UFile ufileInstancefile = service.saveFile('testGoogle', fileInstance, 'test')
+        and: 'The saveFile method has been already called once for given file'
+        service.saveFile('testGoogle', fileInstance, 'test')
 
         when: 'saveFile method gets called again on the file with same content'
-        service.metaClass.getUFileByChecksumAndAlgorithm = { String val, String val2 -> return new UFile() }
-        ufileInstancefile = service.saveFile('testGoogle', fileInstance, 'test')
+        UFile.metaClass.static.findByChecksumAndChecksumAlgorithm = { String val, String val2 -> return new UFile() }
+        service.saveFile('testGoogle', fileInstance, 'test')
+
         then: 'CalculatedChecksumRefersToExistingFileException must be thrown'
-        thrown(CalculatedChecksumRefersToExistingFileException)
+        Exception exception = thrown(CalculatedChecksumRefersToExistingFileException)
+        exception.getMessage() == 'Checksum for file test.txt is CB80455993111C16FD13E70125852AEFC911F31E and that checksum refers to an existing file on serve'
     }
 }
 

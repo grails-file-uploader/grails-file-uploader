@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2018, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
+
 package com.causecode.fileuploader.util.checksum
 
 import com.causecode.fileuploader.BaseTestSetup
@@ -5,110 +13,125 @@ import com.causecode.fileuploader.FileGroup
 import com.causecode.fileuploader.UFile
 import com.causecode.fileuploader.util.checksum.exceptions.UnRecognizedFileTypeException
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
+ * This class contains unit test cases for ChecksumValidator Class
  * @author Milan Savaliya
  */
 @Build(UFile)
-@TestMixin(GrailsUnitTestMixin)
 @SuppressWarnings(['JavaIoPackageAccess'])
 class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
 
-    void "test Constructor"() {
-        given: 'fileGroup instance'
-        FileGroup fileGroupInstance = new FileGroup('testLocal')
-        and: 'invalid checksum config'
-        def checksumConfig = null
-        fileGroupInstance.groupConfig.checksum = checksumConfig
+    @Unroll
+    void "test Constructor with #fileName"() {
+        given: 'fileGroup instance with supplied fileName'
+        FileGroup fileGroupInstance = new FileGroup(fileName)
+
+        and: 'supplied checksum config'
+        fileGroupInstance.groupConfig.checksum = checksum
 
         when: 'constructor is called'
-        def instance = new ChecksumValidator(fileGroupInstance)
-        then: 'expect valid instance'
-        instance != null
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
 
-        when: 'given valid checksum config object'
-        fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1,]
-        instance = new ChecksumValidator(fileGroupInstance)
-        then: 'expect a valid instance'
-        instance != null
+        then: 'expect valid instance'
+        instance != outputShouldNotBe
+
+        where:
+        fileName   | checksum                                     | outputShouldNotBe
+        'testFile' | null                                         | null
+        'testFile' | [calculate: true, algorithm: Algorithm.SHA1] | null
     }
 
-    void 'test isToCalculateChecksum method'() {
+    void "test calculateChecksum method with valid fileGroup instance"() {
         given: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
+
         and: 'mocked config object'
-        fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1,]
-        def instance = new ChecksumValidator(fileGroupInstance)
-        expect: 'instance is ready'
-        instance.isToCalculateChecksum()
+        fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
+
+        expect: 'true in return'
+        instance.calculateChecksum()
     }
 
-    void 'test getChecksum method with java.io.file instance'() {
+    void "test getChecksum method with java.io.file instance"() {
         given: 'java.io.file instance'
         File fileInstance = new File('/tmp/testLocal.txt')
         fileInstance.createNewFile()
-        fileInstance.write('Some dummy date in')
+        fileInstance << 'Some dummy date in'
         fileInstance.deleteOnExit()
 
         and: 'fileGroup instance'
-        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        String groupName = 'testLocal'
+        FileGroup fileGroupInstance = new FileGroup(groupName)
+
+        and: 'valid ChecksumConfig object'
+        fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
 
         when: 'getChecksum method is called'
-        fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1,]
-        def instance = new ChecksumValidator(fileGroupInstance)
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
+        String checksum = instance.getChecksum(fileInstance)
 
         then: 'expect calculated checksum'
-        def checksum = instance.getChecksum(fileInstance)
-        checksum != null
-        !checksum.isEmpty()
+        checksum && !checksum.isEmpty()
     }
 
-    void 'test getChecksum method with MultipartFile instance'() {
+    void "test getChecksum method with MultipartFile instance"() {
         given: 'MultipartFile instance'
-        def test = new GrailsMockMultipartFile('testOne', 'testOne', 'text', [1, 2, 3, 4, 5] as byte[])
+        def fileName = 'testOne'
+        GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(fileName, fileName, 'text', [1, 2, 3, 4, 5] as byte[])
 
         and: 'fileGroup instance'
-        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        String groupName = 'testLocal'
+        FileGroup fileGroupInstance = new FileGroup(groupName)
 
-        when: 'getChecksum method is called'
+        and: 'valid ChecksumConfig object'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
-        def instance = new ChecksumValidator(fileGroupInstance)
+
+        when: 'getChecksum method is called with fileGroupInstance'
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
+        String checksum = instance.getChecksum(multipartFile)
 
         then: 'expect calculated checksum'
-        def checksum = instance.getChecksum(test)
-        checksum != null
-        !checksum.isEmpty()
+        checksum && !checksum.isEmpty()
     }
 
-    void 'test getAlgorithm method'() {
+    void "test getAlgorithm method"() {
         given: 'fileGroup instance'
-        FileGroup fileGroupInstance = new FileGroup('testLocal')
+        String groupName = 'testLocal'
+        FileGroup fileGroupInstance = new FileGroup(groupName)
 
-        when: 'getChecksum method is called'
+        and: 'valid ChecksumConfig object'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
-        def instance = new ChecksumValidator(fileGroupInstance)
-        def algorithm = instance.algorithm
 
-        then: 'expected supplied algorithm instance'
+        and: 'valid ChecksumValidator instance'
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
+
+        when: 'getAlgorithm method is called'
+        String algorithm = instance.algorithm
+
+        then: 'expect supplied algorithm instance'
         algorithm == Algorithm.SHA1.toString()
     }
 
-    void 'test getFileInputBeanForFile method'() {
-        given: 'Unknown instance'
-        def test = new Object()
+    void "test getFileInputBeanForFile method"() {
+        given: 'instance which is not a type of java.io.File or Spring\'s MultipartFileUpload instance'
+        Object dummyObject = new Object()
 
         and: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
 
-        when: 'getChecksum method is called'
+        and: 'valid checksumConfig object'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
-        def instance = new ChecksumValidator(fileGroupInstance)
-        instance.getChecksum(test)
-        then: 'expected UnRecognizedFileTypeException'
+
+        when: 'getChecksum method is called with dummyObject'
+        ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
+        instance.getChecksum(dummyObject)
+
+        then: 'expect UnRecognizedFileTypeException'
         thrown(UnRecognizedFileTypeException)
     }
 }

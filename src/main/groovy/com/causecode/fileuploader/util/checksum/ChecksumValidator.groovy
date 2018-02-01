@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2018, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
+
 package com.causecode.fileuploader.util.checksum
 
 import com.causecode.fileuploader.FileGroup
@@ -11,8 +19,13 @@ import org.springframework.web.multipart.MultipartFile
  * Helper class to validate and generate checksum. This class will communicate with service to
  * generate checksum
  * @author Milan Savaliya
+ * @since 3.1.0
  */
 class ChecksumValidator {
+
+    /**
+     * Member varible to store the calculated hash code for supplied fileinputbean
+     */
     private String calculatedChecksum = null
     private final ChecksumConfig checksumConfig
     private final FileGroup fileGroup
@@ -22,22 +35,39 @@ class ChecksumValidator {
         this.checksumConfig = getChecksumConfig(fileGroup)
     }
 
-    boolean isToCalculateChecksum() {
+    /**
+     * returns if flag to calculate checksum is set or not.
+     * @return boolean
+     */
+    boolean calculateChecksum() {
         return this.checksumConfig.calculate
     }
 
-    String getChecksum(def file) {
-        if (calculatedChecksum == null) {
-            calculatedChecksum = this.getChecksumForFile(file)
-        }
-
+    /**
+     * Method calculates the checksum and returns calculated checksum. This method does not recalculate checksum on second call.
+     * This method returns previously calculated checksum in the next subsequent calls.
+     * @param file
+     * @return String
+     * @throws FileNotFoundException
+     */
+    String getChecksum(def file) throws FileNotFoundException{
+        calculatedChecksum = ( calculatedChecksum ?: this.getChecksumForFile(file) )
         return calculatedChecksum
     }
 
+    /**
+     * Returns the String representation of the algorithm being used to calculate the checksum
+     * @return String
+     */
     String getAlgorithm() {
         return this.checksumConfig.algorithm.toString()
     }
 
+    /**
+     * Private method to get the ChecksumConfig object from the given fileGroup object.
+     * @param fileGroup
+     * @return ChecksumConfig
+     */
     private ChecksumConfig getChecksumConfig(FileGroup fileGroup) {
         def checksumPro = fileGroup.groupConfig.checksum
         if (!checksumPro) {
@@ -49,13 +79,25 @@ class ChecksumValidator {
         return new ChecksumConfig(calculate: calculate, algorithm: algorithm)
     }
 
-    private String getChecksumForFile(def file) {
+    /**
+     * This is actual heart method which generates the checksum and returns its hex string representation to the calling end.
+     * @param file
+     * @return String
+     * @throws FileNotFoundException
+     */
+    private String getChecksumForFile(def file) throws FileNotFoundException{
         FileInputBean fileInputBean = getFileInputBeanForFile(file)
         HashCalculator hashCalculator = new FileHashCalculator(fileInputBean, this.checksumConfig.algorithm)
         return hashCalculator.calculateHash()
     }
 
-    private FileInputBean getFileInputBeanForFile(def file) {
+    /**
+     * Generates the FileInputBean from the given File instance. Currently this method accepts File or MultipartFile Instance
+     * @param file
+     * @return FileInputBean
+     * @throws UnRecognizedFileTypeException
+     */
+    private FileInputBean getFileInputBeanForFile(def file) throws UnRecognizedFileTypeException{
         if (file in File) {
             return new SimpleFileInputBeanImpl(file)
         } else if (file in MultipartFile) {
