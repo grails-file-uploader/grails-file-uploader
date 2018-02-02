@@ -20,8 +20,6 @@ import spock.lang.Unroll
 @SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
 class FileHashCalculatorSpec extends Specification {
 
-    private final String tempDirPath = '/tmp/'
-
     void "test for constructor with file parameter"() {
         when: 'Invalid File Instance is given'
         new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.NULL))
