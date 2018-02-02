@@ -12,8 +12,8 @@ package com.causecode.fileuploader.util.checksum.exceptions
  * @author Milan Savaliya
  * @since 3.1.0
  */
-class FileWithSameContentExists extends RuntimeException {
-    FileWithSameContentExists(GString gString) {
+class DuplicateFileException extends RuntimeException {
+    DuplicateFileException(GString gString) {
         super(gString.toString())
     }
 }

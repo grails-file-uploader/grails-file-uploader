@@ -50,8 +50,8 @@ class ChecksumValidator {
      * @return String
      * @throws FileNotFoundException
      */
-    String getChecksum(def file) throws FileNotFoundException{
-        calculatedChecksum = ( calculatedChecksum ?: this.getChecksumForFile(file) )
+    String getChecksum(def file) throws FileNotFoundException {
+        calculatedChecksum = (calculatedChecksum ?: this.getChecksumForFile(file))
         return calculatedChecksum
     }
 
@@ -86,7 +86,7 @@ class ChecksumValidator {
      * @return String
      * @throws FileNotFoundException
      */
-    private String getChecksumForFile(def file) throws FileNotFoundException{
+    private String getChecksumForFile(def file) throws FileNotFoundException {
         FileInputBean fileInputBean = getFileInputBeanForFile(file)
         HashCalculator hashCalculator = new FileHashCalculator(fileInputBean, this.checksumConfig.algorithm)
         return hashCalculator.calculateHash()
@@ -99,7 +99,7 @@ class ChecksumValidator {
      * @return FileInputBean
      * @throws UnRecognizedFileTypeException
      */
-    private FileInputBean getFileInputBeanForFile(def file) throws UnRecognizedFileTypeException{
+    private FileInputBean getFileInputBeanForFile(def file) throws UnRecognizedFileTypeException {
         if (file in File) {
             return new SimpleFileInputBeanImpl(file)
         } else if (file in MultipartFile) {

@@ -8,7 +8,7 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.util.checksum.Algorithm
-import com.causecode.fileuploader.util.checksum.exceptions.FileWithSameContentExists
+import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -867,7 +867,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         uFileInstance.path != 'https://xyz/abc'
     }
 
-    void "test saveFile method"() {
+    void "test saveFile method with valid inputs"() {
         given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
 
@@ -900,11 +900,47 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFile.metaClass.static.findByChecksumAndChecksumAlgorithm = { String val, String val2 -> return new UFile() }
         service.saveFile('testGoogle', fileInstance, 'test')
 
-        then: 'FileWithSameContentExists must be thrown'
-        Exception exception = thrown(FileWithSameContentExists)
+        then: 'DuplicateFileException must be thrown'
+        Exception exception = thrown(DuplicateFileException)
         String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an" +
                 ' existing file on server'
         exception.message.equalsIgnoreCase(message)
+    }
+
+    void "test saveFile method with invalid Algorithm instance"() {
+        given: 'A file instance'
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        and: 'Mocked authenticate method'
+        mockAuthenticateMethod()
+
+        and: 'Mocked getFileNameAndExtensions'
+        mockGetFileNameAndExtensions()
+
+        and: 'Mocked uploadFile method'
+        mockUploadFileMethod(true)
+
+        and: 'Mocked file.Exists method'
+        mockExistMethod(true)
+
+        and: 'Mocked getProviderInstance method'
+        service.metaClass.getProviderInstance = { String providerName ->
+            providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
+        }
+
+        and: 'Mocked FileGroup Instance'
+        new FileGroup(_) >> fileGroupMock
+        fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+
+        and: 'Invalid algorithm instance supplied'
+        fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: 'ABCD']]
+
+        when: 'The saveFile method has been already called once for given file'
+        service.saveFile('testGoogle', fileInstance, 'test')
+
+        then: 'IllegalArgumentException must be thrown'
+        Exception exception = thrown(IllegalArgumentException)
+        exception.message == "No enum constant ${Algorithm.class.getCanonicalName()}.ABCD"
     }
 }
 

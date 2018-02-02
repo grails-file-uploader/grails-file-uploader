@@ -54,6 +54,7 @@ fileuploader {
             allowedExtensions = ["xls"]
             path = "./web-app/degree-applications"
             storageTypes = ""
+            //Explnation about this congiguration is given below
             checksum {
                 calculate = true
                 algorithm = Algorithm.MD5                

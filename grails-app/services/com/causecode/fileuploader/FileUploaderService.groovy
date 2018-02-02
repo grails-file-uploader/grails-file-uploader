@@ -12,7 +12,7 @@ import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.util.FileUploaderUtils
 import com.causecode.fileuploader.util.Time
 import com.causecode.fileuploader.util.checksum.ChecksumValidator
-import com.causecode.fileuploader.util.checksum.exceptions.FileWithSameContentExists
+import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import com.causecode.util.NucleusUtils
 import grails.core.GrailsApplication
 import grails.util.Holders
@@ -77,7 +77,7 @@ class FileUploaderService {
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
             throws StorageConfigurationException, UploadFailureException,
                     ProviderNotFoundException, FileNotFoundException,
-                    FileWithSameContentExists {
+                    DuplicateFileException {
 
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
@@ -93,7 +93,7 @@ class FileUploaderService {
             checksum = checksumValidator.getChecksum(file)
             algorithm = checksumValidator.algorithm
             if (UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)) {
-                throw new FileWithSameContentExists(
+                throw new DuplicateFileException(
                         "Checksum for file ${file.name} is ${checksum} and " +
                         'that checksum refers to an existing file on server'
                 )

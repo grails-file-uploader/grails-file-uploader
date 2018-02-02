@@ -54,7 +54,6 @@ class FileHashCalculator implements HashCalculator {
         if (!fileInputBean) {
             throw new FileNotFoundException('File not found')
         }
-
     }
 
     /**
