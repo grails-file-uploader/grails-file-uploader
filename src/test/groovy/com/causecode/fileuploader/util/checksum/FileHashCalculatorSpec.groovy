@@ -10,6 +10,7 @@ package com.causecode.fileuploader.util.checksum
 import com.causecode.fileuploader.util.checksum.beans.FileInputBean
 import com.causecode.fileuploader.util.checksum.beans.SimpleFileInputBeanImpl
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Unit Test Class for FileHashCalculator class
@@ -28,24 +29,16 @@ class FileHashCalculatorSpec extends Specification {
         thrown(FileNotFoundException)
     }
 
+    @Unroll
     void "test for constructor with file parameter and algorithm parameter"() {
-        given: 'Proper File Instance'
-        FileInputBean file = getFileInputBeanInstance(FileInstanceType.VALID)
-
-        and: 'Proper Algorithm Instance'
-        Algorithm algorithm = Algorithm.SHA1
-
-        when: 'Only File instance is supplied in the constructor'
-        HashCalculator hashCalculator = new FileHashCalculator(file)
-
-        then: 'instance must be created and algorithm must be set to default MD5'
-        hashCalculator && hashCalculator.algorithm == Algorithm.MD5
-
-        when: 'Valid fileInputBean instance and algorithm instances are given'
-        hashCalculator = new FileHashCalculator(file, algorithm)
-
-        then: 'instance must be created with supplied algorithm'
+        expect: 'proper hashCalculator instance and algorithm instance'
         hashCalculator && hashCalculator.algorithm == algorithm
+
+        where: 'below inputs supplied'
+        hashCalculator                                                                           | algorithm
+
+        new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID))                 | Algorithm.MD5
+        new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID), Algorithm.SHA1) | Algorithm.SHA1sta
     }
 
     void "test calculateHash method #hashCalculator"() {
