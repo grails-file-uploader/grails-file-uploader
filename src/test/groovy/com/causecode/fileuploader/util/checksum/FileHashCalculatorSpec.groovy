@@ -48,26 +48,18 @@ class FileHashCalculatorSpec extends Specification {
         hashCalculator && hashCalculator.algorithm == algorithm
     }
 
-    void "test calculateHash method"() {
-        given: 'A valid fileInputBean instance'
-        FileInputBean fileInstance = getFileInputBeanInstance(FileInstanceType.VALID)
-
-        and: 'a proper algorithm'
-        Algorithm algorithm = Algorithm.SHA1
-
-        when: 'Instance with default algorithm created and hash is calculated'
-        HashCalculator hashCalculator = new FileHashCalculator(fileInstance)
+    void "test calculateHash method #hashCalculator"() {
+        when: 'Hash is calculated'
         String hash = hashCalculator.calculateHash()
 
-        then: 'hash must be generated'
+        then: 'hash must not be null and empty'
         hash && !hash.isEmpty()
 
-        when: 'Instance with supplied algorithm is created and hash is calculated'
-        hashCalculator = new FileHashCalculator(fileInstance, algorithm)
-        hash = hashCalculator.calculateHash()
-
-        then: 'hash must be generated'
-        hash && !hash.isEmpty()
+        where: 'below inputs supplied'
+        hashCalculator << [
+                new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID)),
+                new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID), Algorithm.SHA1)
+        ]
 
     }
 
@@ -77,7 +69,7 @@ class FileHashCalculatorSpec extends Specification {
         } else if (fileInstanceType == FileInstanceType.NOT_EXISTS) {
             return new SimpleFileInputBeanImpl(new File(''))
         } else if (fileInstanceType == FileInstanceType.VALID) {
-            File file = new File(tempDirPath.concat(System.currentTimeMillis() as String).concat('.txt'))
+            File file = new File('/tmp/'.concat(System.currentTimeMillis() as String).concat('.txt'))
             file.createNewFile()
             file.deleteOnExit()
             return new SimpleFileInputBeanImpl(file)
