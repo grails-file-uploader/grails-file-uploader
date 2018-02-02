@@ -81,7 +81,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
 
     void "test getChecksum method with MultipartFile instance"() {
         given: 'MultipartFile instance'
-        def fileName = 'testOne'
+        String fileName = 'testOne'
         GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(fileName, fileName,
                 'text', [1, 2, 3, 4, 5] as byte[])
 
