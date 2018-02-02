@@ -5,7 +5,6 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-
 package com.causecode.fileuploader.util.checksum
 
 import com.causecode.fileuploader.BaseTestSetup
@@ -82,7 +81,8 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
     void "test getChecksum method with MultipartFile instance"() {
         given: 'MultipartFile instance'
         def fileName = 'testOne'
-        GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(fileName, fileName, 'text', [1, 2, 3, 4, 5] as byte[])
+        GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(fileName, fileName,
+                'text', [1, 2, 3, 4, 5] as byte[])
 
         and: 'fileGroup instance'
         String groupName = 'testLocal'

@@ -5,7 +5,6 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-
 package com.causecode.fileuploader.util.checksum
 
 import com.causecode.fileuploader.FileGroup
@@ -44,7 +43,8 @@ class ChecksumValidator {
     }
 
     /**
-     * Method calculates the checksum and returns calculated checksum. This method does not recalculate checksum on second call.
+     * Method calculates the checksum and returns calculated checksum. This method does not recalculate
+     * checksum on second call.
      * This method returns previously calculated checksum in the next subsequent calls.
      * @param file
      * @return String
@@ -80,7 +80,8 @@ class ChecksumValidator {
     }
 
     /**
-     * This is actual heart method which generates the checksum and returns its hex string representation to the calling end.
+     * This is actual heart method which generates the checksum and returns its hex string representation
+     * to the calling end.
      * @param file
      * @return String
      * @throws FileNotFoundException
@@ -92,7 +93,8 @@ class ChecksumValidator {
     }
 
     /**
-     * Generates the FileInputBean from the given File instance. Currently this method accepts File or MultipartFile Instance
+     * Generates the FileInputBean from the given File instance. Currently this method accepts File or
+     * MultipartFile Instance
      * @param file
      * @return FileInputBean
      * @throws UnRecognizedFileTypeException

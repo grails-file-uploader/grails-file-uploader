@@ -75,7 +75,9 @@ class FileUploaderService {
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
-            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException, FileNotFoundException, CalculatedChecksumRefersToExistingFileException {
+            throws StorageConfigurationException, UploadFailureException,
+                    ProviderNotFoundException, FileNotFoundException,
+                    CalculatedChecksumRefersToExistingFileException {
 
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()

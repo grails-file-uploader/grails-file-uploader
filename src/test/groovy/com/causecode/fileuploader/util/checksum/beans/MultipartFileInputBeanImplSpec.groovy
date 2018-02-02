@@ -5,7 +5,6 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-
 package com.causecode.fileuploader.util.checksum.beans
 
 import org.grails.plugins.testing.GrailsMockMultipartFile
@@ -17,6 +16,7 @@ import spock.lang.Unroll
  * Unit Test Class for MultipartFileInputBeanImplSpec class
  * @author Milan Savaliya
  */
+@SuppressWarnings(['UnusedObject'])
 class MultipartFileInputBeanImplSpec extends Specification {
 
     private static final String FILE_NAME = 'text.txt'
@@ -44,7 +44,9 @@ class MultipartFileInputBeanImplSpec extends Specification {
 
     void "test getOriginalFilename method"() {
         given: 'mocked getOriginalFilename method of the fileInputBean'
-        GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(FILE_NAME, FILE_NAME, 'TEXT', [1,2,3] as byte[])
+        GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(FILE_NAME,
+                FILE_NAME,
+                'TEXT', [1, 2, 3] as byte[])
         FileInputBean fileInputBean = new MultipartFileInputBeanImpl(multipartFile)
 
         expect: 'Valid original FILE_NAME'

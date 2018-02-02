@@ -5,7 +5,6 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-
 package com.causecode.fileuploader.util.checksum
 
 import com.causecode.fileuploader.util.checksum.beans.FileInputBean
@@ -16,7 +15,7 @@ import spock.lang.Specification
  * Unit Test Class for FileHashCalculator class
  * @author Milan Savaliya
  */
-@SuppressWarnings(['JavaIoPackageAccess'])
+@SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
 class FileHashCalculatorSpec extends Specification {
 
     private final String tempDirPath = '/tmp/'

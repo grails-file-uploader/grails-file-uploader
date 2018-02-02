@@ -894,7 +894,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: Algorithm.SHA1]]
 
         and: 'The saveFile method has been already called once for given file'
-        service.saveFile('testGoogle', fileInstance, 'test')
+        UFile savedUfileInstance = service.saveFile('testGoogle', fileInstance, 'test')
 
         when: 'saveFile method gets called again on the file with same content'
         UFile.metaClass.static.findByChecksumAndChecksumAlgorithm = { String val, String val2 -> return new UFile() }
@@ -902,7 +902,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         then: 'CalculatedChecksumRefersToExistingFileException must be thrown'
         Exception exception = thrown(CalculatedChecksumRefersToExistingFileException)
-        exception.getMessage() == 'Checksum for file test.txt is CB80455993111C16FD13E70125852AEFC911F31E and that checksum refers to an existing file on serve'
+        String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an existing file on server".toString()
+        exception.message.equalsIgnoreCase(message)
     }
 }
 
