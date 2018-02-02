@@ -902,7 +902,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         then: 'FileWithSameContentExists must be thrown'
         Exception exception = thrown(FileWithSameContentExists)
-        String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an existing file on server".toString()
+        String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an" +
+                ' existing file on server'
         exception.message.equalsIgnoreCase(message)
     }
 }
