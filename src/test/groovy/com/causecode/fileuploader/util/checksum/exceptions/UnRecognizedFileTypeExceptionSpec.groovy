@@ -14,6 +14,7 @@ import spock.lang.Specification
 /**
  * Unit test class for UnRecognizedFileTypeExceptionSpec class
  * @author Milan Savaliya
+ * @since 3.1.0
  */
 class UnRecognizedFileTypeExceptionSpec extends Specification {
 

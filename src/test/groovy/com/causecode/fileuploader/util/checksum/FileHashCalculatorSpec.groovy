@@ -15,6 +15,7 @@ import spock.lang.Unroll
 /**
  * Unit Test Class for FileHashCalculator class
  * @author Milan Savaliya
+ * @since 3.1.0
  */
 @SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
 class FileHashCalculatorSpec extends Specification {
