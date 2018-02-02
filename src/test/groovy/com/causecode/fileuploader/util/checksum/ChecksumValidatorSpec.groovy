@@ -132,6 +132,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         instance.getChecksum(dummyObject)
 
         then: 'expect UnRecognizedFileTypeException'
-        thrown(UnRecognizedFileTypeException)
+        Exception exception = thrown(UnRecognizedFileTypeException)
+        exception.message == "${dummyObject.class.name} is not recognized for FileInputBean"
     }
 }
