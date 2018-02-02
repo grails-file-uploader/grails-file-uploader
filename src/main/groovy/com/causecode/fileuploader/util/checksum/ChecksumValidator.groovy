@@ -69,13 +69,13 @@ class ChecksumValidator {
      * @return ChecksumConfig
      */
     private ChecksumConfig getChecksumConfig(FileGroup fileGroup) {
-        def checksumPro = fileGroup.groupConfig.checksum
-        if (!checksumPro) {
+        Map checksumProperties = fileGroup.groupConfig.checksum
+        if (!checksumProperties) {
             return new ChecksumConfig()
         }
 
-        boolean calculate = checksumPro.calculate ?: false
-        Algorithm algorithm = checksumPro.algorithm ?: Algorithm.MD5
+        boolean calculate = checksumProperties.calculate ?: false
+        Algorithm algorithm = checksumProperties.algorithm ?: Algorithm.MD5
         return new ChecksumConfig(calculate: calculate, algorithm: algorithm)
     }
 
