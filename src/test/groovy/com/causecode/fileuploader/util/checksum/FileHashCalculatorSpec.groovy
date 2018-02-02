@@ -39,7 +39,7 @@ class FileHashCalculatorSpec extends Specification {
         hashCalculator                                                                           | algorithm
 
         new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID))                 | Algorithm.MD5
-        new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID), Algorithm.SHA1) | Algorithm.SHA1sta
+        new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID), Algorithm.SHA1) | Algorithm.SHA1
     }
 
     void "test calculateHash method #hashCalculator"() {
