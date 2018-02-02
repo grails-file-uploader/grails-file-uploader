@@ -12,8 +12,8 @@ package com.causecode.fileuploader.util.checksum.exceptions
  * @author Milan Savaliya
  * @since 3.1.0
  */
-class CalculatedChecksumRefersToExistingFileException extends RuntimeException {
-    CalculatedChecksumRefersToExistingFileException(GString gString) {
+class FileWithSameContentExists extends RuntimeException {
+    FileWithSameContentExists(GString gString) {
         super(gString.toString())
     }
 }

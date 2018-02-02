@@ -8,7 +8,7 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.util.checksum.Algorithm
-import com.causecode.fileuploader.util.checksum.exceptions.CalculatedChecksumRefersToExistingFileException
+import com.causecode.fileuploader.util.checksum.exceptions.FileWithSameContentExists
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -900,8 +900,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFile.metaClass.static.findByChecksumAndChecksumAlgorithm = { String val, String val2 -> return new UFile() }
         service.saveFile('testGoogle', fileInstance, 'test')
 
-        then: 'CalculatedChecksumRefersToExistingFileException must be thrown'
-        Exception exception = thrown(CalculatedChecksumRefersToExistingFileException)
+        then: 'FileWithSameContentExists must be thrown'
+        Exception exception = thrown(FileWithSameContentExists)
         String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an existing file on server".toString()
         exception.message.equalsIgnoreCase(message)
     }
