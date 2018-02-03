@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2011 - Present, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -17,18 +17,19 @@ import spock.lang.Unroll
  * @author Milan Savaliya
  * @since 3.1.0
  */
-@SuppressWarnings(['UnusedObject'])
+
 class MultipartFileInputBeanImplSpec extends Specification {
 
     private static final String FILE_NAME = 'text.txt'
 
     @Unroll
     void "test constructor with valid and invalid multipart instances"() {
-        when: 'given an null object'
-        new MultipartFileInputBeanImpl(null)
+        when: 'given an null object as parameter'
+        MultipartFileInputBeanImpl.newInstance(null)
 
         then: 'expect a IllegalArgumentException'
-        thrown(IllegalArgumentException)
+        Exception exception = thrown(IllegalArgumentException)
+        exception.message == 'Multipart Instance can not be null'
 
         expect: 'a valid instance of MultipartFileInputBeanImpl'
         ((new MultipartFileInputBeanImpl(Mock(MultipartFile))) != null)
