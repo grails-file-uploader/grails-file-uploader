@@ -15,7 +15,7 @@ import spock.lang.Unroll
  * @author Milan Savaliya
  * @since 3.1.0
  */
-@SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
+@SuppressWarnings(['JavaIoPackageAccess'])
 class SimpleFileInputBeanImplSpec extends Specification {
 
     private final String tempDirPath = '/tmp/'
@@ -30,7 +30,7 @@ class SimpleFileInputBeanImplSpec extends Specification {
         fileInputBean = new SimpleFileInputBeanImpl(file)
     }
 
-    private File getFileInstance(String filename) {
+    private static File getFileInstance(String filename) {
         File file = new File("/tmp/${filename}")
         file.createNewFile()
         file.deleteOnExit()
@@ -40,7 +40,7 @@ class SimpleFileInputBeanImplSpec extends Specification {
     @Unroll
     void "test constructor with file object as:- #fileObject"() {
         when: 'given an null object'
-        new SimpleFileInputBeanImpl(fileObject)
+        SimpleFileInputBeanImpl.newInstance(fileObject)
 
         then: 'expect a IllegalArgumentException'
         Exception exception = thrown(exceptionToBeThrown)
@@ -70,8 +70,8 @@ class SimpleFileInputBeanImplSpec extends Specification {
     }
 
     void "test getContentType method"() {
-        expect: 'that getContentType method returns a valid content type'
-        fileInputBean.contentType != null
+        expect: 'that getContentType method does not returns NULL'
+        fileInputBean.contentType
     }
 
     void "test isEmpty method"() {
@@ -90,10 +90,8 @@ class SimpleFileInputBeanImplSpec extends Specification {
     }
 
     void "test getInputStream method"() {
-        expect: 'that getInputStream method returns a valid inputstream object'
-        InputStream inputStream = fileInputBean.inputStream
-        inputStream.bytes.length == 0
-        inputStream.close()
+        expect: 'that getInputStream method returns a valid inputStream object'
+        fileInputBean.inputStream.bytes.length == 0
     }
 
     void "test isExists method"() {

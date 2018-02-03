@@ -17,15 +17,16 @@ import spock.lang.Unroll
  * @author Milan Savaliya
  * @since 3.1.0
  */
-@SuppressWarnings(['JavaIoPackageAccess', 'UnusedObject'])
+@SuppressWarnings(['JavaIoPackageAccess'])
 class FileHashCalculatorSpec extends Specification {
 
     void "test for constructor with file parameter"() {
         when: 'Invalid File Instance is given'
-        new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.NULL))
+        FileHashCalculator.newInstance(getFileInputBeanInstance(FileInstanceType.NULL))
 
         then: 'FileNotFoundException must be thrown'
-        thrown(FileNotFoundException)
+        Exception exception = thrown(FileNotFoundException)
+        exception.message == 'File not found'
     }
 
     @Unroll
@@ -52,10 +53,9 @@ class FileHashCalculatorSpec extends Specification {
                 new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID)),
                 new FileHashCalculator(getFileInputBeanInstance(FileInstanceType.VALID), Algorithm.SHA1)
         ]
-
     }
 
-    private FileInputBean getFileInputBeanInstance(FileInstanceType fileInstanceType) {
+    private static FileInputBean getFileInputBeanInstance(FileInstanceType fileInstanceType) {
         if (fileInstanceType == FileInstanceType.NULL) {
             return null
         } else if (fileInstanceType == FileInstanceType.NOT_EXISTS) {
@@ -68,7 +68,6 @@ class FileHashCalculatorSpec extends Specification {
         }
 
         return null
-
     }
 }
 

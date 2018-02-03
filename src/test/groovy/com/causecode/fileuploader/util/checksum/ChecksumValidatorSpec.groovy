@@ -28,7 +28,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
     @Unroll
     void "test Constructor with #fileName"() {
         given: 'fileGroup instance with supplied fileName'
-        FileGroup fileGroupInstance = new FileGroup(fileName)
+        FileGroup fileGroupInstance = new FileGroup('testFile')
 
         and: 'supplied checksum config'
         fileGroupInstance.groupConfig.checksum = checksum
@@ -36,13 +36,11 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         when: 'constructor is called'
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
 
-        then: 'expect valid instance'
-        instance != outputShouldNotBe
+        then: 'expect a valid instance'
+        instance != null
 
-        where:
-        fileName   | checksum                                     | outputShouldNotBe
-        'testFile' | null                                         | null
-        'testFile' | [calculate: true, algorithm: Algorithm.SHA1] | null
+        where: 'inputs are as below'
+        checksum << [null, [calculate: true, algorithm: Algorithm.SHA1]]
     }
 
     void "test calculateChecksum method with valid fileGroup instance"() {
@@ -51,14 +49,16 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
 
         and: 'mocked config object'
         fileGroupInstance.groupConfig.checksum = [calculate: true, algorithm: Algorithm.SHA1]
+
+        and: 'ChecksumValidator instance'
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
 
-        expect: 'true in return'
+        expect: 'checksum is calculated'
         instance.calculateChecksum()
     }
 
-    void "test getChecksum method with java.io.file instance"() {
-        given: 'java.io.file instance'
+    void "test getChecksum method with a file instance"() {
+        given: 'a file instance'
         File fileInstance = new File('/tmp/testLocal.txt')
         fileInstance.createNewFile()
         fileInstance << 'Some dummy date in'
@@ -75,8 +75,8 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
         String checksum = instance.getChecksum(fileInstance)
 
-        then: 'expect calculated checksum'
-        checksum && !checksum.isEmpty()
+        then: 'expect that checksum is calcuated'
+        checksum
     }
 
     void "test getChecksum method with MultipartFile instance"() {
@@ -96,8 +96,8 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
         String checksum = instance.getChecksum(multipartFile)
 
-        then: 'expect calculated checksum'
-        checksum && !checksum.isEmpty()
+        then: 'expect that checksum is calcuated'
+        checksum
     }
 
     void "test getAlgorithm method"() {
@@ -119,7 +119,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
     }
 
     void "test getFileInputBeanForFile method"() {
-        given: 'instance which is not a type of java.io.File or Spring\'s MultipartFileUpload instance'
+        given: 'instance which is not a type of java.io.File or Spring\'s MultipartFileUpload class'
         Object dummyObject = new Object()
 
         and: 'fileGroup instance'

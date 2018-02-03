@@ -22,7 +22,6 @@ class MultipartFileInputBeanImplSpec extends Specification {
 
     private static final String FILE_NAME = 'text.txt'
 
-    @Unroll
     void "test constructor with valid and invalid multipart instances"() {
         when: 'given an null object as parameter'
         MultipartFileInputBeanImpl.newInstance(null)
@@ -31,8 +30,11 @@ class MultipartFileInputBeanImplSpec extends Specification {
         Exception exception = thrown(IllegalArgumentException)
         exception.message == 'Multipart Instance can not be null'
 
-        expect: 'a valid instance of MultipartFileInputBeanImpl'
-        ((new MultipartFileInputBeanImpl(Mock(MultipartFile))) != null)
+        when: 'given a proper instance as a parameter'
+        FileInputBean fileInputBean = MultipartFileInputBeanImpl.newInstance(Mock(MultipartFile))
+
+        then: 'expect that proper instance created'
+        fileInputBean
     }
 
     void "test getName method"() {
@@ -97,7 +99,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(FILE_NAME, [1, 2, 3] as byte[])
         FileInputBean fileInputBean = new MultipartFileInputBeanImpl(multipartFile)
 
-        expect: 'supplied inputstream instance'
+        expect: 'that supplied inputStream instance is equal to returned one'
         fileInputBean.inputStream.available() == 3
     }
 
@@ -106,7 +108,7 @@ class MultipartFileInputBeanImplSpec extends Specification {
         GrailsMockMultipartFile multipartFile = new GrailsMockMultipartFile(FILE_NAME)
         FileInputBean fileInputBean = new MultipartFileInputBeanImpl(multipartFile)
 
-        expect: 'supplied inputStream instance'
+        expect: 'that file exists on server space'
         fileInputBean.isExists()
     }
 }
