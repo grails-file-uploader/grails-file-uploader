@@ -99,7 +99,9 @@ class MultipartFileInputBeanImplSpec extends Specification {
         FileInputBean fileInputBean = new MultipartFileInputBeanImpl(multipartFile)
 
         expect: 'that supplied inputStream instance is equal to returned one'
-        fileInputBean.inputStream.available() == 3
+        InputStream inputStream = fileInputBean.inputStream
+        inputStream.available() == 3
+        inputStream.close()
     }
 
     void "test isExists method"() {

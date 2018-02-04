@@ -91,7 +91,9 @@ class SimpleFileInputBeanImplSpec extends Specification {
 
     void "test getInputStream method"() {
         expect: 'that getInputStream method returns a valid inputStream object'
-        fileInputBean.inputStream.bytes.length == 0
+        InputStream inputStream = fileInputBean.inputStream
+        inputStream.bytes.length == 0
+        inputStream.close()
     }
 
     void "test isExists method"() {
