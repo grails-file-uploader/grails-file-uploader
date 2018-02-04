@@ -57,14 +57,14 @@ class FileHashCalculator implements HashCalculator {
     }
 
     /**
-     * This method calculates the hash and returns a hexadecimal String representation of Calculated Hash.
+     * This method calculates the hash and returns a hex String representation of Calculated Hash.
      * @return String [ Calculated Hash ]
      */
     @Override
     String calculateHash() {
         log.info "Starting checksum calculation For File ${fileInputBean.name}"
-        def messageDigest = MessageDigest.getInstance(this.algorithm.toString())
-        def hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.fileInputBean.bytes))
+        MessageDigest messageDigest = MessageDigest.getInstance(this.algorithm.toString())
+        String hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.fileInputBean.bytes))
         log.info "Calculated Checksum is:- ${hexHasString}"
 
         return hexHasString

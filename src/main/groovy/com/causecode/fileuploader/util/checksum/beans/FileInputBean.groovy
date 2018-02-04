@@ -34,7 +34,7 @@ interface FileInputBean {
      * @return the content type, or {@code null} if not defined
      * (or no fileInputBean has been chosen in the multipart form)
      */
-    String getContentType()
+    String getContentType() throws IOException
 
     /**
      * Return whether the uploaded fileInputBean is empty, that is, either no fileInputBean has

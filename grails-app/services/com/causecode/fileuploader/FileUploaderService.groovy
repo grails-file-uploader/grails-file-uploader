@@ -89,13 +89,14 @@ class FileUploaderService {
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
         String checksum, algorithm
 
-        if (checksumValidator?.calculateChecksum()) {
+        if (checksumValidator.shouldCalculateChecksum()) {
             checksum = checksumValidator.getChecksum(file)
             algorithm = checksumValidator.algorithm
-            if (UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)) {
+            UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)
+            if (uFileInstance) {
                 throw new DuplicateFileException(
                         "Checksum for file ${file.name} is ${checksum} and " +
-                        'that checksum refers to an existing file on server'
+                        "that checksum refers to an existing file ${uFileInstance} on server"
                 )
             }
         }
@@ -166,7 +167,7 @@ class FileUploaderService {
                         fileGroup: group,
                         provider : cdnProvider])
 
-        if (checksumValidator?.calculateChecksum()) {
+        if (checksumValidator.shouldCalculateChecksum()) {
             ufile.checksum = checksum
             ufile.checksumAlgorithm = algorithm
         }

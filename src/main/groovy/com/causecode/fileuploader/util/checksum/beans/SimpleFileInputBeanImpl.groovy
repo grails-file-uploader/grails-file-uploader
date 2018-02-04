@@ -7,6 +7,8 @@
  */
 package com.causecode.fileuploader.util.checksum.beans
 
+import java.nio.file.Files
+
 /**
  * Bean to handle java.io.File inputs to calculate hash/checksum
  * @author Milan Savaliya
@@ -32,7 +34,6 @@ class SimpleFileInputBeanImpl implements FileInputBean {
         if (!this.file.exists()) {
             throw new FileNotFoundException("File with name ${this.file.name} not found")
         }
-
     }
 
     @Override
@@ -46,8 +47,8 @@ class SimpleFileInputBeanImpl implements FileInputBean {
     }
 
     @Override
-    String getContentType() {
-        return ''
+    String getContentType() throws IOException {
+        return Files.probeContentType(this.file.toPath())
     }
 
     @Override

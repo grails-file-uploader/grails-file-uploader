@@ -112,10 +112,10 @@ can be overwritten for group level configuration by setting **expirationPeriod**
   }
 
 ``` 
-If first flag is set to true, plugin will generate checksum for the uploaded file and try to find a file from database having same checksum. If any such file is found, then plugin will throw an exception.
+If first flag is set to true, plugin will generate checksum for the uploaded file and try to find a file from database having same checksum. If any such file is found, then plugin will throw an **DuplicateFileException** exception.
 Second flag will tell plugin which algorithm to use to calculate the checksum. Currently, possible choices are,
 ``` 
 Algorithm.MD5 and,
 Algorithm.SHA1
 ```
-Second flag will be ignored if first flag is set to false.
+Second flag will be ignored if first flag is set to false. By default checksum calculation features is disabled. To enable provide valid configurations. 

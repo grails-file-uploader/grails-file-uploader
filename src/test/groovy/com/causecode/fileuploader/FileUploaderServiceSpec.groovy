@@ -867,7 +867,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         uFileInstance.path != 'https://xyz/abc'
     }
 
-    void "test saveFile method with valid inputs"() {
+    void "test saveFile method when file with same content uploaded twice"() {
         given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
 
@@ -903,7 +903,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'DuplicateFileException must be thrown'
         Exception exception = thrown(DuplicateFileException)
         String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an" +
-                ' existing file on server'
+                " existing file ${new UFile()} on server"
         exception.message.equalsIgnoreCase(message)
     }
 

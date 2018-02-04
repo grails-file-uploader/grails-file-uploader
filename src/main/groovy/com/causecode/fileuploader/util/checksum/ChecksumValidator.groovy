@@ -38,7 +38,7 @@ class ChecksumValidator {
      * returns if flag to calculate checksum is set or not.
      * @return boolean
      */
-    boolean calculateChecksum() {
+    boolean shouldCalculateChecksum() {
         return this.checksumConfig.calculate
     }
 

@@ -35,7 +35,6 @@ class MultipartFileInputBeanImpl implements FileInputBean {
         if (!this.multipartFile) {
             throw new IllegalArgumentException('Multipart Instance can not be null')
         }
-
     }
 
     @Override

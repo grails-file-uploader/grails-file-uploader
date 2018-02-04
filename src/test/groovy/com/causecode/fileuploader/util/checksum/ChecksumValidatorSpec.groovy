@@ -43,7 +43,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         checksum << [null, [calculate: true, algorithm: Algorithm.SHA1]]
     }
 
-    void "test calculateChecksum method with valid fileGroup instance"() {
+    void "test isCalculate method with valid fileGroup instance"() {
         given: 'fileGroup instance'
         FileGroup fileGroupInstance = new FileGroup('testLocal')
 
@@ -53,8 +53,8 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         and: 'ChecksumValidator instance'
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
 
-        expect: 'checksum is calculated'
-        instance.calculateChecksum()
+        expect: 'shouldCalculateChecksum returns true'
+        instance.shouldCalculateChecksum()
     }
 
     void "test getChecksum method with a file instance"() {

@@ -56,11 +56,11 @@ class FileHashCalculatorSpec extends Specification {
     }
 
     private static FileInputBean getFileInputBeanInstance(FileInstanceType fileInstanceType) {
-        if (fileInstanceType == FileInstanceType.NULL) {
-            return null
-        } else if (fileInstanceType == FileInstanceType.NOT_EXISTS) {
+        if (fileInstanceType == FileInstanceType.NOT_EXISTS) {
             return new SimpleFileInputBeanImpl(new File(''))
-        } else if (fileInstanceType == FileInstanceType.VALID) {
+        }
+
+        if (fileInstanceType == FileInstanceType.VALID) {
             File file = new File('/tmp/'.concat(System.currentTimeMillis() as String).concat('.txt'))
             file.createNewFile()
             file.deleteOnExit()
