@@ -7,8 +7,6 @@
  */
 package com.causecode.fileuploader.util.checksum.exceptions
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
 import spock.lang.Specification
 
 /**

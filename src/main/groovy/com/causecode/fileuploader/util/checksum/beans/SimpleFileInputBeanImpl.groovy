@@ -21,7 +21,7 @@ class SimpleFileInputBeanImpl implements FileInputBean {
     }
 
     /**
-     * Method validates supllied inputs and throws appropriate excpetion if inputs are not in proper format.
+     * Method validates supplied inputs and throws appropriate exception if inputs are not in proper format.
      * @throws IllegalArgumentException , FileNotFoundException
      * */
     private void validateInputs() throws IllegalArgumentException, FileNotFoundException {

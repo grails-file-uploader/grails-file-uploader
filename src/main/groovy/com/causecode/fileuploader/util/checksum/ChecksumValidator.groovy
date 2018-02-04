@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile
 class ChecksumValidator {
 
     /**
-     * Member varible to store the calculated hash code for supplied fileinputbean
+     * Member variable to store the calculated hash code
      */
     private String calculatedChecksum = null
     private final ChecksumConfig checksumConfig
@@ -68,7 +68,7 @@ class ChecksumValidator {
      * @param fileGroup
      * @return ChecksumConfig
      */
-    private ChecksumConfig getChecksumConfig(FileGroup fileGroup) {
+    private static ChecksumConfig getChecksumConfig(FileGroup fileGroup) {
         Map checksumProperties = fileGroup.groupConfig.checksum
         if (!checksumProperties) {
             return new ChecksumConfig()
@@ -99,7 +99,7 @@ class ChecksumValidator {
      * @return FileInputBean
      * @throws UnRecognizedFileTypeException
      */
-    private FileInputBean getFileInputBeanForFile(def file) throws UnRecognizedFileTypeException {
+    private static FileInputBean getFileInputBeanForFile(def file) throws UnRecognizedFileTypeException {
         if (file in File) {
             return new SimpleFileInputBeanImpl(file)
         } else if (file in MultipartFile) {

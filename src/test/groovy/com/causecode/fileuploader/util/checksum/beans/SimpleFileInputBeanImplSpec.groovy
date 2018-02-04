@@ -70,8 +70,8 @@ class SimpleFileInputBeanImplSpec extends Specification {
     }
 
     void "test getContentType method"() {
-        expect: 'that getContentType method does not returns NULL'
-        fileInputBean.contentType
+        expect: 'that getContentType method returns NULL'
+        !fileInputBean.contentType
     }
 
     void "test isEmpty method"() {

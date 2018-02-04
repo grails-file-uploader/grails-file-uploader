@@ -10,7 +10,6 @@ package com.causecode.fileuploader.util.checksum.beans
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.springframework.web.multipart.MultipartFile
 import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
  * Unit Test Class for MultipartFileInputBeanImplSpec class

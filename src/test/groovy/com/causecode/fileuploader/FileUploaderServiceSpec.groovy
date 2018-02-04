@@ -940,7 +940,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         then: 'IllegalArgumentException must be thrown'
         Exception exception = thrown(IllegalArgumentException)
-        exception.message == "No enum constant ${Algorithm.class.getCanonicalName()}.ABCD"
+        exception.message == "No enum constant ${Algorithm.canonicalName}.ABCD"
     }
 }
 
