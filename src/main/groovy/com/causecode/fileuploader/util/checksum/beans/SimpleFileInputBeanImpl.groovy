@@ -49,7 +49,12 @@ class SimpleFileInputBeanImpl implements FileInputBean {
 
     @Override
     String getContentType() throws IOException {
-        return Files.probeContentType(this.file.toPath())
+        String fileName = this.file.name
+        if( fileName.lastIndexOf(".") != -1 ){
+            return fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length())
+        }
+
+        return null
     }
 
     @Override

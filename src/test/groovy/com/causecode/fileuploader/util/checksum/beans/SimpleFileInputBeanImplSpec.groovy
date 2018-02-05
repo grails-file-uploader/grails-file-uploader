@@ -71,7 +71,7 @@ class SimpleFileInputBeanImplSpec extends Specification {
 
     void "test getContentType method"() {
         expect: 'that getContentType method returns NULL'
-        !fileInputBean.contentType
+        fileInputBean.contentType == '.txt'
     }
 
     void "test isEmpty method"() {
