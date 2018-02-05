@@ -78,25 +78,21 @@ class FileUploaderService {
             throws StorageConfigurationException, UploadFailureException,
                     ProviderNotFoundException, FileNotFoundException,
                     DuplicateFileException {
-
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
         String path
-
         FileGroup fileGroupInstance = new FileGroup(group)
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
-        String checksum, algorithm
 
         if (checksumValidator.shouldCalculateChecksum()) {
-            checksum = checksumValidator.getChecksum(file)
-            algorithm = checksumValidator.algorithm
-            UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksum, algorithm)
+            UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksumValidator.getChecksum(file),
+                    checksumValidator.algorithm)
             if (uFileInstance) {
                 throw new DuplicateFileException(
-                        "Checksum for file ${file.name} is ${checksum} and " +
-                        "that checksum refers to an existing file ${uFileInstance} on server"
+                        "Checksum for file ${file.name} is ${checksumValidator.getChecksum(file)} and " +
+                                "that checksum refers to an existing file ${uFileInstance} on server"
                 )
             }
         }
@@ -109,35 +105,27 @@ class FileUploaderService {
 
         fileGroupInstance.allowedExtensions(fileData, locale, group)
         fileGroupInstance.validateFileSize(fileData.fileSize, locale)
-
         // If group specific storage type is not defined then use the common storage type
         String storageTypes = fileGroupInstance.groupConfig.storageTypes ?: fileGroupInstance.config.storageTypes
 
         if (storageTypes == 'CDN') {
             type = UFileType.CDN_PUBLIC
-
             fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
             long expirationPeriod = getExpirationPeriod(group)
-
             File tempFile
 
             if (file instanceof File) {
-                /* No need to transfer a file of type File since its already in a temporary location.
-                * (Saves resource utilization)
-                */
+                // No need to transfer a file of type File since its already in a temporary location.
                 tempFile = file
             } else {
                 if (file instanceof MultipartFile) {
-                    tempFile = new File(newTemporaryDirectoryPath +
-                            "${fileData.fileName}.${fileData.fileExtension}")
-
+                    tempFile = getTempFilePathForMultipartFile(fileData.fileName, fileData.fileExtension)
                     file.transferTo(tempFile)
                 }
             }
 
             // Delete the temporary file when JVM exited since the base file is not required after upload
             tempFile.deleteOnExit()
-
             cdnProvider = fileGroupInstance.cdnProvider
 
             if (!cdnProvider) {
@@ -145,35 +133,28 @@ class FileUploaderService {
             }
 
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
-
             path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
-
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
-
-            // Move file
             log.debug "Moving [$fileData.fileName] to [${path}]."
             moveFile(file, path)
         }
 
         UFile ufile = new UFile(
-                [
-                        name     : fileData.fileName,
-                        size     : fileData.fileSize,
-                        path     : path,
-                        type     : type,
-                        extension: fileData.fileExtension,
-                        expiresOn: expireOn,
-                        fileGroup: group,
-                        provider : cdnProvider])
+                [name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
+                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
 
         if (checksumValidator.shouldCalculateChecksum()) {
-            ufile.checksum = checksum
-            ufile.checksumAlgorithm = algorithm
+            ufile.checksum = checksumValidator.getChecksum(file)
+            ufile.checksumAlgorithm = checksumValidator.algorithm
         }
 
         NucleusUtils.save(ufile, true)
         return ufile
+    }
+
+    private File getTempFilePathForMultipartFile(String fileName, String fileExtension) {
+        return new File(newTemporaryDirectoryPath + "${fileName}.${fileExtension}")
     }
 
     /**
