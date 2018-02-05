@@ -37,7 +37,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
 
         then: 'expect a valid instance'
-        instance != null
+        instance
 
         where: 'inputs are as below'
         checksum << [null, [calculate: true, algorithm: Algorithm.SHA1]]
@@ -75,7 +75,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
         String checksum = instance.getChecksum(fileInstance)
 
-        then: 'expect that checksum is calcuated'
+        then: 'expect that checksum is calculated'
         checksum
     }
 
@@ -96,7 +96,7 @@ class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
         ChecksumValidator instance = new ChecksumValidator(fileGroupInstance)
         String checksum = instance.getChecksum(multipartFile)
 
-        then: 'expect that checksum is calcuated'
+        then: 'expect that checksum is calculated'
         checksum
     }
 

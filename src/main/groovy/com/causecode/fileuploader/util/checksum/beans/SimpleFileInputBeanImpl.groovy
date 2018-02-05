@@ -15,6 +15,7 @@ import java.nio.file.Files
  * @since 3.1.0
  */
 class SimpleFileInputBeanImpl implements FileInputBean {
+
     private final File file
 
     SimpleFileInputBeanImpl(File file) {

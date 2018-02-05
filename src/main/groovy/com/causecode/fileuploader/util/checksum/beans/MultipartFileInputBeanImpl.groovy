@@ -72,6 +72,10 @@ class MultipartFileInputBeanImpl implements FileInputBean {
         return this.multipartFile.inputStream
     }
 
+    /**
+     * Whenever There is valid MultipartFile object available, file will surely exists on server. So this method returns
+     * @return
+     */
     @Override
     boolean isExists() {
         return true

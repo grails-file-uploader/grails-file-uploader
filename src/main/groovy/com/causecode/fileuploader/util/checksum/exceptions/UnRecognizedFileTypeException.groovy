@@ -13,7 +13,6 @@ package com.causecode.fileuploader.util.checksum.exceptions
  * @since 3.1.0
  */
 class UnRecognizedFileTypeException extends RuntimeException {
-
     UnRecognizedFileTypeException(String message) {
         super(message)
     }

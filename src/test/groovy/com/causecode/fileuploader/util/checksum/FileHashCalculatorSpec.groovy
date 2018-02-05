@@ -46,7 +46,7 @@ class FileHashCalculatorSpec extends Specification {
         String hash = hashCalculator.calculateHash()
 
         then: 'hash must not be null and empty'
-        hash && !hash.isEmpty()
+        hash
 
         where: 'below inputs supplied'
         hashCalculator << [
