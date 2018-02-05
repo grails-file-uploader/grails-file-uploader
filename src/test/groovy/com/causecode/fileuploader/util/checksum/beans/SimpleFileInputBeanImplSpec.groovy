@@ -69,9 +69,15 @@ class SimpleFileInputBeanImplSpec extends Specification {
         fileInputBean.originalFilename
     }
 
-    void "test getContentType method"() {
-        expect: 'that getContentType method returns NULL'
-        fileInputBean.contentType == '.txt'
+    @Unroll
+    void "test getContentType method wile file:- #simpleFileInputbean.filename"() {
+        expect: ''
+        simpleFileInputbean.contentType == output
+
+        where: 'Given below inputs'
+        simpleFileInputbean                                           | output
+        new SimpleFileInputBeanImpl(getFileInstance('causecode.txt')) | 'txt'
+        new SimpleFileInputBeanImpl(getFileInstance('causecode'))     | null
     }
 
     void "test isEmpty method"() {
