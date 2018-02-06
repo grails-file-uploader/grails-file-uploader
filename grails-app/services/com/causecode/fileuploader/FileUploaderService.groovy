@@ -8,18 +8,21 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
+import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.util.FileUploaderUtils
+import com.causecode.fileuploader.util.Time
+import com.causecode.fileuploader.util.checksum.ChecksumValidator
+import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import com.causecode.util.NucleusUtils
 import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
+import org.apache.commons.validator.UrlValidator
 import org.springframework.context.MessageSource
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.web.multipart.MultipartFile
+
 import java.nio.channels.FileChannel
-import org.apache.commons.validator.UrlValidator
-import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
-import com.causecode.fileuploader.util.Time
 
 /**
  * A service class for all fileUpload related operations.
@@ -72,15 +75,28 @@ class FileUploaderService {
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
-            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException {
-
+            throws StorageConfigurationException, UploadFailureException,
+                    ProviderNotFoundException, FileNotFoundException,
+                    DuplicateFileException {
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
         UFileType type = UFileType.LOCAL
         String path
-
         FileGroup fileGroupInstance = new FileGroup(group)
+        ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
+
+        if (checksumValidator.shouldCalculateChecksum()) {
+            UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksumValidator.getChecksum(file),
+                    checksumValidator.algorithm)
+            if (uFileInstance) {
+                throw new DuplicateFileException(
+                        "Checksum for file ${file.name} is ${checksumValidator.getChecksum(file)} and " +
+                                "that checksum refers to an existing file ${uFileInstance} on server"
+                )
+            }
+        }
+
         Map fileData = fileGroupInstance.getFileNameAndExtensions(file, customFileName)
 
         if (fileData.empty || !file) {
@@ -89,35 +105,27 @@ class FileUploaderService {
 
         fileGroupInstance.allowedExtensions(fileData, locale, group)
         fileGroupInstance.validateFileSize(fileData.fileSize, locale)
-
         // If group specific storage type is not defined then use the common storage type
         String storageTypes = fileGroupInstance.groupConfig.storageTypes ?: fileGroupInstance.config.storageTypes
 
         if (storageTypes == 'CDN') {
             type = UFileType.CDN_PUBLIC
-
             fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
             long expirationPeriod = getExpirationPeriod(group)
-
             File tempFile
 
             if (file instanceof File) {
-                /* No need to transfer a file of type File since its already in a temporary location.
-                * (Saves resource utilization)
-                */
+                // No need to transfer a file of type File since its already in a temporary location.
                 tempFile = file
             } else {
                 if (file instanceof MultipartFile) {
-                    tempFile = new File(newTemporaryDirectoryPath +
-                            "${fileData.fileName}.${fileData.fileExtension}")
-
+                    tempFile = getTempFilePathForMultipartFile(fileData.fileName, fileData.fileExtension)
                     file.transferTo(tempFile)
                 }
             }
 
             // Delete the temporary file when JVM exited since the base file is not required after upload
             tempFile.deleteOnExit()
-
             cdnProvider = fileGroupInstance.cdnProvider
 
             if (!cdnProvider) {
@@ -125,27 +133,33 @@ class FileUploaderService {
             }
 
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
-
             path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
-
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
-
-            // Move file
             log.debug "Moving [$fileData.fileName] to [${path}]."
             moveFile(file, path)
         }
 
-        UFile ufile = new UFile([name: fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
-        NucleusUtils.save(ufile, true)
+        UFile ufile = new UFile(
+                [name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
+                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
 
+        if (checksumValidator.shouldCalculateChecksum()) {
+            ufile.checksum = checksumValidator.getChecksum(file)
+            ufile.checksumAlgorithm = checksumValidator.algorithm
+        }
+
+        NucleusUtils.save(ufile, true)
         return ufile
+    }
+
+    private File getTempFilePathForMultipartFile(String fileName, String fileExtension) {
+        return new File(newTemporaryDirectoryPath + "${fileName}.${fileExtension}")
     }
 
     /**
      * Method is used to upload file to cloud provider. Then it gets the path of uploaded file
-     * @params fileData, fileGroupInstance, tempFile
+     * @params fileData , fileGroupInstance, tempFile
      * @return path of uploaded file
      *
      */
@@ -176,7 +190,7 @@ class FileUploaderService {
 
     /**
      * Method is used to move file from temp directory to another.
-     * @params fileInstance, path
+     * @params fileInstance , path
      *
      */
     void moveFile(def file, String path) {

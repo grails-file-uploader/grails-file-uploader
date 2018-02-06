@@ -34,6 +34,12 @@ class UFile implements Serializable {
     String name
     String path
 
+    //Contains calculated hash value of file content
+    String checksum
+
+    //Algorithm Used to calculate Checksum
+    String checksumAlgorithm
+
     UFileType type
 
     Date dateCreated
@@ -48,12 +54,19 @@ class UFile implements Serializable {
         name blank: false
         fileGroup blank: false
         provider nullable: true
+        checksum nullable: true
+        checksumAlgorithm nullable: true
         dateCreated bindable: false
         lastUpdated bindable: false
     }
 
     static mapping = {
         path sqlType: 'text'
+
+        //Index on checksum
+        checksum index: true
+        //Index on checksumAlgorithm
+        checksumAlgorithm index: true
     }
 
     def afterDelete() {
@@ -118,6 +131,7 @@ enum UFileType {
     LOCAL(3)
 
     final int id
+
     UFileType(int id) {
         this.id = id
     }
@@ -137,6 +151,7 @@ enum CDNProvider {
     LOCAL(4)
 
     final int id
+
     CDNProvider(int id) {
         this.id = id
     }

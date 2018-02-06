@@ -18,12 +18,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.causecode.plugins:gradle-code-quality:1.0.0"
+        classpath "com.causecode.plugins:gradle-code-quality:1.0.1-RC1"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
 
-version "3.0.9"
+version "3.1.0"
 group "com.causecode.plugins"
 
 apply plugin: "idea"

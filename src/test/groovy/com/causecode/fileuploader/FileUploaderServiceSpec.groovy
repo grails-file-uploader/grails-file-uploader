@@ -7,6 +7,8 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.util.checksum.Algorithm
+import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -17,8 +19,8 @@ import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
 import spock.lang.Unroll
 import spock.util.mop.ConfineMetaClassChanges
@@ -150,7 +152,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         file.delete()
 
         where:
-        fileGroup | provider
+        fileGroup    | provider
         'testAmazon' | CDNProvider.AMAZON
         'testGoogle' | CDNProvider.GOOGLE
     }
@@ -160,8 +162,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File file = getFileInstance('/tmp/test.txt')
 
         1 * googleCDNFileUploaderImplMock.uploadFile(_, _, _, _, _) >> {
-                String containerName, File fileToUpload, String fileName, boolean makePublic, long maxAge ->
-            throw new UploadFailureException(fileName, containerName, new Throwable())
+            String containerName, File fileToUpload, String fileName, boolean makePublic, long maxAge ->
+                throw new UploadFailureException(fileName, containerName, new Throwable())
         }
 
         mockGetProviderInstance('google')
@@ -340,9 +342,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File fileInstance = getFileInstance('./temp/test.txt')
 
         and: 'Mocked method'
-        service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                Object userInstance = null, Locale locale = null ->
-            return ufIleInstance
+        service.metaClass.saveFile = {
+            String group,
+            def file,
+            String customFileName = '',
+            Object userInstance = null,
+            Locale locale = null -> return ufIleInstance
         }
 
         when: 'cloneFile method is called and uFileInstance is missing'
@@ -368,9 +373,12 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
-        service.metaClass.saveFile = { String group, def file, String customFileName = '',
-                Object userInstance = null, Locale locale = null ->
-            return ufIleInstance
+        service.metaClass.saveFile = {
+            String group, def file,
+            String customFileName = '',
+            Object userInstance = null,
+            Locale locale = null ->
+                return ufIleInstance
         }
 
         when: 'cloneFile method is called for valid parameters and UFile is not LOCAL type'
@@ -672,9 +680,10 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFileMoveHistory uFileMoveHistoryInstance = UFileMoveHistory.build(fromCDN: CDNProvider.RACKSPACE,
                 toCDN: CDNProvider.GOOGLE, status: MoveStatus.FAILURE, ufile: UFile.build())
 
-        service.metaClass.moveFilesToCDN = { List<UFile> uFileList, CDNProvider toCDNProvider,
-            boolean makePublic = false ->
-            return
+        service.metaClass.moveFilesToCDN = {
+            List<UFile> uFileList,
+            CDNProvider toCDNProvider,
+            boolean makePublic = false -> return
         }
 
         when: 'moveFailedFilesToCDN method is called and failedList containes no UFiles'
@@ -717,7 +726,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         service.ufileById(2, locale)
 
         then: 'Method throws FileNotFoundException'
-        FileNotFoundException e =thrown()
+        FileNotFoundException e = thrown()
         e.message == 'File not found'
     }
 
@@ -857,4 +866,81 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'It should renew the image path of all the Instance'
         uFileInstance.path != 'https://xyz/abc'
     }
+
+    void "test saveFile method when file with same content uploaded twice"() {
+        given: 'A file instance'
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        and: 'Mocked authenticate method'
+        mockAuthenticateMethod()
+
+        and: 'Mocked getFileNameAndExtensions'
+        mockGetFileNameAndExtensions()
+
+        and: 'Mocked uploadFile method'
+        mockUploadFileMethod(true)
+
+        and: 'Mocked file.Exists method'
+        mockExistMethod(true)
+
+        and: 'Mocked getProviderInstance method'
+        service.metaClass.getProviderInstance = { String providerName ->
+            providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
+        }
+
+        and: 'Mocked FileGroup Instance'
+        new FileGroup(_) >> fileGroupMock
+        fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+        fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: Algorithm.SHA1]]
+
+        and: 'The saveFile method has been already called once for given file'
+        UFile savedUfileInstance = service.saveFile('testGoogle', fileInstance, 'test')
+
+        when: 'saveFile method gets called again on the file with same content'
+        UFile.metaClass.static.findByChecksumAndChecksumAlgorithm = { String val, String val2 -> return new UFile() }
+        service.saveFile('testGoogle', fileInstance, 'test')
+
+        then: 'DuplicateFileException must be thrown'
+        Exception exception = thrown(DuplicateFileException)
+        String message = "Checksum for file test.txt is ${savedUfileInstance.checksum} and that checksum refers to an" +
+                " existing file ${new UFile()} on server"
+        exception.message.equalsIgnoreCase(message)
+    }
+
+    void "test saveFile method with invalid Algorithm instance"() {
+        given: 'A file instance'
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        and: 'Mocked authenticate method'
+        mockAuthenticateMethod()
+
+        and: 'Mocked getFileNameAndExtensions'
+        mockGetFileNameAndExtensions()
+
+        and: 'Mocked uploadFile method'
+        mockUploadFileMethod(true)
+
+        and: 'Mocked file.Exists method'
+        mockExistMethod(true)
+
+        and: 'Mocked getProviderInstance method'
+        service.metaClass.getProviderInstance = { String providerName ->
+            providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
+        }
+
+        and: 'Mocked FileGroup Instance'
+        new FileGroup(_) >> fileGroupMock
+        fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+
+        and: 'Invalid algorithm instance supplied'
+        fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: 'ABCD']]
+
+        when: 'The saveFile method has been already called once for given file'
+        service.saveFile('testGoogle', fileInstance, 'test')
+
+        then: 'IllegalArgumentException must be thrown'
+        Exception exception = thrown(IllegalArgumentException)
+        exception.message == "No enum constant ${Algorithm.canonicalName}.ABCD"
+    }
 }
+
