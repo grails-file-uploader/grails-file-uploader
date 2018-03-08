@@ -24,7 +24,7 @@ class UFileSpec extends Specification implements BaseTestSetup {
     void "test isFileExists method for various cases"() {
         given: 'An instance of UFile'
         UFile ufileInstance = UFile.build()
-        ufileInstance.path = System.getProperty('user.dir') + '/temp'
+        ufileInstance.path = '/tmp'
 
         when: 'isFileExists method is called and file exists'
         boolean result = ufileInstance.isFileExists()
