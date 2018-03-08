@@ -18,7 +18,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.causecode.plugins:gradle-code-quality:1.0.1-RC1"
+        classpath "com.causecode.plugins:gradle-code-quality:1.0.2"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
