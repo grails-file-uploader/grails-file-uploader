@@ -1,9 +1,19 @@
 # ChangeLog
 
-## Version 3.1.1 [Unreleased]
+## Version 3.1.2 [02-May-2018]
+
+### Added 
+- Environment field in UFile to delete the files from buckets which were uploaded in same environment.
+
+## Version 3.1.1 [06-April-2018]
 
 ### Added
 - Functionality to disable URL renew job for installing application.
+
+## Version 3.1.0 [08-March-2018]
+
+## Added
+- Ability to avoid duplicate file upload using checksum algorithm.
 
 ## Version 3.0.9 [28-Nov-2017]
 

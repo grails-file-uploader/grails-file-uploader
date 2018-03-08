@@ -80,7 +80,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
     void  "test show action for various cases"() {
         given: 'A fileInstance and a uFileInstance'
-        File fileInstance = getFileInstance('./temp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
         UFile uFileInstance = UFile.build()
 
         when: 'show method is called and UFile instance is not found'
@@ -102,7 +102,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
         when: 'show action is hit and no errors occur'
         controller.response.reset()
-        uFileInstance.path = System.getProperty('user.dir') + '/temp/test.txt'
+        uFileInstance.path = '/tmp/test.txt'
         controller.params.id = uFileInstance.id
         controller.show()
 
