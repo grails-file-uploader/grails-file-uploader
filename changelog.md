@@ -2,19 +2,17 @@
 
 ## Version 3.1.2 [02-May-2018]
 
-### Added 
-- Environment field in UFile to delete the files from buckets which were uploaded in same environment.
+### Added
+- Added environment specific UFile feature. This enables deletion of remote files only when the upload operation was  
+performed in the same environment.
+
+## Modified
+- Updated gradle-code-quality plugin version from 1.0.1-RC1 to 1.0.2
 
 ## Version 3.1.1 [06-April-2018]
 
 ### Added
 - Functionality to disable URL renew job for installing application.
-
-### Added
-- Added code climate configuration.
-
-## Modified
-- Updated gradle-code-quality plugin version from 1.0.1-RC1 to 1.0.2
 
 ## Version 3.1.0 [08-March-2018]
 

@@ -193,3 +193,12 @@ jar {
 task wrapper(type: Wrapper) {
     gradleVersion = gradleWrapperVersion
 }
+
+// Adding migration files to jar
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
+    }
+}

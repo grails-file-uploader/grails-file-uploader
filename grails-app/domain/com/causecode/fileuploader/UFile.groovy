@@ -24,6 +24,8 @@ class UFile implements Serializable {
 
     CDNProvider provider
 
+    String envName = Environment.current.name  // development, production, test or custom environment.
+
     Date dateUploaded = new Date()
     Date expiresOn
 
@@ -74,7 +76,9 @@ class UFile implements Serializable {
          * Using Holder class to get service instead of injecting it as dependency injection with transient modifier.
          * This prevents problem when we deserialize any instance of this class and the injected beans gets null value.
          */
-        Holders.applicationContext['fileUploaderService'].deleteFileForUFile(this)
+        if (this.envName == Environment.current.name) {
+            Holders.applicationContext['fileUploaderService'].deleteFileForUFile(this)
+        }
     }
 
     String searchLink() {
