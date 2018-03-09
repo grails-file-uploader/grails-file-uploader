@@ -110,7 +110,7 @@ class FileUploaderService {
 
         if (storageTypes == 'CDN') {
             type = UFileType.CDN_PUBLIC
-            fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
+            fileData.fileName = fileGroupInstance.scopeFileName(userInstance, fileData, group, currentTimeMillis)
             long expirationPeriod = getExpirationPeriod(group)
             File tempFile
 

@@ -14,10 +14,10 @@ package com.causecode.fileuploader.util.checksum.beans
  */
 class SimpleFileInputBeanImpl implements FileInputBean {
 
-    private final File file
+    private final File FILE
 
     SimpleFileInputBeanImpl(File file) {
-        this.file = file
+        this.FILE = file
         validateInputs()
     }
 
@@ -26,28 +26,28 @@ class SimpleFileInputBeanImpl implements FileInputBean {
      * @throws IllegalArgumentException , FileNotFoundException
      * */
     private void validateInputs() throws IllegalArgumentException, FileNotFoundException {
-        if (!this.file) {
+        if (!this.FILE) {
             throw new IllegalArgumentException('File instance can not be null')
         }
 
-        if (!this.file.exists()) {
-            throw new FileNotFoundException("File with name ${this.file.name} not found")
+        if (!this.FILE.exists()) {
+            throw new FileNotFoundException("File with name ${this.FILE.name} not found")
         }
     }
 
     @Override
     String getName() {
-        return this.file.name
+        return this.FILE.name
     }
 
     @Override
     String getOriginalFilename() {
-        return this.file.name
+        return this.FILE.name
     }
 
     @Override
     String getContentType() throws IOException {
-        String fileName = this.file.name
+        String fileName = this.FILE.name
         if (fileName.lastIndexOf('.') != -1) {
             return fileName[fileName.lastIndexOf('.') + 1..fileName.length() - 1]
         }
@@ -57,17 +57,17 @@ class SimpleFileInputBeanImpl implements FileInputBean {
 
     @Override
     boolean isEmpty() {
-        return this.file.size() == 0
+        return this.FILE.size() == 0
     }
 
     @Override
     long getSize() {
-        return this.file.size()
+        return this.FILE.size()
     }
 
     @Override
     byte[] getBytes() throws IOException {
-        return this.file.readBytes()
+        return this.FILE.readBytes()
     }
 
     /**
@@ -77,11 +77,11 @@ class SimpleFileInputBeanImpl implements FileInputBean {
      */
     @Override
     InputStream getInputStream() throws IOException {
-        return new FileInputStream(this.file)
+        return new FileInputStream(this.FILE)
     }
 
     @Override
     boolean isExists() {
-        return this.file.exists()
+        return this.FILE.exists()
     }
 }

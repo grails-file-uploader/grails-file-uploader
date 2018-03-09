@@ -26,12 +26,12 @@ class ChecksumValidator {
      * Member variable to store the calculated hash code
      */
     private String calculatedChecksum = null
-    private final ChecksumConfig checksumConfig
-    private final FileGroup fileGroup
+    private final ChecksumConfig CHECKSUM_CONFIG
+    private final FileGroup FILE_GROUP
 
     ChecksumValidator(FileGroup fileGroup) {
-        this.fileGroup = fileGroup
-        this.checksumConfig = getChecksumConfig(fileGroup)
+        this.FILE_GROUP = fileGroup
+        this.CHECKSUM_CONFIG = getChecksumConfig(fileGroup)
     }
 
     /**
@@ -39,7 +39,7 @@ class ChecksumValidator {
      * @return boolean
      */
     boolean shouldCalculateChecksum() {
-        return this.checksumConfig.calculate
+        return this.CHECKSUM_CONFIG.calculate
     }
 
     /**
@@ -60,7 +60,7 @@ class ChecksumValidator {
      * @return String
      */
     String getAlgorithm() {
-        return this.checksumConfig.algorithm.toString()
+        return this.CHECKSUM_CONFIG.algorithm.toString()
     }
 
     /**
@@ -88,7 +88,7 @@ class ChecksumValidator {
      */
     private String getChecksumForFile(def file) throws FileNotFoundException {
         FileInputBean fileInputBean = getFileInputBeanForFile(file)
-        HashCalculator hashCalculator = new FileHashCalculator(fileInputBean, this.checksumConfig.algorithm)
+        HashCalculator hashCalculator = new FileHashCalculator(fileInputBean, this.CHECKSUM_CONFIG.algorithm)
         return hashCalculator.calculateHash()
     }
 
