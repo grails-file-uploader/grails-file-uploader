@@ -17,10 +17,6 @@ import com.causecode.fileuploader.UFile
 class DuplicateFileException extends RuntimeException {
     UFile duplicateUFile
 
-    DuplicateFileException(GString gString) {
-        super(gString.toString())
-    }
-
     DuplicateFileException(GString gString, UFile duplicateUFile) {
         super(gString.toString())
 
