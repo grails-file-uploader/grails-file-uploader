@@ -60,6 +60,7 @@ class UFile implements Serializable {
         checksumAlgorithm nullable: true
         dateCreated bindable: false
         lastUpdated bindable: false
+        envName bindable: false
     }
 
     static mapping = {

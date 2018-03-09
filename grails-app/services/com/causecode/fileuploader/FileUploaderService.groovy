@@ -92,7 +92,7 @@ class FileUploaderService {
             if (uFileInstance) {
                 throw new DuplicateFileException(
                         "Checksum for file ${file.name} is ${checksumValidator.getChecksum(file)} and " +
-                                "that checksum refers to an existing file ${uFileInstance} on server"
+                                "that checksum refers to an existing file ${uFileInstance} on server", uFileInstance
                 )
             }
         }
