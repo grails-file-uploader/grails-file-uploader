@@ -22,13 +22,15 @@ class DailyJob {
     }
 
     def execute() {
-        log.info 'Started executing DailyJob..'
 
         boolean renewJobDisabled = Holders.config.jobs.fileUploader.renewURLs.disable ?: false
 
         if (!renewJobDisabled) {
+            log.info 'Started executing DailyJob..'
+
             fileUploaderService.renewTemporaryURL()
             fileUploaderService.moveFailedFilesToCDN()
+
             log.info 'Finished executing DailyJob.'
         }
 
