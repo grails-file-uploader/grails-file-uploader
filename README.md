@@ -1,4 +1,4 @@
-# File-Uploader Plugin (Latest 3.1.0)
+# File-Uploader Plugin (Latest 3.1.1)
 
 Supported Grails 3.2.0
 
@@ -127,3 +127,5 @@ jobs {
     fileUploader.renewURLs.disable = true // By default it is set to false
 }
 ```
+
+6. To disable the expiration of the URL, Add `makePublic: true` to group config in application.groovy.
