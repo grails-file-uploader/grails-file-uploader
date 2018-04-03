@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Version 3.1.2 [03-April-2018]
+
+### Added
+- Made trigger of auto renew URL job configurable. Developer can disable the execution of the job from the installing app.
+
 ## Version 3.0.9 [28-Nov-2017]
 
 ### Database changes

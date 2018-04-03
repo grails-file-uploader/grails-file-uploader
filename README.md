@@ -96,6 +96,7 @@ can be overwritten for group level configuration by setting **expirationPeriod**
    ```
    # Google Default Credentials
    export GOOGLE_APPLICATION_CREDENTIALS='/path/to/key.json'
+   ```
 4. To Enable checksum checks and generation, define configuration as shown in the sample configuration, 
 ```
  groups {
@@ -119,3 +120,10 @@ Algorithm.MD5 and,
 Algorithm.SHA1
 ```
 Second flag will be ignored if first flag is set to false. By default checksum calculation features is disabled. To enable provide valid configurations. 
+
+5. To disable the auto renew URL job from the installing app, add the following config in the application.groovy file.
+```
+jobs {
+    fileUploader.renewURLs.disable = true // By default it is set to false
+}
+```
