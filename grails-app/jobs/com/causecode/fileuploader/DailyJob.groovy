@@ -38,11 +38,11 @@ class DailyJob {
 
         log.info 'Finished executing DailyJob.'
 
-    /*
-     * Trigger event to notity the installing app for any further app specific processing.
-     *
-     * TODO This is not working. Need to investigate grails events.
-     */
+        /*
+         * Trigger event to notity the installing app for any further app specific processing.
+         *
+         * TODO This is not working. Need to investigate grails events.
+         */
         // grailsEvents.event("file-uploader", "on-ufile-renewal")
     }
 }
