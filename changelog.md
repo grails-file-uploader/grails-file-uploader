@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Version 3.1.1 [Unreleased]
+
+### Added
+- Functionality to disable URL renew job for installing application.
+
 ## Version 3.0.9 [28-Nov-2017]
 
 ### Database changes
