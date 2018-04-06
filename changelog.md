@@ -1,9 +1,22 @@
 # ChangeLog
 
-## Version 3.1.2 [03-April-2018]
+## Version 3.1.2 [Unreleased]
 
 ### Added
-- Made trigger of auto renew URL job configurable. Developer can disable the execution of the job from the installing app.
+- Functionality to disable URL renew job for installing application.
+
+#Version 3.1.1 [30-March-2018]
+
+### Added
+- Added environment specific UFile feature.
+
+### Modified
+-Updated gradle-code-quality plugin version from 1.0.1-RC1 to 1.0.2
+
+## Version 3.1.0 [08-March-2018]
+
+### Added
+- Ability to avoid duplicate file upload using checksum algorithm.
 
 ## Version 3.0.9 [28-Nov-2017]
 

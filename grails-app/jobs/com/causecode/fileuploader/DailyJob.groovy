@@ -32,6 +32,8 @@ class DailyJob {
             fileUploaderService.moveFailedFilesToCDN()
 
             log.info 'Finished executing DailyJob.'
+        } else {
+            log.info 'Renew URLs DailyJob is disabled.'
         }
 
         /*

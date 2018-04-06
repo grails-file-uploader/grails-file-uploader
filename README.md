@@ -128,4 +128,5 @@ jobs {
 }
 ```
 
-6. To disable the expiration of the URL, Add `makePublic: true` to group config in application.groovy.
+6. To make files public add makePublic: true to group config in application.groovy.
+Note: Public URLs do not expire.
