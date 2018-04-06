@@ -25,22 +25,24 @@ class DailyJob {
 
         boolean renewJobDisabled = Holders.config.jobs.fileUploader.renewURLs.disable ?: false
 
-        if (!renewJobDisabled) {
-            log.info 'Started executing DailyJob..'
+        if (renewJobDisabled) {
+            log.info 'Renew URLs DailyJob has been disabled by the installing application.'
 
-            fileUploaderService.renewTemporaryURL()
-            fileUploaderService.moveFailedFilesToCDN()
-
-            log.info 'Finished executing DailyJob.'
-        } else {
-            log.info 'Renew URLs DailyJob is disabled.'
+            return
         }
 
-        /*
-         * Trigger event to notity the installing app for any further app specific processing.
-         *
-         * TODO This is not working. Need to investigate grails events.
-         */
+        log.info 'Started executing DailyJob..'
+
+        fileUploaderService.renewTemporaryURL()
+        fileUploaderService.moveFailedFilesToCDN()
+
+        log.info 'Finished executing DailyJob.'
+
+    /*
+     * Trigger event to notity the installing app for any further app specific processing.
+     *
+     * TODO This is not working. Need to investigate grails events.
+     */
         // grailsEvents.event("file-uploader", "on-ufile-renewal")
     }
 }
