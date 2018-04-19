@@ -37,6 +37,12 @@ import javax.servlet.http.Part
 @SuppressWarnings('MethodCount')
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
+    def setup() {
+        UtilitiesService utilitiesService = Mock(UtilitiesService)
+        utilitiesService.grailsApplication = Holders.grailsApplication
+        service.utilitiesService = utilitiesService
+    }
+
     void "test isPublicGroup for various file groups"() {
         mockCodec(HTMLCodec)
 
@@ -95,7 +101,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockGetTemporaryURL()
 
         and: 'Mocked getProviderInstance method'
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             return amazonCDNFileUploaderInstance
         }
 
@@ -132,7 +138,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockAuthenticateMethod()
         mockGetFileNameAndExtensions()
         mockUploadFileMethod(true)
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
@@ -364,7 +370,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         result.name == 'test-file-1'
 
         cleanup:
-        fileInstance.delete()
+        fileInstance?.delete()
     }
 
     void "test cloneFile method for LOCAL type file"() {
@@ -481,6 +487,13 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC)
         assert uFileInstance.type == UFileType.CDN_PUBLIC
 
+        and: 'Mocked getProviderInstance method'
+        1* service.utilitiesService.getProviderInstance(_) >> { String provider ->
+            throw new ProviderNotFoundException('Provider RACKSPACE not found.')
+        } >> { String provider ->
+            return amazonCDNFileUploaderImplMock
+        }
+
         and: 'Mocked method'
         googleCDNFileUploaderImplMock.deleteFile(_, _) >> {
         }
@@ -558,7 +571,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
     void "test renewTemporaryURL method when fileUploaderInstance is null"() {
         given: 'Mocked method'
-        service.metaClass.getProviderInstance = { String name ->
+        service.utilitiesService.getProviderInstance(_) >> { String name ->
             return null
         }
 
@@ -567,21 +580,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
         then: 'Method returns null'
         result == null
-    }
-
-    void "test getProviderInstance method"() {
-        when: 'getProviderInstance method is called and class does not exist'
-        service.getProviderInstance('test')
-
-        then: 'Method should throw exception'
-        ProviderNotFoundException e = thrown()
-        e.message == 'Provider test not found.'
-
-        when: 'getProviderInstance method is called and class exist'
-        service.getProviderInstance('Amazon')
-
-        then: 'No exception is thrown'
-        noExceptionThrown()
     }
 
     void "test saveFile method for various cases"() {
@@ -834,7 +832,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockGetTemporaryURL()
 
         and: 'Mocked getProviderInstance method'
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             return amazonCDNFileUploaderInstance
         }
 
@@ -884,7 +882,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockExistMethod(true)
 
         and: 'Mocked getProviderInstance method'
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
@@ -924,7 +922,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockExistMethod(true)
 
         and: 'Mocked getProviderInstance method'
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 

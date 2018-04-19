@@ -89,7 +89,7 @@ class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTest
     }
 
     void mockGetProviderInstance(String provider) {
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
             provider == 'google' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
     }

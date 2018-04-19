@@ -11,6 +11,7 @@ import grails.buildtestdata.mixin.Build
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.util.Environment
+import grails.util.Holders
 import spock.lang.Specification
 
 /**
@@ -20,6 +21,12 @@ import spock.lang.Specification
 @Build(UFile)
 @Mock([FileUploaderService])
 class UFileSpec extends Specification implements BaseTestSetup {
+
+    def setup() {
+        UtilitiesService utilitiesService = Mock(UtilitiesService)
+        FileUploaderService service = Holders.applicationContext['fileUploaderService']
+        service.utilitiesService = utilitiesService
+    }
 
     void "test isFileExists method for various cases"() {
         given: 'An instance of UFile'
@@ -75,6 +82,11 @@ class UFileSpec extends Specification implements BaseTestSetup {
         UFile uFileInstance = UFile.build()
         uFileInstance.type = UFileType.CDN_PUBLIC
         uFileInstance.provider = CDNProvider.RACKSPACE
+
+        and: 'getProvider throws ProviderNotFoundException'
+        Holders.applicationContext['fileUploaderService'].utilitiesService.getProviderInstance(_) >> { String name ->
+            throw new ProviderNotFoundException('Provider RACKSPACE not found.')
+        }
 
         when: 'afterDelete method is called for this instance'
         uFileInstance.afterDelete()
