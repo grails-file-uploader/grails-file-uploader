@@ -152,7 +152,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'UFile instance should be successfully saved'
         ufileInstancefile.provider == provider
         ufileInstancefile.extension == 'txt'
-        ufileInstancefile.container == 'causecode-test'
+        ufileInstancefile.container == 'causecode'
         ufileInstancefile.fileGroup == fileGroup
 
         file.delete()

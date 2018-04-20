@@ -8,6 +8,8 @@
 package com.causecode.fileuploader
 
 import grails.util.Environment
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.access.annotation.Secured
 
 /**
@@ -19,6 +21,9 @@ class FileUploaderController {
     static namespace = 'v1'
 
     FileUploaderService fileUploaderService
+
+    @Autowired
+    @Qualifier('UFileTemporaryUrlRenewerService')
     UFileTemporaryUrlRenewerService urlRenewerService
 
     def download() {

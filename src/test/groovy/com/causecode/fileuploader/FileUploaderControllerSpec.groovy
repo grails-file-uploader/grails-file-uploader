@@ -134,13 +134,13 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
     }
 
     void "test renew action"() {
-        given: 'Mocked fileUploaderService methods'
-        FileUploaderService fileUploaderService = Mock(FileUploaderService)
-        2 * fileUploaderService.renewTemporaryURL() >> { } >> {
+        given: 'Mocked utilitiesService methods'
+        UFileTemporaryUrlRenewerService renewerService = Mock(UFileTemporaryUrlRenewerService)
+        2 * renewerService.renewTemporaryURL() >> { } >> {
             throw new ProviderNotFoundException('Provider missing.')
         }
 
-        controller.fileUploaderService = fileUploaderService
+        controller.urlRenewerService = renewerService
 
         when: 'renew action is executed successfully'
         boolean result  = controller.renew()
