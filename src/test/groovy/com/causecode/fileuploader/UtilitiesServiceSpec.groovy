@@ -1,10 +1,11 @@
 package com.causecode.fileuploader
 
 import grails.test.mixin.TestFor
+import org.springframework.web.multipart.MultipartFile
 import spock.lang.Specification
 
 /**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
+ * Unit tests for {@link UtilitiesService}
  */
 @TestFor(UtilitiesService)
 class UtilitiesServiceSpec extends Specification {
@@ -21,6 +22,43 @@ class UtilitiesServiceSpec extends Specification {
         service.getProviderInstance('Amazon')
 
         then: 'No exception is thrown'
+        noExceptionThrown()
+    }
+
+    void "test getNewTemporaryDirectoryPath method"() {
+        when:
+        service.getNewTemporaryDirectoryPath()
+        then:
+        noExceptionThrown()
+    }
+
+    void "test getTempFilePathForMultipartFile"() {
+        when:
+        service.getTempFilePathForMultipartFile('Foo', '.pdf')
+        then:
+        noExceptionThrown()
+    }
+
+    void "test moveFile"() {
+        setup: 'Dummy Dir'
+        File dir = new File('./dummyDir')
+        dir.mkdir()
+        dir.deleteOnExit()
+
+        when: 'instance is of simpleFile'
+        File f = new File('./test')
+        f.deleteOnExit()
+        service.moveFile(f, dir.getAbsolutePath())
+
+        then:
+        noExceptionThrown()
+
+        when: 'instance is of multipart file'
+        MultipartFile multipartFile = Mock(MultipartFile)
+        multipartFile.transferTo(_) >> { File input -> }
+        service.moveFile(multipartFile, dir.getAbsolutePath())
+
+        then:
         noExceptionThrown()
     }
 }

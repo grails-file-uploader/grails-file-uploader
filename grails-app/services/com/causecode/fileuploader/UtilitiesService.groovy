@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2011-Present, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
@@ -6,6 +13,13 @@ import grails.core.GrailsApplication
 import grails.transaction.Transactional
 import org.springframework.web.multipart.MultipartFile
 
+/**
+ * General Utilities Service.
+ *
+ * @author Milan Savaliya
+ * @author Nikil Sharma
+ * @since 3.1.1
+ */
 @Transactional
 class UtilitiesService {
     GrailsApplication grailsApplication

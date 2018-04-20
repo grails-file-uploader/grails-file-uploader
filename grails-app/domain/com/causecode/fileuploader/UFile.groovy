@@ -116,7 +116,7 @@ class UFile implements Serializable {
         }
 
         if (Environment.current != Environment.PRODUCTION) {
-            return containerName + '-' + Environment.current.name
+            return containerName
         }
 
         return containerName

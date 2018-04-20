@@ -19,6 +19,7 @@ class FileUploaderController {
     static namespace = 'v1'
 
     FileUploaderService fileUploaderService
+    UFileTemporaryUrlRenewerService urlRenewerService
 
     def download() {
         File file
@@ -127,7 +128,7 @@ class FileUploaderController {
     @Secured('ROLE_ADMIN')
     def renew() {
         try {
-            fileUploaderService.renewTemporaryURL()
+            urlRenewerService.renewTemporaryURL()
         } catch (ProviderNotFoundException e) {
             log.error e.message
             response.setStatus(404)
