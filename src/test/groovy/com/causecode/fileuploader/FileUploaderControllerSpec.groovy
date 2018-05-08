@@ -140,7 +140,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
             throw new ProviderNotFoundException('Provider missing.')
         }
 
-        controller.urlRenewerService = renewerService
+        controller.temporaryUrlRenewerService = renewerService
 
         when: 'renew action is executed successfully'
         boolean result  = controller.renew()

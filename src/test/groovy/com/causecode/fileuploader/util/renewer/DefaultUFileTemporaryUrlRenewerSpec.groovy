@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package com.causecode.fileuploader.util.process
+package com.causecode.fileuploader.util.renewer
 
 import com.causecode.fileuploader.CDNProvider
 import com.causecode.fileuploader.StorageException
@@ -13,25 +13,24 @@ import com.causecode.fileuploader.UFile
 import com.causecode.fileuploader.UFileType
 import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
-import com.causecode.fileuploader.util.UFileTemporaryUrlRenewer
 import grails.buildtestdata.mixin.Build
 import grails.util.Holders
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
- * Unit tests for {@link UFileTemporaryUrlRenewer}
+ * Unit tests for {@link DefaultUFileTemporaryUrlRenewer}
  *
  * @author Milan Savaliya
  * @since 3.1.1
  */
 @Build([UFile])
-class UFileTemporaryUrlRenewerSpec extends Specification {
+class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
 
     @Unroll
     void "test constrcutor when inputs are not valid"() {
         when:
-        UFileTemporaryUrlRenewer.newInstance(
+        DefaultUFileTemporaryUrlRenewer.newInstance(
                 cdnProvider,
                 fileUploder,
                 false,
@@ -58,7 +57,7 @@ class UFileTemporaryUrlRenewerSpec extends Specification {
 
     void "test constructor when all are valid inputs"() {
         when:
-        UFileTemporaryUrlRenewer renewer = UFileTemporaryUrlRenewer.newInstance(
+        DefaultUFileTemporaryUrlRenewer renewer = DefaultUFileTemporaryUrlRenewer.newInstance(
                 CDNProvider.GOOGLE,
                 Mock(GoogleCDNFileUploaderImpl),
                 false,
@@ -102,11 +101,11 @@ class UFileTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put("fileuploader.groups.SomeFileGroup.container", 'tendering-staging')
 
         when:
-        UFileTemporaryUrlRenewer renewer = new UFileTemporaryUrlRenewer(
+        DefaultUFileTemporaryUrlRenewer renewer = new DefaultUFileTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 forceAll, 5)
-        renewer.start()
+        renewer.renew()
 
         then:
         noExceptionThrown()

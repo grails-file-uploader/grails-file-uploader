@@ -8,7 +8,8 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
-import com.causecode.fileuploader.util.UFileTemporaryUrlRenewer
+import com.causecode.fileuploader.util.renewer.DefaultUFileTemporaryUrlRenewer
+import com.causecode.fileuploader.util.renewer.UFileTemporaryUrlRenewer
 import grails.transaction.Transactional
 import groovy.util.logging.Slf4j
 
@@ -30,8 +31,8 @@ class UFileTemporaryUrlRenewerService {
 
         (allProviders - providersToExclude).each { CDNProvider cdnProvider ->
             CDNFileUploader cDNFileUploader = utilitiesService.getProviderInstance(cdnProvider.name())
-            UFileTemporaryUrlRenewer renewer = new UFileTemporaryUrlRenewer(cdnProvider, cDNFileUploader, forceAll)
-            renewer.start()
+            UFileTemporaryUrlRenewer temporaryUrlRenewer = new DefaultUFileTemporaryUrlRenewer(cdnProvider, cDNFileUploader, forceAll)
+            temporaryUrlRenewer.renew()
         }
     }
 }

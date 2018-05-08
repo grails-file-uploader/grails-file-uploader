@@ -24,7 +24,7 @@ class FileUploaderController {
 
     @Autowired
     @Qualifier('UFileTemporaryUrlRenewerService')
-    UFileTemporaryUrlRenewerService urlRenewerService
+    UFileTemporaryUrlRenewerService temporaryUrlRenewerService
 
     def download() {
         File file
@@ -33,7 +33,7 @@ class FileUploaderController {
         try {
             uFileInstance = fileUploaderService.ufileById(params.id, request.locale)
             file = fileUploaderService.fileForUFile(uFileInstance, request.locale)
-        } catch (FileNotFoundException | IOException e) {
+        } catch (IOException e) {
             log.error e.message
             flash.message = e.message
             redirect controller: params.errorController, action: params.errorAction
@@ -133,7 +133,7 @@ class FileUploaderController {
     @Secured('ROLE_ADMIN')
     def renew() {
         try {
-            urlRenewerService.renewTemporaryURL()
+            temporaryUrlRenewerService.renewTemporaryURL()
         } catch (ProviderNotFoundException e) {
             log.error e.message
             response.setStatus(404)
