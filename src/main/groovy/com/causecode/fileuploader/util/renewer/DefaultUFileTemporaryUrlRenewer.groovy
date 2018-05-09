@@ -27,6 +27,7 @@ import groovy.util.logging.Slf4j
  * @since 3.1.3
  */
 @Slf4j
+@SuppressWarnings('FieldName') // Regex for final fields is incorrect in CodeNarc rules
 class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
 
     private final CDNProvider cdnProvider
@@ -100,6 +101,7 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
         }
     }
 
+    @SuppressWarnings('CannotModifyReference') // Method just saves the given instance after updating the properties
     private void updateExpirationPeriodAndUrl(UFile uFile) {
         long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
 
