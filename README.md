@@ -1,4 +1,4 @@
-# File-Uploader Plugin (Latest 3.1.3)
+# File-Uploader Plugin (Latest 3.1.2)
 
 Supported Grails 3.2.0
 

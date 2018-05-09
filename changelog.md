@@ -1,8 +1,11 @@
 # ChangeLog
 
-##
+## Version 3.1.2 [Unreleased]
 
-## Version 3.1.1 [Unreleased]
+### Changed
+- RenewTemprary URL Refactored to new service and now handles all the files
+
+## Version 3.1.1 [06-Apr-2017]
 
 ### Added
 - Functionality to disable URL renew job for installing application.
