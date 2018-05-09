@@ -8,13 +8,19 @@
 package com.causecode.fileuploader
 
 import grails.util.Holders
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 
 /**
  * A job which gets triggered at 2 am.
  */
 class DailyJob {
 
-    def fileUploaderService
+    @Autowired
+    @Qualifier('UFileTemporaryUrlRenewerService')
+    UFileTemporaryUrlRenewerService temporaryUrlRenewerService
+
+    FileUploaderService fileUploaderService
     def grailsEvents
 
     static triggers = {
@@ -33,13 +39,15 @@ class DailyJob {
 
         log.info 'Started executing DailyJob..'
 
-        fileUploaderService.renewTemporaryURL()
-        fileUploaderService.moveFailedFilesToCDN()
+        UFile.withNewSession {
+            temporaryUrlRenewerService.renewTemporaryURL()
+            fileUploaderService.moveFailedFilesToCDN()
+        }
 
         log.info 'Finished executing DailyJob.'
 
         /*
-         * Trigger event to notity the installing app for any further app specific processing.
+         * Trigger event to notify the installing app for any further app specific processing.
          *
          * TODO This is not working. Need to investigate grails events.
          */

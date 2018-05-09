@@ -8,7 +8,7 @@
 package com.causecode.fileuploader.util.renewer
 
 /**
- * Simple Contract for any DefaultUFileTemporaryUrlRenewer based execution
+ * Simple Contract for any TemporaryUrlRenewer based execution
  *
  * @author Milan Savaliya
  * @since 3.1.1

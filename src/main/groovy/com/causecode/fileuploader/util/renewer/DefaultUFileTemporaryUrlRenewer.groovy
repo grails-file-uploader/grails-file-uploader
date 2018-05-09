@@ -15,7 +15,6 @@ import com.causecode.fileuploader.UFile
 import com.causecode.fileuploader.UFileType
 import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.util.Time
-import com.causecode.fileuploader.util.renewer.UFileTemporaryUrlRenewer
 import com.causecode.util.NucleusUtils
 import grails.util.Holders
 import groovy.util.logging.Slf4j
@@ -25,10 +24,12 @@ import org.grails.datastore.mapping.query.api.Criteria
  * This renewer, fetches UFiles of given CDNProvider and then renews its temporary urls.
  *
  * @author Milan Savaliya
- * @since 1.0.3
+ * @author Hardik Modha
+ * @since 3.1.3
  */
 @Slf4j
 class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
+
     private final CDNProvider cdnProvider
     private final CDNFileUploader cdnFileUploader
     private final int maxResultsInOneIteration
@@ -93,25 +94,25 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
             log.debug "Renewing URL for $uFile"
 
             try {
-                renewURL(uFile)
-                NucleusUtils.save(uFile, true)
-
-                log.debug "New URL for $uFile [$uFile.path] [$uFile.expiresOn]"
+                updateExpirationPeriodAndUrl(uFile)
             } catch (StorageException ex) {
-                log.error("URL is not generated for File: $uFile due to $ex.message")
+                log.error("URL is not generated for File: $uFile due to $ex.message", ex)
             }
         }
     }
 
-    private void renewURL(UFile uFile) {
+    private void updateExpirationPeriodAndUrl(UFile uFile) {
         long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
 
-        uFile.path = cdnFileUploader.getTemporaryURL(uFile.container,
-                uFile.fullName, expirationPeriod)
+        uFile.path = cdnFileUploader.getTemporaryURL(uFile.container, uFile.fullName, expirationPeriod)
         uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
+
+        if (NucleusUtils.save(uFile, true)) {
+            log.debug "New URL for $uFile [$uFile.path] [$uFile.expiresOn]"
+        }
     }
 
-    long getExpirationPeriod(String fileGroup) {
+    private long getExpirationPeriod(String fileGroup) {
         // Default to 30 Days
         return Holders.flatConfig["fileuploader.groups.${fileGroup}.expirationPeriod"] ?: (Time.DAY * 30)
     }

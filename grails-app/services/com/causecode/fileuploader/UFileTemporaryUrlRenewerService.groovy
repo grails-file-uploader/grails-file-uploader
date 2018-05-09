@@ -11,16 +11,14 @@ import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.util.renewer.DefaultUFileTemporaryUrlRenewer
 import com.causecode.fileuploader.util.renewer.UFileTemporaryUrlRenewer
 import grails.transaction.Transactional
-import groovy.util.logging.Slf4j
 
 /**
  * Service which communicates with UFileTemporaryUrlRenewers.
  *
  * @author Milan Savaliya
- * @since 3.1.1
+ * @since 3.
  */
 @Transactional
-@Slf4j
 class UFileTemporaryUrlRenewerService {
 
     UtilitiesService utilitiesService
@@ -31,7 +29,12 @@ class UFileTemporaryUrlRenewerService {
 
         (allProviders - providersToExclude).each { CDNProvider cdnProvider ->
             CDNFileUploader cDNFileUploader = utilitiesService.getProviderInstance(cdnProvider.name())
-            UFileTemporaryUrlRenewer temporaryUrlRenewer = new DefaultUFileTemporaryUrlRenewer(cdnProvider, cDNFileUploader, forceAll)
+
+            UFileTemporaryUrlRenewer temporaryUrlRenewer =
+                    new DefaultUFileTemporaryUrlRenewer(cdnProvider, cDNFileUploader, forceAll)
+
+            log.debug "Renewing TemporaryUrls for the $cdnProvider"
+
             temporaryUrlRenewer.renew()
         }
     }
