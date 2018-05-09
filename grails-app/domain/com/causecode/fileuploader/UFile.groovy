@@ -10,12 +10,14 @@ package com.causecode.fileuploader
 import grails.util.Environment
 import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
+import groovy.util.logging.Slf4j
 
 /**
  * A domain class which will hold the UFile related data.
  */
+@Slf4j
 @EqualsAndHashCode
-@SuppressWarnings(['GrailsDomainReservedSqlKeywordName', 'JavaIoPackageAccess'])
+@SuppressWarnings(['GrailsDomainReservedSqlKeywordName', 'JavaIoPackageAccess', 'GrailsDomainWithServiceReference'])
 class UFile implements Serializable {
 
     private static final long serialVersionUID = 1
@@ -23,6 +25,8 @@ class UFile implements Serializable {
     int downloads
 
     CDNProvider provider
+
+    String envName = Environment.current.name  // development, production, test or custom environment.
 
     Date dateUploaded = new Date()
     Date expiresOn
@@ -45,7 +49,9 @@ class UFile implements Serializable {
     Date dateCreated
     Date lastUpdated
 
-    static transients = ['serialVersionUID']
+    FileUploaderService fileUploaderService
+
+    static transients = ['serialVersionUID', 'fileUploaderService']
 
     static constraints = {
         expiresOn nullable: true
@@ -58,6 +64,7 @@ class UFile implements Serializable {
         checksumAlgorithm nullable: true
         dateCreated bindable: false
         lastUpdated bindable: false
+        envName bindable: false
     }
 
     static mapping = {
@@ -74,11 +81,17 @@ class UFile implements Serializable {
          * Using Holder class to get service instead of injecting it as dependency injection with transient modifier.
          * This prevents problem when we deserialize any instance of this class and the injected beans gets null value.
          */
-        Holders.applicationContext['fileUploaderService'].deleteFileForUFile(this)
+        if (this.envName == Environment.current.name) {
+            log.warn('Deleting file from CDN...')
+
+            fileUploaderService.deleteFileForUFile(this)
+        } else {
+            log.warn('File was uploaded from a different environment. Not deleting the actual file.')
+        }
     }
 
     String searchLink() {
-        Holders.applicationContext['fileUploaderService'].resolvePath(this)
+        fileUploaderService.resolvePath(this)
     }
 
     boolean canMoveToCDN() {

@@ -163,9 +163,10 @@ class FileGroup {
      * This method is used to modify fileName obtained from fileDataMap.
      * @params userInstance, fileDataMap, group, currentTimeMillis
      *
+     * @return scopedFileName {@link String}
      * @throws StorageConfigurationException
      */
-    void scopeFileName(Object userInstance, Map fileDataMap, String group, Long currentTimeMillis)
+    String scopeFileName(Object userInstance, Map fileDataMap, String group, Long currentTimeMillis)
             throws StorageConfigurationException {
         String container = containerName
 
@@ -197,7 +198,7 @@ class FileGroup {
          * logo-1415804444014-organizationlogo.png
          *
          */
-        fileDataMap.fileName = fileNameBuilder.toString()
+        return fileNameBuilder.toString()
     }
 
     // Method which fetches containerName from application.groovy file and returns it.

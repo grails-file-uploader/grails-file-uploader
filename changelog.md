@@ -1,14 +1,28 @@
 # ChangeLog
 
-## Version 3.1.2 [Unreleased]
+## Version 3.1.3 [Unreleased]
 
 ### Changed
 - RenewTemprary URL Refactored to new service and now handles all the files
 
-## Version 3.1.1 [06-Apr-2017]
+## Version 3.1.2 [02-May-2018]
+
+### Added
+- Added environment specific UFile feature. This enables deletion of remote files only when the upload operation was  
+performed in the same environment.
+
+## Modified
+- Updated gradle-code-quality plugin version from 1.0.1-RC1 to 1.0.2
+
+## Version 3.1.1 [06-April-2018]
 
 ### Added
 - Functionality to disable URL renew job for installing application.
+
+## Version 3.1.0 [08-March-2018]
+
+### Added
+- Ability to avoid duplicate file upload using checksum algorithm.
 
 ## Version 3.0.9 [28-Nov-2017]
 

@@ -93,7 +93,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         Map fileGroupMap = [fileName: 'test']
 
         when: 'scopeFileMethod is called and method executes successfully'
-        fileGroupInstance.scopeFileName(uFileInstance, fileGroupMap, 'testGoogle', 0L)
+        fileGroupMap.fileName = fileGroupInstance.scopeFileName(uFileInstance, fileGroupMap, 'testGoogle', 0L)
 
         then: 'No exception is thrown'
         noExceptionThrown()

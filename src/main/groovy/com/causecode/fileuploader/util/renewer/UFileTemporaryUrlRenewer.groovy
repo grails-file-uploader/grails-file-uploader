@@ -11,7 +11,7 @@ package com.causecode.fileuploader.util.renewer
  * Simple Contract for any TemporaryUrlRenewer based execution
  *
  * @author Milan Savaliya
- * @since 3.1.1
+ * @since 3.1.3
  */
 interface UFileTemporaryUrlRenewer {
     void renew()

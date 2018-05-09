@@ -1,4 +1,7 @@
-# File-Uploader Plugin (Latest 3.1.2)
+# File-Uploader Plugin (Latest 3.1.3)
+
+[![Maintainability](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/maintainability)](https://codeclimate.com/github/causecode/grails-file-uploader/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/test_coverage)](https://codeclimate.com/github/causecode/grails-file-uploader/test_coverage)
 
 Supported Grails 3.2.0
 

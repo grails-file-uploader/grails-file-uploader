@@ -7,24 +7,29 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.logger.ReplaceSlf4jLogger
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.util.Environment
 import grails.util.Holders
+import org.junit.Rule
+import org.slf4j.Logger
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * This class contains unit test cases for UFile class.
  */
 @TestFor(UFile)
 @Build(UFile)
-@Mock([FileUploaderService])
 class UFileSpec extends Specification implements BaseTestSetup {
+
+    Logger logger = Mock(Logger)
+    @Rule ReplaceSlf4jLogger replaceSlf4jLogger = new ReplaceSlf4jLogger(UFile, logger)
 
     def setup() {
         UtilitiesService utilitiesService = Mock(UtilitiesService)
-        FileUploaderService service = Holders.applicationContext['fileUploaderService']
+        FileUploaderService service = Mock(FileUploaderService)
         service.utilitiesService = utilitiesService
     }
 
@@ -70,6 +75,14 @@ class UFileSpec extends Specification implements BaseTestSetup {
         UFile uFileInstance = UFile.build()
         uFileInstance.type = UFileType.CDN_PUBLIC
 
+        and: 'Mocked fileUploaderService method call'
+        FileUploaderService fileUploaderServiceMock = Mock(FileUploaderService)
+        fileUploaderServiceMock.resolvePath(_) >> {
+            uFileInstance.path
+        }
+
+        uFileInstance.fileUploaderService = fileUploaderServiceMock
+
         when: 'searchLink method is called and UFile is PUBLIC type'
         String result = uFileInstance.searchLink()
 
@@ -79,12 +92,18 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
     void "test afterDelete method"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = UFile.build()
-        uFileInstance.type = UFileType.CDN_PUBLIC
-        uFileInstance.provider = CDNProvider.RACKSPACE
+        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC, provider: CDNProvider.RACKSPACE)
+
+        and: 'Mocked fileUploaderService method call'
+        FileUploaderService fileUploaderServiceMock = Mock(FileUploaderService)
+        fileUploaderServiceMock.deleteFileForUFile(_) >> {
+            throw new ProviderNotFoundException('Provider RACKSPACE not found.')
+        }
+
+        uFileInstance.fileUploaderService = fileUploaderServiceMock
 
         and: 'getProvider throws ProviderNotFoundException'
-        Holders.applicationContext['fileUploaderService'].utilitiesService.getProviderInstance(_) >> { String name ->
+        uFileInstance.fileUploaderService.utilitiesService.getProviderInstance(_) >> { String name ->
             throw new ProviderNotFoundException('Provider RACKSPACE not found.')
         }
 
@@ -117,5 +136,33 @@ class UFileSpec extends Specification implements BaseTestSetup {
 
         then: 'Method returns containerName'
         result == 'test'
+    }
+
+    @Unroll
+    void "test afterDelete method call to check for environment before deleting actual file when env #condition"() {
+        given: 'An instance of UFile'
+        UFile uFile = UFile.build()
+        uFile.fileUploaderService = Mock(FileUploaderService)
+
+        and: 'Mocked Environment'
+        Environment environmentMock = GroovyMock(Environment, global: true)
+        Environment.current >> {
+            environmentMock.name >> {
+                return currentEnv
+            }
+
+            return environmentMock
+        }
+
+        when: 'afterDelete method is called and environments do not match'
+        uFile.afterDelete()
+
+        then: 'The deleteFileForUFile method does not get called'
+        1 * logger.warn(warnMessage)
+
+        where:
+        condition      | currentEnv   | warnMessage
+        'match'        | 'test'       | 'Deleting file from CDN...'
+        'don\'t match' | 'production' | 'File was uploaded from a different environment. Not deleting the actual file.'
     }
 }

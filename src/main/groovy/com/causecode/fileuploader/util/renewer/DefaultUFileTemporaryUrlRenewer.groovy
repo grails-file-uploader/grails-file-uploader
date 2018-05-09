@@ -24,7 +24,7 @@ import groovy.util.logging.Slf4j
  *
  * @author Milan Savaliya
  * @author Hardik Modha
- * @since 3.1.2
+ * @since 3.1.3
  */
 @Slf4j
 class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
