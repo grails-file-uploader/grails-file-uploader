@@ -8,17 +8,13 @@
 package com.causecode.fileuploader
 
 import grails.util.Holders
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 
 /**
  * A job which gets triggered at 2 am.
  */
 class DailyJob {
 
-    @Autowired
-    @Qualifier('UFileTemporaryUrlRenewerService')
-    UFileTemporaryUrlRenewerService temporaryUrlRenewerService
+    UFileTemporaryUrlRenewerService ufileTemporaryUrlRenewerService
 
     FileUploaderService fileUploaderService
     def grailsEvents
@@ -40,7 +36,7 @@ class DailyJob {
         log.info 'Started executing DailyJob..'
 
         UFile.withNewSession {
-            temporaryUrlRenewerService.renewTemporaryURL()
+            ufileTemporaryUrlRenewerService.renewTemporaryURL()
             fileUploaderService.moveFailedFilesToCDN()
         }
 

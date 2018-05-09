@@ -21,10 +21,7 @@ class FileUploaderController {
     static namespace = 'v1'
 
     FileUploaderService fileUploaderService
-
-    @Autowired
-    @Qualifier('UFileTemporaryUrlRenewerService')
-    UFileTemporaryUrlRenewerService temporaryUrlRenewerService
+    UFileTemporaryUrlRenewerService ufileTemporaryUrlRenewerService
 
     def download() {
         File file
@@ -133,7 +130,7 @@ class FileUploaderController {
     @Secured('ROLE_ADMIN')
     def renew() {
         try {
-            temporaryUrlRenewerService.renewTemporaryURL()
+            ufileTemporaryUrlRenewerService.renewTemporaryURL()
         } catch (ProviderNotFoundException e) {
             log.error e.message
             response.setStatus(404)

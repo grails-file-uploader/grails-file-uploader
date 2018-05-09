@@ -18,7 +18,6 @@ import com.causecode.fileuploader.util.Time
 import com.causecode.util.NucleusUtils
 import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.grails.datastore.mapping.query.api.Criteria
 
 /**
  * This renewer, fetches UFiles of given CDNProvider and then renews its temporary urls.
@@ -56,7 +55,7 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
         int offset = 0
         List<UFile> uFiles
 
-        while ((uFiles = getResultListStartingFrom(offset)).size()) {
+        while ((uFiles = getResultListFromOffset(offset)).size()) {
             processResultList(uFiles)
             offset += this.maxResultsInOneIteration
         }
@@ -64,11 +63,11 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
         cdnFileUploader.close()
     }
 
-    private List<UFile> getResultListStartingFrom(int offset) {
+    private List<UFile> getResultListFromOffset(int offset) {
         return UFile.createCriteria().list([offset: offset, max: this.maxResultsInOneIteration], criteriaClosure())
     }
 
-    private Closure<Criteria> criteriaClosure() {
+    private Closure criteriaClosure() {
         return {
             eq('type', UFileType.CDN_PUBLIC)
             eq('provider', this.cdnProvider)
@@ -86,7 +85,7 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
                     between('expiresOn', new Date(), new Date() + 1)
                 }
             }
-        } as Closure
+        }
     }
 
     private List<UFile> processResultList(List<UFile> resultList) {

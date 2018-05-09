@@ -23,7 +23,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
     // Note: Not a database query. Calling list action in FileUploaderController.
     @SuppressWarnings(['GrailsMaxForListQueries'])
-    void "test list action to get UFile realted information"() {
+    void "test list action to get UFile related information"() {
         given: 'An instance of UFile'
         UFile uFileInstance = UFile.build()
 
@@ -140,7 +140,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
             throw new ProviderNotFoundException('Provider missing.')
         }
 
-        controller.temporaryUrlRenewerService = renewerService
+        controller.ufileTemporaryUrlRenewerService = renewerService
 
         when: 'renew action is executed successfully'
         boolean result  = controller.renew()

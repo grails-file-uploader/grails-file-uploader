@@ -152,7 +152,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'UFile instance should be successfully saved'
         ufileInstancefile.provider == provider
         ufileInstancefile.extension == 'txt'
-        ufileInstancefile.container == 'causecode'
+        ufileInstancefile.container == 'causecode-test'
         ufileInstancefile.fileGroup == fileGroup
 
         file.delete()
@@ -488,7 +488,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         assert uFileInstance.type == UFileType.CDN_PUBLIC
 
         and: 'Mocked getProviderInstance method'
-        1* service.utilitiesService.getProviderInstance(_) >> { String provider ->
+        1 * service.utilitiesService.getProviderInstance(_) >> { String provider ->
             throw new ProviderNotFoundException('Provider RACKSPACE not found.')
         } >> { String provider ->
             return amazonCDNFileUploaderImplMock

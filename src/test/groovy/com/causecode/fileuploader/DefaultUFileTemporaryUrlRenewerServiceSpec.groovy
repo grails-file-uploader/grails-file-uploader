@@ -27,7 +27,7 @@ class DefaultUFileTemporaryUrlRenewerServiceSpec extends Specification {
         DefaultUFileTemporaryUrlRenewer renewer = Mock(DefaultUFileTemporaryUrlRenewer)
         renewer.renew() >> { /*do nothing*/ }
         GroovyMock(DefaultUFileTemporaryUrlRenewer, global:true)
-        new DefaultUFileTemporaryUrlRenewer(_,_,_) >> renewer
+        new DefaultUFileTemporaryUrlRenewer(_ , _ ,_) >> renewer
 
         when:
         service.renewTemporaryURL(true)

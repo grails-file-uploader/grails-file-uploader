@@ -46,6 +46,7 @@ class UtilitiesService {
         }
     }
 
+    @SuppressWarnings('JavaIoPackageAccess')
     String getNewTemporaryDirectoryPath() {
         String tempDirectoryPath = FileUploaderUtils.baseTemporaryDirectoryPath + UUID.randomUUID().toString() + '/'
         File tempDirectory = new File(tempDirectoryPath)
@@ -57,6 +58,7 @@ class UtilitiesService {
         return tempDirectoryPath
     }
 
+    @SuppressWarnings('JavaIoPackageAccess')
     File getTempFilePathForMultipartFile(String fileName, String fileExtension) {
         return new File(newTemporaryDirectoryPath + "${fileName}.${fileExtension}")
     }
@@ -66,6 +68,7 @@ class UtilitiesService {
      * @params fileInstance , path
      *
      */
+    @SuppressWarnings(['Instanceof', 'JavaIoPackageAccess'])
     void moveFile(def file, String path) {
         if (file instanceof File) {
             file.renameTo(new File(path))

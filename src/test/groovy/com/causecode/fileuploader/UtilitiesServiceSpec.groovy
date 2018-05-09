@@ -27,7 +27,7 @@ class UtilitiesServiceSpec extends Specification {
 
     void "test getNewTemporaryDirectoryPath method"() {
         when:
-        service.getNewTemporaryDirectoryPath()
+        service.newTemporaryDirectoryPath
         then:
         noExceptionThrown()
     }
@@ -39,6 +39,7 @@ class UtilitiesServiceSpec extends Specification {
         noExceptionThrown()
     }
 
+    @SuppressWarnings('JavaIoPackageAccess')
     void "test moveFile"() {
         setup: 'Dummy Dir'
         File dir = new File('./dummyDir')
@@ -48,7 +49,7 @@ class UtilitiesServiceSpec extends Specification {
         when: 'instance is of simpleFile'
         File f = new File('./test')
         f.deleteOnExit()
-        service.moveFile(f, dir.getAbsolutePath())
+        service.moveFile(f, dir.absolutePath)
 
         then:
         noExceptionThrown()
@@ -56,7 +57,7 @@ class UtilitiesServiceSpec extends Specification {
         when: 'instance is of multipart file'
         MultipartFile multipartFile = Mock(MultipartFile)
         multipartFile.transferTo(_) >> { File input -> }
-        service.moveFile(multipartFile, dir.getAbsolutePath())
+        service.moveFile(multipartFile, dir.absolutePath)
 
         then:
         noExceptionThrown()
