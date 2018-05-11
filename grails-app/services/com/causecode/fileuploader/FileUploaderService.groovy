@@ -9,19 +9,18 @@ package com.causecode.fileuploader
 
 import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
+import com.causecode.fileuploader.provider.ProviderService
 import com.causecode.fileuploader.util.FileUploaderUtils
 import com.causecode.fileuploader.util.Time
 import com.causecode.fileuploader.util.checksum.ChecksumValidator
 import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import com.causecode.util.NucleusUtils
-import grails.core.GrailsApplication
 import grails.util.Holders
 import groovy.io.FileType
 import org.apache.commons.validator.UrlValidator
 import org.springframework.context.MessageSource
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.web.multipart.MultipartFile
-
 import java.nio.channels.FileChannel
 
 /**
@@ -31,40 +30,7 @@ import java.nio.channels.FileChannel
 class FileUploaderService {
 
     MessageSource messageSource
-    GrailsApplication grailsApplication
-
-    /**
-     * This method is used for dynamically instantiating the CDNFileUploader class based on the Provider.
-     *
-     * @param providerName The name of the provider.
-     * @return Instance of the CDNFileUploader class.
-     *
-     * @author Nikhil Sharma
-     * @since 2.4.9
-     */
-    CDNFileUploader getProviderInstance(String providerName) {
-        String packageName = "com.causecode.fileuploader.cdn.${providerName.toLowerCase()}."
-        String classNamePrefix = providerName.toLowerCase().capitalize()
-        String providerClassName = packageName + "${classNamePrefix}CDNFileUploaderImpl"
-
-        try {
-            return grailsApplication.classLoader.loadClass(providerClassName)?.newInstance()
-        } catch (ClassNotFoundException e) {
-            log.debug 'Could not find Provider class', e
-            throw new ProviderNotFoundException("Provider $providerName not found.", e)
-        }
-    }
-
-    String getNewTemporaryDirectoryPath() {
-        String tempDirectoryPath = FileUploaderUtils.baseTemporaryDirectoryPath + UUID.randomUUID().toString() + '/'
-        File tempDirectory = new File(tempDirectoryPath)
-        tempDirectory.mkdirs()
-
-        // Delete the temporary directory when JVM exited
-        tempDirectory.deleteOnExit()
-
-        return tempDirectoryPath
-    }
+    ProviderService providerService
 
     /**
      * This method is used to save files locally or to CDN providers.
@@ -75,9 +41,9 @@ class FileUploaderService {
      * @return
      */
     UFile saveFile(String group, def file, String customFileName = '', Object userInstance = null, Locale locale = null)
-            throws StorageConfigurationException, UploadFailureException,
-                    ProviderNotFoundException, FileNotFoundException,
-                    DuplicateFileException {
+            throws StorageConfigurationException, UploadFailureException, ProviderNotFoundException, IOException,
+            IllegalStateException {
+
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
@@ -119,7 +85,9 @@ class FileUploaderService {
                 tempFile = file
             } else {
                 if (file instanceof MultipartFile) {
-                    tempFile = getTempFilePathForMultipartFile(fileData.fileName, fileData.fileExtension)
+                    tempFile = FileUploaderUtils.getTempFilePathForMultipartFile(fileData.fileName,
+                            fileData.fileExtension)
+
                     file.transferTo(tempFile)
                 }
             }
@@ -137,7 +105,7 @@ class FileUploaderService {
         } else {
             path = fileGroupInstance.getLocalSystemPath(storageTypes, fileData, currentTimeMillis)
             log.debug "Moving [$fileData.fileName] to [${path}]."
-            moveFile(file, path)
+            FileUploaderUtils.moveFile(file, path)
         }
 
         UFile ufile = new UFile(
@@ -151,10 +119,6 @@ class FileUploaderService {
 
         NucleusUtils.save(ufile, true)
         return ufile
-    }
-
-    private File getTempFilePathForMultipartFile(String fileName, String fileExtension) {
-        return new File(newTemporaryDirectoryPath + "${fileName}.${fileExtension}")
     }
 
     /**
@@ -172,7 +136,7 @@ class FileUploaderService {
         String containerName = fileGroupInstance.containerName
 
         try {
-            fileUploaderInstance = getProviderInstance(fileGroupInstance.cdnProvider.name())
+            fileUploaderInstance = providerService.getProviderInstance(fileGroupInstance.cdnProvider.name())
             fileUploaderInstance.uploadFile(containerName, tempFile, tempFileFullName, makePublic, expirationPeriod)
 
             if (makePublic) {
@@ -186,21 +150,6 @@ class FileUploaderService {
         }
 
         return path
-    }
-
-    /**
-     * Method is used to move file from temp directory to another.
-     * @params fileInstance , path
-     *
-     */
-    void moveFile(def file, String path) {
-        if (file instanceof File) {
-            file.renameTo(new File(path))
-        } else {
-            if (file instanceof MultipartFile) {
-                file.transferTo(new File(path))
-            }
-        }
     }
 
     boolean deleteFile(Serializable idUfile) {
@@ -227,7 +176,7 @@ class FileUploaderService {
 
             CDNFileUploader fileUploaderInstance
             try {
-                fileUploaderInstance = getProviderInstance(ufileInstance.provider.name())
+                fileUploaderInstance = providerService.getProviderInstance(ufileInstance.provider.name())
                 fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
             } finally {
                 fileUploaderInstance?.close()
@@ -320,7 +269,7 @@ class FileUploaderService {
 
         log.info "Cloning ufile [${ufileInstance.id}][${ufileInstance.name}]"
 
-        String tempFile = newTemporaryDirectoryPath + (name ?: ufileInstance.fullName)
+        String tempFile = FileUploaderUtils.newTemporaryDirectoryPath + (name ?: ufileInstance.fullName)
 
         File destFile = new File(tempFile)
         if (!destFile.exists()) {
@@ -372,54 +321,6 @@ class FileUploaderService {
         }
     }
 
-    void renewTemporaryURL(boolean forceAll = false) {
-        CDNProvider.values().each { CDNProvider cdnProvider ->
-            if (cdnProvider == CDNProvider.RACKSPACE || cdnProvider == CDNProvider.LOCAL) {
-                return
-            }
-
-            CDNFileUploader fileUploaderInstance = getProviderInstance(cdnProvider.name())
-
-            if (!fileUploaderInstance) {
-                return
-            }
-
-            UFile.withCriteria {
-                eq('type', UFileType.CDN_PUBLIC)
-                eq('provider', cdnProvider)
-
-                if (Holders.flatConfig['fileuploader.persistence.provider'] == 'mongodb') {
-                    eq('expiresOn', [$exists: true])
-                } else {
-                    isNotNull('expiresOn')
-                }
-
-                if (!forceAll) {
-                    or {
-                        lt('expiresOn', new Date())
-                        // Getting all CDN UFiles which are about to expire within one day.
-                        between('expiresOn', new Date(), new Date() + 1)
-                    }
-                }
-
-                maxResults(100)
-            }.each { UFile ufileInstance ->
-                log.debug "Renewing URL for $ufileInstance"
-
-                long expirationPeriod = getExpirationPeriod(ufileInstance.fileGroup)
-
-                ufileInstance.path = fileUploaderInstance.getTemporaryURL(ufileInstance.container,
-                        ufileInstance.fullName, expirationPeriod)
-                ufileInstance.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
-                NucleusUtils.save(ufileInstance, true)
-
-                log.debug "New URL for $ufileInstance [$ufileInstance.path] [$ufileInstance.expiresOn]"
-            }
-
-            fileUploaderInstance.close()
-        }
-    }
-
     long getExpirationPeriod(String fileGroup) {
         // Default to 30 Days
         return Holders.flatConfig["fileuploader.groups.${fileGroup}.expirationPeriod"] ?: (Time.DAY * 30)
@@ -432,7 +333,7 @@ class FileUploaderService {
      * @param filename Name of the file
      */
     File getFileFromURL(String url, String filename) throws IOException {
-        String path = newTemporaryDirectoryPath
+        String path = FileUploaderUtils.newTemporaryDirectoryPath
 
         File file = new File(path + filename.replaceAll('/', '-'))
         FileOutputStream fileOutputStream = new FileOutputStream(file)
@@ -550,7 +451,7 @@ class FileUploaderService {
                 if (toCDNProvider == CDNProvider.GOOGLE || toCDNProvider == CDNProvider.AMAZON) {
                     CDNFileUploader fileUploaderInstance
                     try {
-                        fileUploaderInstance = getProviderInstance(toCDNProvider.name())
+                        fileUploaderInstance = providerService.getProviderInstance(toCDNProvider.name())
                         fileUploaderInstance.uploadFile(uFile.container, downloadedFile, fileName, makePublic,
                                 expirationPeriod)
 

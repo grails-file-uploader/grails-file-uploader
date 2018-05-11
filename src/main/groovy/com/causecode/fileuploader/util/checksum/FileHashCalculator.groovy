@@ -23,7 +23,7 @@ import java.security.MessageDigest
 class FileHashCalculator implements HashCalculator {
 
     //FileInputBean instance
-    private final FileInputBean FILE_INPUT_BEAN
+    private final FileInputBean fileInputBean
 
     /**
      * Constructs FileHashCalculator instance and throws FileNotFoundException If Input File Is null or not exists
@@ -33,7 +33,7 @@ class FileHashCalculator implements HashCalculator {
      * @throws FileNotFoundException
      */
     FileHashCalculator(FileInputBean fileInputBean) throws FileNotFoundException {
-        this.FILE_INPUT_BEAN = fileInputBean
+        this.fileInputBean = fileInputBean
         validateInputs()
     }
 
@@ -51,7 +51,7 @@ class FileHashCalculator implements HashCalculator {
      * This Method validates inputs.
      */
     private void validateInputs() throws FileNotFoundException {
-        if (!FILE_INPUT_BEAN) {
+        if (!fileInputBean) {
             throw new FileNotFoundException('File not found')
         }
     }
@@ -62,9 +62,9 @@ class FileHashCalculator implements HashCalculator {
      */
     @Override
     String calculateHash() {
-        log.info "Starting checksum calculation For File ${FILE_INPUT_BEAN.name}"
+        log.info "Starting checksum calculation For File ${fileInputBean.name}"
         MessageDigest messageDigest = MessageDigest.getInstance(this.algorithm.toString())
-        String hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.FILE_INPUT_BEAN.bytes))
+        String hexHasString = new HexBinaryAdapter().marshal(messageDigest.digest(this.fileInputBean.bytes))
         log.info "Calculated Checksum is:- ${hexHasString}"
 
         return hexHasString

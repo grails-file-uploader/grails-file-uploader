@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
 import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
 import grails.test.mixin.TestFor
@@ -23,7 +24,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
 
     // Note: Not a database query. Calling list action in FileUploaderController.
     @SuppressWarnings(['GrailsMaxForListQueries'])
-    void "test list action to get UFile realted information"() {
+    void "test list action to get UFile related information"() {
         given: 'An instance of UFile'
         UFile uFileInstance = UFile.build()
 
@@ -134,13 +135,13 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup 
     }
 
     void "test renew action"() {
-        given: 'Mocked fileUploaderService methods'
-        FileUploaderService fileUploaderService = Mock(FileUploaderService)
-        2 * fileUploaderService.renewTemporaryURL() >> { } >> {
+        given: 'Mocked TemporaryUrlRenewerService methods'
+        TemporaryUrlRenewerService renewerService = Mock(TemporaryUrlRenewerService)
+        2 * renewerService.renewTemporaryURL() >> { } >> {
             throw new ProviderNotFoundException('Provider missing.')
         }
 
-        controller.fileUploaderService = fileUploaderService
+        controller.temporaryUrlRenewerService = renewerService
 
         when: 'renew action is executed successfully'
         boolean result  = controller.renew()

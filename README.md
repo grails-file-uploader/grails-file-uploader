@@ -1,11 +1,11 @@
-# File-Uploader Plugin (Latest 3.1.2)
+# File-Uploader Plugin (Latest 3.1.3)
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/maintainability)](https://codeclimate.com/github/causecode/grails-file-uploader/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/test_coverage)](https://codeclimate.com/github/causecode/grails-file-uploader/test_coverage)
 
 Supported Grails 3.2.0
 
-# For Grails 2.x refer branch [here](https://bitbucket.org/causecode/grails-file-uploader/src/a26a79d1a8fceada58f7ad3fd5550a75a27e247c/?at=grails-2.x-master)
+# For Grails 2.x refer branch [here](https://github.com/causecode/grails-file-uploader/tree/grails-2.x-master)
 
 #### Causecode Technologies Pvt. Ltd.
 

@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
 import grails.util.Holders
 
 /**
@@ -14,7 +15,9 @@ import grails.util.Holders
  */
 class DailyJob {
 
-    def fileUploaderService
+    TemporaryUrlRenewerService temporaryUrlRenewerService
+
+    FileUploaderService fileUploaderService
     def grailsEvents
 
     static triggers = {
@@ -33,13 +36,15 @@ class DailyJob {
 
         log.info 'Started executing DailyJob..'
 
-        fileUploaderService.renewTemporaryURL()
-        fileUploaderService.moveFailedFilesToCDN()
+        UFile.withNewSession {
+            temporaryUrlRenewerService.renewTemporaryURL()
+            fileUploaderService.moveFailedFilesToCDN()
+        }
 
         log.info 'Finished executing DailyJob.'
 
         /*
-         * Trigger event to notity the installing app for any further app specific processing.
+         * Trigger event to notify the installing app for any further app specific processing.
          *
          * TODO This is not working. Need to investigate grails events.
          */
