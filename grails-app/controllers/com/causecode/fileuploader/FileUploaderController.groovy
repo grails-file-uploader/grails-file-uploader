@@ -7,9 +7,8 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
 import grails.util.Environment
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.access.annotation.Secured
 
 /**
@@ -21,7 +20,7 @@ class FileUploaderController {
     static namespace = 'v1'
 
     FileUploaderService fileUploaderService
-    UFileTemporaryUrlRenewerService ufileTemporaryUrlRenewerService
+    TemporaryUrlRenewerService temporaryUrlRenewerService
 
     def download() {
         File file
@@ -130,7 +129,7 @@ class FileUploaderController {
     @Secured('ROLE_ADMIN')
     def renew() {
         try {
-            ufileTemporaryUrlRenewerService.renewTemporaryURL()
+            temporaryUrlRenewerService.renewTemporaryURL()
         } catch (ProviderNotFoundException e) {
             log.error e.message
             response.setStatus(404)

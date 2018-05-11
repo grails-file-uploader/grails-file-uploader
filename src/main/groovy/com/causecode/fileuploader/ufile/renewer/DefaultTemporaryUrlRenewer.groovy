@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package com.causecode.fileuploader.util.renewer
+package com.causecode.fileuploader.ufile.renewer
 
 import static com.google.common.base.Preconditions.checkArgument
 
@@ -28,14 +28,14 @@ import groovy.util.logging.Slf4j
  */
 @Slf4j
 @SuppressWarnings('FieldName') // Regex for final fields is incorrect in CodeNarc rules
-class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
+class DefaultTemporaryUrlRenewer implements TemporaryUrlRenewer {
 
     private final CDNProvider cdnProvider
     private final CDNFileUploader cdnFileUploader
     private final int maxResultsInOneIteration
     private final boolean forceAll
 
-    DefaultUFileTemporaryUrlRenewer(
+    DefaultTemporaryUrlRenewer(
             CDNProvider cdnProvider,
             CDNFileUploader cdnFileUploader,
             boolean forceAll,
@@ -102,7 +102,7 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
     }
 
     @SuppressWarnings('CannotModifyReference') // Method just saves the given instance after updating the properties
-    private void updateExpirationPeriodAndUrl(UFile uFile) {
+    private boolean updateExpirationPeriodAndUrl(UFile uFile) {
         long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
 
         uFile.path = cdnFileUploader.getTemporaryURL(uFile.container, uFile.fullName, expirationPeriod)
@@ -110,7 +110,11 @@ class DefaultUFileTemporaryUrlRenewer implements UFileTemporaryUrlRenewer {
 
         if (NucleusUtils.save(uFile, true)) {
             log.debug "New URL for $uFile [$uFile.path] [$uFile.expiresOn]"
+
+            return true
         }
+
+        return false
     }
 
     private long getExpirationPeriod(String fileGroup) {

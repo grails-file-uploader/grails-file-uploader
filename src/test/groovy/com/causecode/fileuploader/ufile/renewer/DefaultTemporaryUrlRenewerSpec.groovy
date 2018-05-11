@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package com.causecode.fileuploader.util.renewer
+package com.causecode.fileuploader.ufile.renewer
 
 import com.causecode.fileuploader.CDNProvider
 import com.causecode.fileuploader.StorageException
@@ -20,14 +20,14 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
- * Unit tests for {@link DefaultUFileTemporaryUrlRenewer}
+ * Unit tests for {@link DefaultTemporaryUrlRenewer}
  *
  * @author Milan Savaliya
  * @author Hardik Modha
  * @since 3.1.3
  */
 @Build([UFile])
-class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
+class DefaultTemporaryUrlRenewerSpec extends Specification {
 
     UFile createUFileInstance(Date expirationDate) {
         UFile.build(
@@ -44,8 +44,8 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
 
     @Unroll
     void "test constructor when inputs are not valid"() {
-        when: 'DefaultUFileTemporaryUrlRenewer instance is created'
-        DefaultUFileTemporaryUrlRenewer.newInstance(
+        when: 'DefaultTemporaryUrlRenewer instance is created'
+        DefaultTemporaryUrlRenewer.newInstance(
                 cdnProvider,
                 fileUploder,
                 false,
@@ -71,7 +71,7 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
 
     void "test constructor when all are valid inputs"() {
         when:
-        DefaultUFileTemporaryUrlRenewer renewer = new DefaultUFileTemporaryUrlRenewer(
+        DefaultTemporaryUrlRenewer renewer = new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 Mock(GoogleCDNFileUploaderImpl),
                 false,
@@ -109,7 +109,7 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
         when:
-        DefaultUFileTemporaryUrlRenewer renewer = new DefaultUFileTemporaryUrlRenewer(
+        DefaultTemporaryUrlRenewer renewer = new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 forceAll,
@@ -144,14 +144,14 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
         CDNFileUploader fileUploader = Mock(GoogleCDNFileUploaderImpl)
 
         when: 'getResultListFromOffset method is called'
-        List<UFile> resultUFiles = new DefaultUFileTemporaryUrlRenewer(
+        List<UFile> resultUFiles = new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 true,
                 5
         ).getResultListFromOffset(5)
 
-        then: 'The returned resultUFiles must matches with the expected list of UFiles'
+        then: 'The returned resultUFiles must match with the expected list of UFiles'
         resultUFiles == uFiles[5..9]
     }
 
@@ -170,7 +170,7 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
         when: 'processResultList method is called'
-        new DefaultUFileTemporaryUrlRenewer(
+        new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 true,
@@ -197,7 +197,7 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
         when: 'updateExpirationPeriodAndUrl method is called'
-        new DefaultUFileTemporaryUrlRenewer(
+        new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 true,
@@ -217,7 +217,7 @@ class DefaultUFileTemporaryUrlRenewerSpec extends Specification {
         Holders.config.put('fileuploader.persistence.provider', persistenceProvider)
 
         when: 'updateExpirationPeriodAndUrl method is called'
-        Closure criteriaClosure = new DefaultUFileTemporaryUrlRenewer(
+        Closure criteriaClosure = new DefaultTemporaryUrlRenewer(
                 CDNProvider.GOOGLE,
                 fileUploader,
                 true,

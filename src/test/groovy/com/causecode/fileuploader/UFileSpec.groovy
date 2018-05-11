@@ -8,10 +8,10 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.logger.ReplaceSlf4jLogger
+import com.causecode.fileuploader.provider.ProviderService
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
 import grails.util.Environment
-import grails.util.Holders
 import org.junit.Rule
 import org.slf4j.Logger
 import spock.lang.Specification
@@ -28,9 +28,9 @@ class UFileSpec extends Specification implements BaseTestSetup {
     @Rule ReplaceSlf4jLogger replaceSlf4jLogger = new ReplaceSlf4jLogger(UFile, logger)
 
     def setup() {
-        UtilitiesService utilitiesService = Mock(UtilitiesService)
+        ProviderService providerServiceMock = Mock(ProviderService)
         FileUploaderService service = Mock(FileUploaderService)
-        service.utilitiesService = utilitiesService
+        service.providerService = providerServiceMock
     }
 
     void "test isFileExists method for various cases"() {
@@ -103,7 +103,7 @@ class UFileSpec extends Specification implements BaseTestSetup {
         uFileInstance.fileUploaderService = fileUploaderServiceMock
 
         and: 'getProvider throws ProviderNotFoundException'
-        uFileInstance.fileUploaderService.utilitiesService.getProviderInstance(_) >> { String name ->
+        uFileInstance.fileUploaderService.providerService.getProviderInstance(_) >> { String name ->
             throw new ProviderNotFoundException('Provider RACKSPACE not found.')
         }
 

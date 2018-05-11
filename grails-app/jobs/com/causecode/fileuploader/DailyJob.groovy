@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
 import grails.util.Holders
 
 /**
@@ -14,7 +15,7 @@ import grails.util.Holders
  */
 class DailyJob {
 
-    UFileTemporaryUrlRenewerService ufileTemporaryUrlRenewerService
+    TemporaryUrlRenewerService temporaryUrlRenewerService
 
     FileUploaderService fileUploaderService
     def grailsEvents
@@ -36,7 +37,7 @@ class DailyJob {
         log.info 'Started executing DailyJob..'
 
         UFile.withNewSession {
-            ufileTemporaryUrlRenewerService.renewTemporaryURL()
+            temporaryUrlRenewerService.renewTemporaryURL()
             fileUploaderService.moveFailedFilesToCDN()
         }
 

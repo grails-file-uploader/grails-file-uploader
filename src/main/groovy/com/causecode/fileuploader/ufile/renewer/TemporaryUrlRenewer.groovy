@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or
  * without modification, are not permitted.
  */
-package com.causecode.fileuploader.util.renewer
+package com.causecode.fileuploader.ufile.renewer
 
 /**
  * Simple Contract for any TemporaryUrlRenewer based execution
@@ -13,6 +13,6 @@ package com.causecode.fileuploader.util.renewer
  * @author Milan Savaliya
  * @since 3.1.3
  */
-interface UFileTemporaryUrlRenewer {
+interface TemporaryUrlRenewer {
     void renew()
 }

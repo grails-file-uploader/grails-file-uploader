@@ -7,11 +7,11 @@
  */
 package com.causecode.fileuploader
 
+import com.causecode.fileuploader.provider.ProviderService
 import com.causecode.fileuploader.util.checksum.Algorithm
 import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import grails.buildtestdata.mixin.Build
 import grails.test.mixin.TestFor
-import grails.test.runtime.DirtiesRuntime
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
@@ -37,10 +37,10 @@ import javax.servlet.http.Part
 @SuppressWarnings('MethodCount')
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
 
-    def setup() {
-        UtilitiesService utilitiesService = Mock(UtilitiesService)
-        utilitiesService.grailsApplication = Holders.grailsApplication
-        service.utilitiesService = utilitiesService
+    void setup() {
+        ProviderService providerService= Mock(ProviderService)
+        providerService.grailsApplication = Holders.grailsApplication
+        service.providerService = providerService
     }
 
     void "test isPublicGroup for various file groups"() {
@@ -78,57 +78,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         fileInstance?.delete()
     }
 
-    @DirtiesRuntime
-    void "Test renewTemporaryURL method in FileUploaderService class for forceAll=false"() {
-        given: 'a few instances of UFile class'
-        UFile uFileInstance1 = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
-                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date() + 30,
-                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
-        UFile uFileInstance2 = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
-                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date() + 20,
-                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
-        UFile uFileInstance3 = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
-                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date() + 10,
-                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
-        UFile uFileInstance4 = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
-                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date(),
-                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
-
-        assert UFile.count() == 4
-
-        and: 'Mocked AmazonCDNFileUploaderImpl\'s methods'
-        mockAuthenticateMethod()
-        mockGetTemporaryURL()
-
-        and: 'Mocked getProviderInstance method'
-        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
-            return amazonCDNFileUploaderInstance
-        }
-
-        when: 'renewTemporaryURL method is called'
-        service.renewTemporaryURL()
-        String uFilePath = uFileInstance4.path
-
-        then: 'It should only change image path of uFileInstance4'
-        uFileInstance1.path == 'https://xyz/abc'
-        uFileInstance2.path == 'https://xyz/abc'
-        uFileInstance3.path == 'https://xyz/abc'
-        uFilePath != 'https://xyz/abc'
-
-        when: 'renewTemporaryURL method is called'
-        uFileInstance4.path = 'https://xyz/abc'
-        uFileInstance4.save(flush: true)
-
-        assert uFileInstance4.path == 'https://xyz/abc'
-        service.renewTemporaryURL(true)
-
-        then: 'It should renew the image path of all the Instance'
-        uFileInstance1.path != 'https://xyz/abc'
-        uFileInstance2.path != 'https://xyz/abc'
-        uFileInstance3.path != 'https://xyz/abc'
-        uFileInstance4.path != 'https://xyz/abc'
-    }
-
     @Unroll
     void "test saveFile for uploading files for CDNProvider #provider"() {
         given: 'A file instance'
@@ -138,7 +87,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockAuthenticateMethod()
         mockGetFileNameAndExtensions()
         mockUploadFileMethod(true)
-        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
+        service.providerService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
@@ -488,7 +437,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         assert uFileInstance.type == UFileType.CDN_PUBLIC
 
         and: 'Mocked getProviderInstance method'
-        1 * service.utilitiesService.getProviderInstance(_) >> { String provider ->
+        service.providerService.getProviderInstance(_) >> { String provider ->
             throw new ProviderNotFoundException('Provider RACKSPACE not found.')
         } >> { String provider ->
             return amazonCDNFileUploaderImplMock
@@ -567,19 +516,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         then: 'Method returns true'
         UFile.count() == 1
         result
-    }
-
-    void "test renewTemporaryURL method when fileUploaderInstance is null"() {
-        given: 'Mocked method'
-        service.utilitiesService.getProviderInstance(_) >> { String name ->
-            return null
-        }
-
-        when: 'renewTemporaryURL method is called'
-        def result = service.renewTemporaryURL()
-
-        then: 'Method returns null'
-        result == null
     }
 
     void "test saveFile method for various cases"() {
@@ -817,54 +753,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         fileInstance.delete()
     }
 
-    void "Test renewTemporaryURL method in FileUploaderService class for forceAll=false and provider=mongodb"() {
-        given: 'an instances of UFile class'
-        UFile uFileInstance = new UFile(dateUploaded: new Date(), downloads: 0, extension: 'png', name: 'abc',
-                path: 'https://xyz/abc', size: 12345, fileGroup: 'image', expiresOn: new Date(),
-                provider: CDNProvider.AMAZON, type: UFileType.CDN_PUBLIC).save(flush: true)
-
-        assert UFile.count() == 1
-
-        Holders.flatConfig['fileuploader.persistence.provider'] = 'mongodb'
-
-        and: 'Mocked AmazonCDNFileUploaderImpl\'s methods'
-        mockAuthenticateMethod()
-        mockGetTemporaryURL()
-
-        and: 'Mocked getProviderInstance method'
-        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
-            return amazonCDNFileUploaderInstance
-        }
-
-        and: 'Mocked withCriteria and getContainerName method'
-        GroovyMock(UFile, global: true)
-        UFile.withCriteria(_) >> { Closure closure ->
-            assert closure != null
-            new JsonBuilder() closure
-
-            return [uFileInstance]
-        }
-
-        UFile.containerName(_) >> Holders.flatConfig["fileuploader.groups.${uFileInstance.fileGroup}.container"]
-
-        when: 'renewTemporaryURL method is called'
-        service.renewTemporaryURL()
-        String uFilePath = uFileInstance.path
-
-        then: 'It should only change image path of uFileInstance'
-        uFilePath != 'https://xyz/abc'
-
-        when: 'renewTemporaryURL method is called'
-        uFileInstance.path = 'https://xyz/abc'
-        uFileInstance.save(flush: true)
-
-        assert uFileInstance.path == 'https://xyz/abc'
-        service.renewTemporaryURL(true)
-
-        then: 'It should renew the image path of all the Instance'
-        uFileInstance.path != 'https://xyz/abc'
-    }
-
     void "test saveFile method when file with same content uploaded twice"() {
         given: 'A file instance'
         File fileInstance = getFileInstance('/tmp/test.txt')
@@ -882,7 +770,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockExistMethod(true)
 
         and: 'Mocked getProviderInstance method'
-        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
+        service.providerService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 
@@ -922,7 +810,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
         mockExistMethod(true)
 
         and: 'Mocked getProviderInstance method'
-        service.utilitiesService.getProviderInstance(_) >> { String providerName ->
+        service.providerService.getProviderInstance(_) >> { String providerName ->
             providerName == 'GOOGLE' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
 

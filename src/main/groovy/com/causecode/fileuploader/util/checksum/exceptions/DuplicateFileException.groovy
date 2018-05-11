@@ -14,7 +14,7 @@ import com.causecode.fileuploader.UFile
  * @author Milan Savaliya
  * @since 3.1.0
  */
-class DuplicateFileException extends RuntimeException {
+class DuplicateFileException extends IOException {
     UFile duplicateUFile
 
     DuplicateFileException(GString gString, UFile duplicateUFile) {
