@@ -3,7 +3,7 @@
 ## Version 3.1.3 [Unreleased]
 
 ### Changed
-- RenewTemprary URL Refactored to new service and now handles all the files
+- RenewTemprary URL Refactored to new service and now handles all the files at once.
 
 ## Version 3.1.2 [02-May-2018]
 

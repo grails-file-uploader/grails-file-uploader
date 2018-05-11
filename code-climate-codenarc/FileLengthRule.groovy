@@ -1,11 +1,3 @@
-/*
- * Copyright (c) 2017-Present, Niteo Consulting Private Limited, India.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or
- * without modification, are not permitted.
- */
-
 import org.codenarc.rule.AbstractRule
 import org.codenarc.source.SourceCode
 

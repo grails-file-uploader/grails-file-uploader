@@ -50,7 +50,7 @@ class TemporaryUrlRenewerServiceSpec extends Specification {
 
         and: 'Mocked DefaultTemporaryUrlRenewer'
         GroovyMock(DefaultTemporaryUrlRenewer, global:true)
-        new DefaultTemporaryUrlRenewer(_ , _ ,_) >> { throw new IllegalArgumentException() }
+        new DefaultTemporaryUrlRenewer(_, _, _) >> { throw new IllegalArgumentException() }
 
         when: 'renewTemporaryURL method is called'
         service.renewTemporaryURL()
