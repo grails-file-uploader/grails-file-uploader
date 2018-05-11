@@ -18,13 +18,13 @@ import spock.lang.Unroll
 @SuppressWarnings(['JavaIoPackageAccess'])
 class SimpleFileInputBeanImplSpec extends Specification {
 
-    private final String TEMP_DIR_PATH = '/tmp/'
+    private final String tempDirPath = '/tmp/'
     private FileInputBean fileInputBean
     private String fileName
 
     def setup() {
         fileName = (System.currentTimeMillis() as String) + '.txt'
-        File file = new File(TEMP_DIR_PATH.concat(fileName))
+        File file = new File(tempDirPath.concat(fileName))
         file.createNewFile()
         file.deleteOnExit()
         fileInputBean = new SimpleFileInputBeanImpl(file)

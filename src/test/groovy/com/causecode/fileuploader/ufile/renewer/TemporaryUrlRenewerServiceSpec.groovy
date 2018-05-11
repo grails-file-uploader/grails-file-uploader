@@ -35,7 +35,7 @@ class TemporaryUrlRenewerServiceSpec extends Specification {
         DefaultTemporaryUrlRenewer renewer = Mock(DefaultTemporaryUrlRenewer)
         renewer.renew() >> { /*do nothing*/ }
         GroovyMock(DefaultTemporaryUrlRenewer, global:true)
-        new DefaultTemporaryUrlRenewer(_ , _ ,_) >> renewer
+        new DefaultTemporaryUrlRenewer(_, _, _) >> renewer
 
         when: 'renewTemporaryURL method is called'
         service.renewTemporaryURL(true)
