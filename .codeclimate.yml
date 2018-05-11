@@ -4,3 +4,7 @@ plugins:
   codenarc:
     enabled: true
     channel: "beta"
+    config: "./code-climate-codenarc/codenarc.groovy"
+
+exclude_patterns:
+  - "code-climate-codenarc/"
