@@ -71,6 +71,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
 
         cleanup:
         fileInstance?.delete()
+        amazonCDNFileUploaderImpl.close()
     }
 
     void "test makeFilePublic method for failure case"() {
@@ -97,6 +98,7 @@ class AmazonCDNFileUploaderImplSpec extends Specification implements BaseTestSet
 
         then: 'No Exception is thrown'
         noExceptionThrown()
+        amazonCDNFileUploaderImpl.close()
     }
 
     void "test containerExists method for successFul execution"() {

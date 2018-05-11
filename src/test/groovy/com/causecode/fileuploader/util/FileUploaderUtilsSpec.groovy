@@ -25,7 +25,11 @@ class FileUploaderUtilsSpec extends Specification {
 
         then: 'No exception must be thrown and a temporary path should be returned'
         noExceptionThrown()
-        new File(tempDirectoryPath).exists()
+        File tempDirectory = new File(tempDirectoryPath)
+        tempDirectory.exists()
+
+        cleanup:
+        tempDirectory.deleteDir()
     }
 
     void "test getTempFilePathForMultipartFile when no exception is thrown"() {

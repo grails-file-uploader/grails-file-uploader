@@ -13,6 +13,7 @@ import com.causecode.fileuploader.UFile
 import com.causecode.fileuploader.UFileType
 import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
+import com.causecode.util.NucleusUtils
 import grails.buildtestdata.mixin.Build
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -30,7 +31,7 @@ import spock.lang.Unroll
 class DefaultTemporaryUrlRenewerSpec extends Specification {
 
     UFile createUFileInstance(Date expirationDate) {
-        UFile.build(
+        return UFile.build(
                 downloads: 100,
                 provider: CDNProvider.GOOGLE,
                 size: 100,
@@ -39,6 +40,19 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
                 fileGroup: 'SomeFileGroup',
                 type: UFileType.CDN_PUBLIC,
                 expiresOn: expirationDate
+        )
+    }
+
+    DefaultTemporaryUrlRenewer getDefaultTemporaryUrlRenewerInstance(boolean forceAll = true,
+            int maxInOneIteration = 5, CDNFileUploader cdnFileUploader = null) {
+
+        CDNFileUploader tempCDNFileUploader = cdnFileUploader ?: Mock(GoogleCDNFileUploaderImpl)
+
+        return new DefaultTemporaryUrlRenewer(
+                CDNProvider.GOOGLE,
+                tempCDNFileUploader,
+                forceAll,
+                maxInOneIteration
         )
     }
 
@@ -70,13 +84,8 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
     }
 
     void "test constructor when all are valid inputs"() {
-        when:
-        DefaultTemporaryUrlRenewer renewer = new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                Mock(GoogleCDNFileUploaderImpl),
-                false,
-                10
-        )
+        when: 'DefaultTemporaryUrlRenewer instance is created'
+        DefaultTemporaryUrlRenewer renewer = defaultTemporaryUrlRenewerInstance
 
         then: 'No exception should be thrown and instance should be created successfully'
         noExceptionThrown()
@@ -108,13 +117,8 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
         and: 'Configuration for container name'
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
-        when:
-        DefaultTemporaryUrlRenewer renewer = new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                fileUploader,
-                forceAll,
-                10
-        )
+        when: 'The renew method is called'
+        DefaultTemporaryUrlRenewer renewer = getDefaultTemporaryUrlRenewerInstance(forceAll)
         renewer.renew()
 
         then: 'No exception should be thrown'
@@ -144,12 +148,8 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
         CDNFileUploader fileUploader = Mock(GoogleCDNFileUploaderImpl)
 
         when: 'getResultListFromOffset method is called'
-        List<UFile> resultUFiles = new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                fileUploader,
-                true,
-                5
-        ).getResultListFromOffset(5)
+        List<UFile> resultUFiles = getDefaultTemporaryUrlRenewerInstance(true, 5, fileUploader)
+                .getResultListFromOffset(5)
 
         then: 'The returned resultUFiles must match with the expected list of UFiles'
         resultUFiles == uFiles[5..9]
@@ -170,17 +170,25 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
         when: 'processResultList method is called'
-        new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                fileUploader,
-                true,
-                5
-        ).processResultList(uFiles)
+        getDefaultTemporaryUrlRenewerInstance(true, 5, fileUploader).processResultList(uFiles)
 
         then: 'path and expiresOn properties for the given files should be updated'
         uFiles.every { UFile uFile ->
             return uFile.path == 'Dummy Url' && uFile.expiresOn > new Date()
         }
+
+        when: 'updateExpirationPeriodAndUrl method throws an exception'
+        CDNFileUploader cdnFileUploader = Mock(GoogleCDNFileUploaderImpl)
+        cdnFileUploader.getTemporaryURL(_, _, _) >> { String containerName, String fileName, long expiration ->
+            throw new StorageException('Error')
+        }
+
+        DefaultTemporaryUrlRenewer defaultTemporaryUrlRenewer =
+                getDefaultTemporaryUrlRenewerInstance(true, 5, cdnFileUploader)
+        defaultTemporaryUrlRenewer.processResultList(uFiles)
+
+        then: 'The thrown exception should be caught and exception should not get propagated'
+        noExceptionThrown()
     }
 
     void "test that updateExpirationPeriodAndUrl method updates the expiration date and url for the given UFile"() {
@@ -197,15 +205,20 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
         Holders.flatConfig.put('fileuploader.groups.SomeFileGroup.container', 'dummy-container')
 
         when: 'updateExpirationPeriodAndUrl method is called'
-        new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                fileUploader,
-                true,
-                5
-        ).updateExpirationPeriodAndUrl(uFile)
+        getDefaultTemporaryUrlRenewerInstance(true, 5, fileUploader)
+                .updateExpirationPeriodAndUrl(uFile)
 
         then: 'path and expiresOn properties for the given file should be updated'
         uFile.path == 'Dummy Url' && uFile.expiresOn > new Date()
+
+        when: 'The passed UFile instance cannot be updated'
+        GroovyMock(NucleusUtils, global: true)
+        NucleusUtils.save(_, _) >> false
+        boolean result = getDefaultTemporaryUrlRenewerInstance(true, 5, fileUploader)
+                .updateExpirationPeriodAndUrl(uFile)
+
+        then: 'The method should return false'
+        !result
     }
 
     @Unroll
@@ -217,12 +230,7 @@ class DefaultTemporaryUrlRenewerSpec extends Specification {
         Holders.config.put('fileuploader.persistence.provider', persistenceProvider)
 
         when: 'updateExpirationPeriodAndUrl method is called'
-        Closure criteriaClosure = new DefaultTemporaryUrlRenewer(
-                CDNProvider.GOOGLE,
-                fileUploader,
-                true,
-                5
-        ).criteriaClosure()
+        Closure criteriaClosure = getDefaultTemporaryUrlRenewerInstance(true, 5, fileUploader).criteriaClosure()
 
         then: 'Criteria closure should contain mongodb specific criteria query'
         new JsonBuilder(criteriaClosure).toString().contains(expectedCriteriaString)
