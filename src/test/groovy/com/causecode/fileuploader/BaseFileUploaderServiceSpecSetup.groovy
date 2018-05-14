@@ -10,6 +10,7 @@ package com.causecode.fileuploader
 import com.causecode.fileuploader.cdn.amazon.AmazonCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import com.causecode.fileuploader.cdn.google.GoogleCredentials
+import com.causecode.fileuploader.provider.ProviderService
 import spock.lang.Specification
 
 /**
@@ -89,7 +90,7 @@ class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTest
     }
 
     void mockGetProviderInstance(String provider) {
-        service.metaClass.getProviderInstance = { String providerName ->
+        service.providerService.getProviderInstance(_) >> { String providerName ->
             provider == 'google' ? googleCDNFileUploaderImplMock : amazonCDNFileUploaderImplMock
         }
     }

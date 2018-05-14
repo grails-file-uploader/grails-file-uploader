@@ -17,14 +17,14 @@ import org.springframework.web.multipart.MultipartFile
 class MultipartFileInputBeanImpl implements FileInputBean {
 
     //Instance of MultipartFile Bean
-    private final MultipartFile MUTLTIPART_FILE
+    private final MultipartFile multipartFile
 
     /**
      * Constructor to instantiate MultipartFileInputBeanImpl instance
      * @param multipartFile
      */
     MultipartFileInputBeanImpl(MultipartFile multipartFile) {
-        this.MUTLTIPART_FILE = multipartFile
+        this.multipartFile = multipartFile
         validateInputs()
     }
 
@@ -32,44 +32,44 @@ class MultipartFileInputBeanImpl implements FileInputBean {
      * Method checks supplied inputs and throws appropriate exception if input is not in format as expected.
      */
     private void validateInputs() throws IllegalArgumentException{
-        if (!this.MUTLTIPART_FILE) {
+        if (!this.multipartFile) {
             throw new IllegalArgumentException('Multipart Instance can not be null')
         }
     }
 
     @Override
     String getName() {
-        return this.MUTLTIPART_FILE.name
+        return this.multipartFile.name
     }
 
     @Override
     String getOriginalFilename() {
-        return this.MUTLTIPART_FILE.originalFilename
+        return this.multipartFile.originalFilename
     }
 
     @Override
     String getContentType() {
-        return this.MUTLTIPART_FILE.contentType
+        return this.multipartFile.contentType
     }
 
     @Override
     boolean isEmpty() {
-        return this.MUTLTIPART_FILE.isEmpty()
+        return this.multipartFile.isEmpty()
     }
 
     @Override
     long getSize() {
-        return this.MUTLTIPART_FILE.size
+        return this.multipartFile.size
     }
 
     @Override
     byte[] getBytes() throws IOException {
-        return this.MUTLTIPART_FILE.bytes
+        return this.multipartFile.bytes
     }
 
     @Override
     InputStream getInputStream() throws IOException {
-        return this.MUTLTIPART_FILE.inputStream
+        return this.multipartFile.inputStream
     }
 
     /**

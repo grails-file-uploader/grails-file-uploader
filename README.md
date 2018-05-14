@@ -6,7 +6,7 @@
 File-Uploader Plugin > 3.2.0 supports Grails 3.3.x
 File-Uploader Plugin < 3.1.2 supports Grails 3.2.x (Tested upto 3.2.x)
 
-# For Grails 2.x refer branch [here](https://bitbucket.org/causecode/grails-file-uploader/src/a26a79d1a8fceada58f7ad3fd5550a75a27e247c/?at=grails-2.x-master)
+# For Grails 2.x refer branch [here](https://github.com/causecode/grails-file-uploader/tree/grails-2.x-master)
 
 #### Causecode Technologies Pvt. Ltd.
 
