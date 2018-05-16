@@ -17,6 +17,8 @@ import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.multipart.MultipartFile
@@ -36,6 +38,8 @@ import javax.servlet.http.Part
 @Build([UFile, UFileMoveHistory])
 @SuppressWarnings('MethodCount')
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
+
+    final static Logger log = LoggerFactory.getLogger(FileUploaderServiceSpec)
 
     void setup() {
         ProviderService providerService= Mock(ProviderService)

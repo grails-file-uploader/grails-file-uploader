@@ -8,8 +8,6 @@
 package com.causecode.fileuploader
 
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
@@ -24,7 +22,6 @@ import javax.servlet.http.Part
  * This is Unit test file for FileGroup class.
  */
 @Build(UFile)
-@TestMixin(GrailsUnitTestMixin)
 class FileGroupSpec extends Specification implements BaseTestSetup {
 
     @SuppressWarnings(['JavaIoPackageAccess'])

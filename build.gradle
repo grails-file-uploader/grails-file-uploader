@@ -58,35 +58,47 @@ dependencyManagement {
 }
 
 dependencies {
-    /* Default dependencies in grails 3.2.0 for plugin
-    * While porting to a new grails version, create a blank plugin and replace the default dependencies with the new ones.
-    */
+    // Default dependencies in grails 3.3.5 for plugin
+    // While porting to a new grails version, create a blank app and replace the default dependencies with the new ones.
+    compile "org.springframework.boot:spring-boot-starter-logging:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-autoconfigure:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-actuator:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-tomcat:1.5.12.RELEASE"
 
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.grails:grails-dependencies"
-    compile "org.grails:grails-web-boot"
-    compile "org.grails.plugins:cache"
-    compile "org.grails.plugins:scaffolding"
+    compile "org.grails:grails-core:3.3.5"
+    compile "org.grails:grails-web-boot:3.3.5"
+    compile "org.grails:grails-logging:3.3.5"
+    compile "org.grails:grails-plugin-rest:3.3.5"
+    compile "org.grails:grails-plugin-databinding:3.3.5"
+    compile "org.grails:grails-plugin-i18n:3.3.5"
+    compile "org.grails:grails-plugin-services:3.3.5"
+    compile "org.grails:grails-plugin-url-mappings:3.3.5"
+    compile "org.grails:grails-plugin-interceptors:3.3.5"
+    compile "org.grails.plugins:cache:4.0.0"
+    compile "org.grails.plugins:async:3.3.2"
+    compile "org.grails.plugins:scaffolding:3.4.1"
+    compile "org.grails.plugins:gsp:3.3.1"
+
     profile "org.grails.profiles:web-plugin"
 
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
 
     provided "com.h2database:h2"
-    testCompile "org.grails:grails-plugin-testing"
+
+    testCompile "org.grails:grails-test-mixins:3.3.0"
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails:grails-web-testing-support"
 
     /*
     * Dependencies which were needed for the application/plugin.
     */
 
     testCompile "org.grails.plugins:build-test-data:3.0.1"
+
     testRuntime "cglib:cglib:3.2.0"  // To resolve cglib dependency issue for test cases
     compile "com.google.code.gson:gson:2.5" // To resolve guice dependency.
-    provided "org.grails.plugins:quartz:2.0.8"
+    provided "org.grails.plugins:quartz:2.0.13"
 
     compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
         exclude module: "jclouds-core"
@@ -116,8 +128,9 @@ dependencies {
     compile "commons-fileupload:commons-fileupload:1.3.1"
     compile "org.ow2.asm:asm:5.0.3"
 
-    provided "com.causecode.plugins:nucleus:0.4.2"
-    provided "org.grails.plugins:spring-security-core:3.1.1"
+    provided "com.causecode.plugins:nucleus:1.0.0"
+
+    provided 'org.grails.plugins:spring-security-core:3.2.1'
 }
 
 project.publishing {

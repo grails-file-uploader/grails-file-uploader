@@ -30,6 +30,7 @@ class UFileMoveHistory {
     }
 
     static mapping = {
+        autowire true
         moveCount defaultValue: '0'
     }
 
