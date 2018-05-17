@@ -10,6 +10,7 @@ package com.causecode.fileuploader
 import com.causecode.fileuploader.logger.ReplaceSlf4jLogger
 import com.causecode.fileuploader.provider.ProviderService
 import grails.buildtestdata.mixin.Build
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.util.Environment
 import org.junit.Rule
@@ -27,15 +28,15 @@ class UFileSpec extends Specification implements BaseTestSetup {
     Logger logger = Mock(Logger)
     @Rule ReplaceSlf4jLogger replaceSlf4jLogger = new ReplaceSlf4jLogger(UFile, logger)
 
-    def setup() {
-        ProviderService providerServiceMock = Mock(ProviderService)
-        FileUploaderService service = Mock(FileUploaderService)
-        service.providerService = providerServiceMock
-    }
+//    def setup() {
+//        ProviderService providerServiceMock = Mock(ProviderService)
+//        FileUploaderService service = Mock(FileUploaderService)
+//        service.providerService = providerServiceMock
+//    }
 
     void "test isFileExists method for various cases"() {
         given: 'An instance of UFile'
-        UFile ufileInstance = UFile.build()
+        UFile ufileInstance = new UFile(fileGroup: 'test', name: 'testfile', provider: CDNProvider.LOCAL).save(false)
         ufileInstance.path = '/tmp'
 
         when: 'isFileExists method is called and file exists'
