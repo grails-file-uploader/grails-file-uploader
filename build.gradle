@@ -75,19 +75,21 @@ dependencies {
 
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
+    provided "org.hibernate:hibernate-core:5.1.5.Final"
+    provided "org.grails.plugins:hibernate5:6.1.9"
 
     provided "com.h2database:h2"
 
+    testCompile 'cglib:cglib:3.2.5' // To resolve cglib dependency for test cases.
     testCompile "org.grails:grails-test-mixins:3.3.0"
+    testCompile "org.grails.plugins:build-test-data:3.3.0"
     testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails:grails-datastore-rest-client"
     testCompile "org.grails:grails-web-testing-support"
 
     /*
     * Dependencies which were needed for the application/plugin.
     */
-
-    testCompile "org.grails.plugins:build-test-data:3.0.1"
-
     compile "com.google.code.gson:gson:2.5" // To resolve guice dependency.
     provided "org.grails.plugins:quartz:2.0.13"
 
@@ -121,7 +123,6 @@ dependencies {
     compile "org.ow2.asm:asm:5.0.3"
 
     provided "com.causecode.plugins:nucleus:1.0.0"
-
     provided 'org.grails.plugins:spring-security-core:3.2.1'
 }
 

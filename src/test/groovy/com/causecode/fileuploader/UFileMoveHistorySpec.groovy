@@ -7,15 +7,14 @@
  */
 package com.causecode.fileuploader
 
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * This is unit test file for UFileMoveHistory class.
  */
-@TestFor(UFileMoveHistory)
-class UFileMoveHistorySpec extends Specification implements BaseTestSetup {
+class UFileMoveHistorySpec extends Specification implements DomainUnitTest<UFileMoveHistory>, BaseTestSetup {
 
     @Unroll
     void "test getValue method for various values"() {

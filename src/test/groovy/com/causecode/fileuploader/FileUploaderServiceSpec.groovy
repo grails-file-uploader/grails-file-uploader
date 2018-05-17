@@ -11,7 +11,7 @@ import com.causecode.fileuploader.provider.ProviderService
 import com.causecode.fileuploader.util.checksum.Algorithm
 import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
@@ -34,10 +34,9 @@ import javax.servlet.http.Part
  */
 // Suppressed Methods counts since this class contains more than 30 methods.
 @ConfineMetaClassChanges([FileUploaderService, File])
-@TestFor(FileUploaderService)
 @Build([UFile, UFileMoveHistory])
 @SuppressWarnings('MethodCount')
-class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup {
+class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService> {
 
     final static Logger log = LoggerFactory.getLogger(FileUploaderServiceSpec)
 
