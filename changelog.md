@@ -1,9 +1,11 @@
 # ChangeLog
 
-## Version 3.2.0 [Unreleased]
+## Version 3.3.0 [Unreleased]
+
 ### Changed
 - Upgraded the plugin to support grails 3.3.5
-## Version 3.1.3 [Unreleased]
+
+## Version 3.1.3 [11-May-2018]
 
 ### Changed
 - RenewTemprary URL Refactored to new service and now handles all the files at once.
