@@ -20,7 +20,7 @@ import spock.lang.Unroll
  * This is unit test file for FileUploaderController class.
  */
 @Build(UFile)
-class FileUploaderControllerSpec extends Specification implements BaseTestSetup, 
+class FileUploaderControllerSpec extends Specification implements BaseTestSetup,
         ControllerUnitTest<FileUploaderController>, BuildDataTest {
 
     // Note: Not a database query. Calling list action in FileUploaderController.
