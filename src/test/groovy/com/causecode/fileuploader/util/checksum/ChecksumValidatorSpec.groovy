@@ -11,7 +11,10 @@ import com.causecode.fileuploader.BaseTestSetup
 import com.causecode.fileuploader.FileGroup
 import com.causecode.fileuploader.UFile
 import com.causecode.fileuploader.util.checksum.exceptions.UnRecognizedFileTypeException
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
+import grails.util.Holders
+import org.grails.config.NavigableMapConfig
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -23,7 +26,7 @@ import spock.lang.Unroll
  */
 @Build(UFile)
 @SuppressWarnings(['JavaIoPackageAccess'])
-class ChecksumValidatorSpec extends Specification implements BaseTestSetup {
+class ChecksumValidatorSpec extends Specification implements BaseTestSetup, BuildDataTest {
 
     @Unroll
     void "test Constructor with #fileName"() {

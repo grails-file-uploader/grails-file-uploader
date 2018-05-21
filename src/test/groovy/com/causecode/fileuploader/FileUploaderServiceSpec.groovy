@@ -10,6 +10,7 @@ package com.causecode.fileuploader
 import com.causecode.fileuploader.provider.ProviderService
 import com.causecode.fileuploader.util.checksum.Algorithm
 import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import grails.testing.services.ServiceUnitTest
 import grails.util.Holders
@@ -17,8 +18,6 @@ import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
 import org.grails.plugins.codecs.HTMLCodec
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.multipart.MultipartFile
@@ -36,9 +35,8 @@ import javax.servlet.http.Part
 @ConfineMetaClassChanges([FileUploaderService, File])
 @Build([UFile, UFileMoveHistory])
 @SuppressWarnings('MethodCount')
-class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService> {
-
-    final static Logger log = LoggerFactory.getLogger(FileUploaderServiceSpec)
+class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService>, 
+        BuildDataTest {
 
     void setup() {
         ProviderService providerService= Mock(ProviderService)
@@ -47,8 +45,6 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
     }
 
     void "test isPublicGroup for various file groups"() {
-        mockCodec(HTMLCodec)
-
         expect: 'Following conditions should pass'
         service.isPublicGroup('user') == true
         service.isPublicGroup('image') == false
@@ -58,7 +54,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test moveFilesToCDN method for successfully moving a file"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = UFile.build()
+        UFile uFileInstance = UFile.build(provider: CDNProvider.GOOGLE, path: '/tmp/test.txt', fileGroup: 'testGoogle')
         File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
@@ -169,7 +165,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test moveFilesToCDN method for making a file public while moving and error occurs"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC)
+        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC, fileGroup: 'testGoogle', 
+                provider: CDNProvider.GOOGLE)
         File fileInstance = getFileInstance('/tmp/test.txt')
         assert uFileInstance.type == UFileType.CDN_PUBLIC
 
@@ -193,7 +190,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test moveFilesToCDN method for making a file public while moving and no error occurs"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = UFile.build()
+        UFile uFileInstance = UFile.build(path: '/tmp/test.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
         File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
@@ -210,8 +207,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         service.moveFilesToCDN([uFileInstance], CDNProvider.AMAZON, true)
 
         then: 'File would be made public'
-        uFileInstance.type == UFileType.CDN_PUBLIC
         uFileInstance.provider == CDNProvider.AMAZON
+        uFileInstance.type == UFileType.CDN_PUBLIC
 
         cleanup:
         fileInstance?.delete()
@@ -296,8 +293,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test cloneFile method for various cases"() {
         given: 'An instance of UFile and File'
-        UFile ufIleInstance = UFile.build(name: 'test-file-1')
-        File fileInstance = getFileInstance('./temp/test.txt')
+        UFile ufIleInstance = UFile.build(name: 'test-file-1', path: '/tmp/test.txt')
+        File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'
         service.metaClass.saveFile = {
@@ -460,6 +457,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         when: 'deleteFileForUFile method is called and method executes successfully'
         uFileInstance.provider = CDNProvider.GOOGLE
+        uFileInstance.fileGroup = 'testGoogle'
         mockGetProviderInstance('google')
         def response = service.deleteFileForUFile(uFileInstance)
 
@@ -488,7 +486,10 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test deleteFileForUFile method for LOCAL file when parent folder not empty"() {
         given: 'A UFile and a File instance'
-        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL, fileGroup: 'testLocal', path: '/tmp/testDir/test.txt')
+        new File('/tmp/testDir').mkdir()
+        File fileInstance = getFileInstance('/tmp/testDir/test.txt')
+        File fileInstance1 = getFileInstance('/tmp/testDir/test1.txt')
 
         and: 'Mocked method'
         mockExistMethod(true)
@@ -499,11 +500,15 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         then: 'No exceptions are thrown'
         noExceptionThrown()
+        
+        cleanup:
+        fileInstance.delete()
+        fileInstance1.delete()
     }
 
     void "test deleteFile method for various cases"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = UFile.build(type: UFileType.LOCAL)
+        UFile uFileInstance = UFile.build(type: UFileType.LOCAL, path: '/tmp/test.txt')
         UFile.build(type: UFileType.LOCAL)
 
         when: 'deleteFile method is called and File is not found'
@@ -733,7 +738,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test moveFilesToCDN method when exception occurres while getting file from URL"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = UFile.build()
+        UFile uFileInstance = UFile.build(path: '/tmp/test.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
         File fileInstance = getFileInstance('/tmp/test.txt')
 
         and: 'Mocked method'

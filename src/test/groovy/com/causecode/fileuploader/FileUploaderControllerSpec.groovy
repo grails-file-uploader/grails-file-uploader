@@ -27,7 +27,7 @@ class FileUploaderControllerSpec extends Specification implements BaseTestSetup,
     @SuppressWarnings(['GrailsMaxForListQueries'])
     void "test list action to get UFile related information"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = UFile.build()
+        UFile uFileInstance = UFile.build(fileGroup: 'testGoogle')
 
         when: 'list action is hit'
         controller.params.id = uFileInstance.id

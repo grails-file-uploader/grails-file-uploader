@@ -9,6 +9,7 @@ package com.causecode.fileuploader.cdn
 
 import com.causecode.fileuploader.BaseTestSetup
 import com.causecode.fileuploader.UFile
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import spock.lang.Specification
 
@@ -16,7 +17,7 @@ import spock.lang.Specification
  * This class contains unit test cases for BlobDetail class
  */
 @Build(UFile)
-class BlobDetailSpec extends Specification implements BaseTestSetup {
+class BlobDetailSpec extends Specification implements BaseTestSetup, BuildDataTest {
 
     void "test BlobDetails class methods"() {
         given: 'An instance of BlobDetails'

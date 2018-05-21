@@ -7,6 +7,7 @@
  */
 package com.causecode.fileuploader
 
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.springframework.context.MessageSource
@@ -22,7 +23,7 @@ import javax.servlet.http.Part
  * This is Unit test file for FileGroup class.
  */
 @Build(UFile)
-class FileGroupSpec extends Specification implements BaseTestSetup {
+class FileGroupSpec extends Specification implements BaseTestSetup, BuildDataTest {
 
     @SuppressWarnings(['JavaIoPackageAccess'])
     void "test getFileNameAndExtensions method to return File data"() {
@@ -80,7 +81,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         String resultPath = fileGroupInstance.getLocalSystemPath('monthSubdirsuuid', null, 0L)
 
         then: 'Method returns path of file'
-        resultPath.contains('./temp')
+        resultPath.contains('/tmp')
     }
 
     void "test scopeFileName when containerName does not exist"() {
@@ -177,7 +178,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
         String localPath = fileGroupInstance.getLocalSystemPath('', fileProperties, 0L)
 
         then: 'Method returns a valid local path'
-        localPath == './temp/0/test.txt'
+        localPath == '/tmp/0/test.txt'
     }
 
     @SuppressWarnings('JavaIoPackageAccess')
@@ -196,6 +197,6 @@ class FileGroupSpec extends Specification implements BaseTestSetup {
 
         then: 'StorageConfigurationException will be thrown'
         StorageConfigurationException exception = thrown()
-        exception.message == 'FileUploader plugin couldn\'t create directories: [./temp/0/]'
+        exception.message == 'FileUploader plugin couldn\'t create directories: [/tmp/0/]'
     }
 }
