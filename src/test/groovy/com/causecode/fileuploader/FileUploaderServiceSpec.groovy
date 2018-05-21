@@ -35,7 +35,7 @@ import javax.servlet.http.Part
 @ConfineMetaClassChanges([FileUploaderService, File])
 @Build([UFile, UFileMoveHistory])
 @SuppressWarnings('MethodCount')
-class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService>, 
+class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService>,
         BuildDataTest {
 
     void setup() {
@@ -165,7 +165,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
     void "test moveFilesToCDN method for making a file public while moving and error occurs"() {
         given: 'An instance of UFile and File'
-        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC, fileGroup: 'testGoogle', 
+        UFile uFileInstance = UFile.build(type: UFileType.CDN_PUBLIC, fileGroup: 'testGoogle',
                 provider: CDNProvider.GOOGLE)
         File fileInstance = getFileInstance('/tmp/test.txt')
         assert uFileInstance.type == UFileType.CDN_PUBLIC
@@ -484,6 +484,8 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         noExceptionThrown()
     }
 
+    // Note: Creating test file and directories for testing delete method call.
+    @SuppressWarnings(['JavaIoPackageAccess'])
     void "test deleteFileForUFile method for LOCAL file when parent folder not empty"() {
         given: 'A UFile and a File instance'
         UFile uFileInstance = UFile.build(type: UFileType.LOCAL, fileGroup: 'testLocal', path: '/tmp/testDir/test.txt')
@@ -500,7 +502,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         then: 'No exceptions are thrown'
         noExceptionThrown()
-        
+
         cleanup:
         fileInstance.delete()
         fileInstance1.delete()
