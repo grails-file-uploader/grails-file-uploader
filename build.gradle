@@ -188,7 +188,8 @@ ccJacocoExt {
        'com.causecode.fileuploader.FileUploaderTagLib*',
        'com.causecode.fileuploader.FileUploaderBootStrap*',
        'com.causecode.fileuploader.UploadFailureException*',
-       'com.causecode.fileuploader.Application*'
+       'com.causecode.fileuploader.Application*',
+       'com.causecode.fileuploader.UrlMappings*'
    ]
 }
 
