@@ -98,7 +98,3 @@ environments {
         grails.gorm.autoFlush = true
     }
 }
-
-grails.gorm.default.mapping = {
-    autowire true
-}

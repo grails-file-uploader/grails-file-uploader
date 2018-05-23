@@ -23,7 +23,7 @@ buildscript {
     }
 }
 
-version "3.3.0"
+version "4.0.0"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -58,8 +58,10 @@ dependencyManagement {
 }
 
 dependencies {
-    // Default dependencies in grails 3.3.5 for plugin
-    // While porting to a new grails version, create a blank app and replace the default dependencies with the new ones.
+    /*
+     * Default dependencies in grails 3.3.5 for plugin.
+     * While porting to a new grails version, create a blank app and replace the default dependencies with the new ones.
+     */
     compile "org.springframework.boot:spring-boot-starter-logging:1.5.12.RELEASE"
     compile "org.springframework.boot:spring-boot-autoconfigure:1.5.12.RELEASE"
     compile "org.springframework.boot:spring-boot-starter-actuator:1.5.12.RELEASE"

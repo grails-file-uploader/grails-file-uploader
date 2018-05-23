@@ -1,7 +1,7 @@
 grails:
     profile: web-plugin
     codegen:
-        defaultPackage: com.causecode.fileUploader
+        defaultPackage: com.causecode.fileuploader
     spring:
         transactionManagement:
             proxies: false
