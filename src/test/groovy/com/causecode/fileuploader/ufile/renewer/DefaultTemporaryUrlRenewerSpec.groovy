@@ -14,6 +14,7 @@ import com.causecode.fileuploader.UFileType
 import com.causecode.fileuploader.cdn.CDNFileUploader
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import com.causecode.util.NucleusUtils
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -28,7 +29,7 @@ import spock.lang.Unroll
  * @since 3.1.3
  */
 @Build([UFile])
-class DefaultTemporaryUrlRenewerSpec extends Specification {
+class DefaultTemporaryUrlRenewerSpec extends Specification implements BuildDataTest {
 
     UFile createUFileInstance(Date expirationDate) {
         return UFile.build(

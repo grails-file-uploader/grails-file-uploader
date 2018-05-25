@@ -9,8 +9,9 @@ package com.causecode.fileuploader
 
 import com.causecode.fileuploader.logger.ReplaceSlf4jLogger
 import com.causecode.fileuploader.provider.ProviderService
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DomainUnitTest
 import grails.util.Environment
 import org.junit.Rule
 import org.slf4j.Logger
@@ -20,9 +21,8 @@ import spock.lang.Unroll
 /**
  * This class contains unit test cases for UFile class.
  */
-@TestFor(UFile)
 @Build(UFile)
-class UFileSpec extends Specification implements BaseTestSetup {
+class UFileSpec extends Specification implements BaseTestSetup, DomainUnitTest<UFile>, BuildDataTest {
 
     Logger logger = Mock(Logger)
     @Rule ReplaceSlf4jLogger replaceSlf4jLogger = new ReplaceSlf4jLogger(UFile, logger)

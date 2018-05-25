@@ -68,6 +68,7 @@ class UFile implements Serializable {
     }
 
     static mapping = {
+        autowire true
         path sqlType: 'text'
 
         //Index on checksum

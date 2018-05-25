@@ -8,9 +8,10 @@
 package com.causecode.fileuploader
 
 import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
+import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import grails.converters.JSON
-import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import grails.util.Environment
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -19,14 +20,14 @@ import spock.lang.Unroll
  * This is unit test file for FileUploaderController class.
  */
 @Build(UFile)
-@TestFor(FileUploaderController)
-class FileUploaderControllerSpec extends Specification implements BaseTestSetup {
+class FileUploaderControllerSpec extends Specification implements BaseTestSetup,
+        ControllerUnitTest<FileUploaderController>, BuildDataTest {
 
     // Note: Not a database query. Calling list action in FileUploaderController.
     @SuppressWarnings(['GrailsMaxForListQueries'])
     void "test list action to get UFile related information"() {
         given: 'An instance of UFile'
-        UFile uFileInstance = UFile.build()
+        UFile uFileInstance = UFile.build(fileGroup: 'testGoogle')
 
         when: 'list action is hit'
         controller.params.id = uFileInstance.id

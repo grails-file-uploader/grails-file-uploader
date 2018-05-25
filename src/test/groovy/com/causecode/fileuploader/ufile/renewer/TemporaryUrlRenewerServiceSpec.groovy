@@ -10,7 +10,7 @@ package com.causecode.fileuploader.ufile.renewer
 import com.causecode.fileuploader.cdn.google.GoogleCDNFileUploaderImpl
 import com.causecode.fileuploader.provider.ProviderService
 import com.causecode.fileuploader.ufile.TemporaryUrlRenewerService
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
@@ -19,8 +19,7 @@ import spock.lang.Specification
  * @author Milan Savaliya
  * @since 3.1.3
  */
-@TestFor(TemporaryUrlRenewerService)
-class TemporaryUrlRenewerServiceSpec extends Specification {
+class TemporaryUrlRenewerServiceSpec extends Specification implements ServiceUnitTest<TemporaryUrlRenewerService> {
 
     def setup() {
         ProviderService providerServiceMock = Mock(ProviderService)

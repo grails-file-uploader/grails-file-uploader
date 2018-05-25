@@ -8,7 +8,7 @@
 package com.causecode.fileuploader.provider
 
 import com.causecode.fileuploader.ProviderNotFoundException
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
@@ -17,8 +17,7 @@ import spock.lang.Specification
  * @author Hardik Modha
  * @since 3.1.3
  */
-@TestFor(ProviderService)
-class ProviderServiceSpec extends Specification {
+class ProviderServiceSpec extends Specification implements ServiceUnitTest<ProviderService> {
     void "test getProviderInstance method"() {
         when: 'getProviderInstance method is called and class does not exist'
         service.getProviderInstance('test')
