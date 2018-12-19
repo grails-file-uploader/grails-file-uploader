@@ -8,17 +8,9 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "http://repo.spring.io/milestone/" }
         maven { url "https://repo.grails.org/grails/plugins" }
-        maven {
-            credentials {
-                username mavenUser
-                password mavenPassword
-            }
-            url "https://nexus.causecode.com/repository/maven-releases/"
-        }
         mavenCentral()
     }
     dependencies {
-        classpath "com.causecode.plugins:gradle-code-quality:1.0.4"
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
     }
 }
@@ -28,9 +20,10 @@ group "com.causecode.plugins"
 
 apply plugin: "idea"
 apply plugin: "org.grails.grails-plugin"
-apply plugin: "org.grails.grails-plugin-publish"
 apply plugin: "org.grails.grails-gsp"
-apply plugin: 'gradle-code-quality'
+apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 ext {
     grailsVersion = project.grailsVersion
@@ -40,13 +33,6 @@ ext {
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
-    maven {
-        credentials {
-            username mavenUser
-            password mavenPassword
-        }
-        url "https://nexus.causecode.com/repository/maven-releases/"
-    }
     mavenCentral()
 }
 
@@ -128,13 +114,74 @@ dependencies {
     provided 'org.grails.plugins:spring-security-core:3.2.1'
 }
 
-project.publishing {
+artifacts {
+    archives jar
+
+    archives javadocJar
+    archives sourcesJar
+}
+
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            if (!project.hasProperty('ossrhUsername') || !project.hasProperty('ossrhPassword')) {
+                return
+            }
+
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'grails-file-uploader'
+                packaging 'jar'
+                description 'This Plugin provides endpoints for file upload to CDN related operations.'
+                url 'https://github.com/causecode/grails-file-uploader'
+
+                scm {
+                    url 'scm:svn:https://github.com/causecode/grails-file-uploader'
+                    connection 'scm:svn:https://github.com/causecode/grails-file-uploader.git'
+                    developerConnection 'https://github.com:causecode/grails-file-uploader.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'causecode'
+                        name 'CauseCode Technologies'
+                        email 'bootstrap@causecode.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+publishing {
     publications {
         mavenJava(MavenPublication) {
-            from project.components.java
+            from components.java
 
-            artifactId "file-uploader"
-
+            artifactId "grails-file-uploader"
             pom.withXml {
                 def pomNode = asNode()
                 // version-less dependencies are handled with dependencyManagement
@@ -146,54 +193,8 @@ project.publishing {
             }
         }
     }
-    repositories {
-        maven {
-            credentials {
-                username mavenPublishUser
-                password mavenPublishPassword
-            }
-            url "https://nexus.causecode.com/repository/maven-releases/"
-        }
-    }
 }
 
-grailsPublish {
-    // TODO: Provide values here
-    user = 'user'
-    key = 'key'
-    githubSlug = 'foo/bar'
-    license {
-        name = 'Apache-2.0'
-    }
-    title = "My Plugin"
-    desc = "Full plugin description"
-    developers = [johndoe:"John Doe"]
-    portalUser = ""
-    portalPassword = ""
-}
-
-ccJacocoExt {
-    excludes = [
-            '**/Application*/**',
-            '**/FileUploaderTagLib*/**',
-            '**/FileUploaderBootStrap*/**',
-            '**/GrailsFileUploaderGrailsPlugin*/**',
-            '**/UrlMappings*/**',
-            '**/*Exception*/**',
-            '**/DailyJob*/**',
-    ]
-
-    coverageVerificationExcludes =[
-       'com.causecode.fileuploader.FileUploaderService',
-       'com.causecode.fileuploader.FileUploaderService._deleteFileForUFile_closure1',
-       'com.causecode.fileuploader.DailyJob*',
-       'com.causecode.fileuploader.FileUploaderTagLib*',
-       'com.causecode.fileuploader.FileUploaderBootStrap*',
-       'com.causecode.fileuploader.UploadFailureException*',
-       'com.causecode.fileuploader.Application*',
-       'com.causecode.fileuploader.UrlMappings*'
-   ]
-}
 
 jar {
     exclude('**/UrlMappings*')
