@@ -47,6 +47,7 @@ class FileUploaderService {
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
+        String containerName
         UFileType type = UFileType.LOCAL
         String path
         FileGroup fileGroupInstance = new FileGroup(group)
@@ -98,6 +99,12 @@ class FileUploaderService {
 
             if (!cdnProvider) {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
+            }
+
+            containerName = fileGroupInstance.containerName
+
+            if (!containerName) {
+                throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
             }
 
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)

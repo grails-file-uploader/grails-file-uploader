@@ -92,6 +92,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         new FileGroup(_) >> fileGroupMock
         fileGroupMock.cdnProvider >> provider
+        fileGroupMock.containerName >> 'test-bucket'
         fileGroupMock.groupConfig >> [storageTypes: 'CDN']
 
         when: 'The saveFile method is called'
