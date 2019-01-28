@@ -844,7 +844,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         exception.message == "No enum constant ${Algorithm.canonicalName}.ABCD"
     }
 
-    void "test saveFile method for when container name is not defined"() {
+    void "test saveFile method when container name is not defined in the config"() {
         given: 'Instances of CommonsMultipartFile to upload'
         File fileInstance = getFileInstance('/tmp/test.txt')
 
@@ -853,11 +853,11 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         and: 'Mocked methods of FileGroup to return empty container name'
         mockFileGroupConstructor('CDN')
-        1 * fileGroupMock.containerName >> {
+        fileGroupMock.containerName >> {
             return null
         }
 
-        1 * fileGroupMock.cdnProvider >> {
+        fileGroupMock.cdnProvider >> {
             return CDNProvider.GOOGLE
         }
 
@@ -867,7 +867,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         when: 'saveFile is called and container name is not defined'
         service.saveFile('testGoogle', commonsMultipartFileInstance, 'test')
 
-        then: 'Method should throw StorageConfigurationException'
+        then: 'Method should throw StorageConfigurationException and message should match'
         StorageConfigurationException exception = thrown(StorageConfigurationException)
         exception.message == 'Container name not defined in the Config. Please define one.'
     }

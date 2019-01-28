@@ -121,7 +121,7 @@ class FileUploaderService {
         }
 
         // Assign container name to the UFile instance
-        ufile.@containerName = containerNameFomConfig
+        ufile.containerName = containerNameFomConfig
 
         NucleusUtils.save(ufile, true)
         return ufile
