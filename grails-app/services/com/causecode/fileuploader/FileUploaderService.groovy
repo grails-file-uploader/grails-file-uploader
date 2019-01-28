@@ -52,7 +52,7 @@ class FileUploaderService {
         FileGroup fileGroupInstance = new FileGroup(group)
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
 
-        String containerNameFomConfig
+        String containerName
 
         if (checksumValidator.shouldCalculateChecksum()) {
             UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksumValidator.getChecksum(file),
@@ -102,7 +102,7 @@ class FileUploaderService {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
-            containerNameFomConfig = getContainerNameFromConfig(fileGroupInstance)
+            containerName = getContainerNameFromConfig(fileGroupInstance)
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
             path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
         } else {
@@ -113,21 +113,26 @@ class FileUploaderService {
 
         UFile ufile = new UFile(
                 [name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider,
+                 containerName: containerName])
 
         if (checksumValidator.shouldCalculateChecksum()) {
             ufile.checksum = checksumValidator.getChecksum(file)
             ufile.checksumAlgorithm = checksumValidator.algorithm
         }
 
-        // Assign container name to the UFile instance
-        ufile.containerName = containerNameFomConfig
-
         NucleusUtils.save(ufile, true)
         return ufile
     }
 
-    private static String getContainerNameFromConfig(FileGroup fileGroup) {
+    /**
+     * This method checks if the configuration {@link FileGroup} contains the {@link String} container name.
+     *
+     * @param fileGroup {@link FileGroup}
+     * @return {@link String} - containerName
+     * @throws StorageConfigurationException - When container name is not defined.
+     */
+    private static String getContainerNameFromConfig(FileGroup fileGroup) throws StorageConfigurationException {
         String contaierName = fileGroup.containerName
 
         if (!contaierName) {
