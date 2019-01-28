@@ -33,7 +33,7 @@ import javax.servlet.http.Part
 // Suppressed Methods counts since this class contains more than 30 methods.
 @ConfineMetaClassChanges([FileUploaderService, File])
 @Build([UFile, UFileMoveHistory])
-@SuppressWarnings('MethodCount')
+@SuppressWarnings(['MethodCount', 'FileLengthRule'])
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService>,
         BuildDataTest {
 
