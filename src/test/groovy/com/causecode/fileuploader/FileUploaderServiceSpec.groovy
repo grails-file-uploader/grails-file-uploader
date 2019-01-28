@@ -17,7 +17,6 @@ import grails.util.Holders
 import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
-import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.multipart.MultipartFile
@@ -101,7 +100,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         then: 'UFile instance should be successfully saved'
         ufileInstancefile.provider == provider
         ufileInstancefile.extension == 'txt'
-        ufileInstancefile.container == 'causecode-test'
+        ufileInstancefile.containerFromConfig == 'causecode-test'
         ufileInstancefile.fileGroup == fileGroup
 
         file.delete()

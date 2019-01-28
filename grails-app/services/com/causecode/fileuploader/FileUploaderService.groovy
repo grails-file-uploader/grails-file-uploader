@@ -102,12 +102,7 @@ class FileUploaderService {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
-            containerNameFomConfig = fileGroupInstance.containerName
-
-            if (!containerNameFomConfig) {
-                throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
-            }
-
+            containerNameFomConfig = getContainerNameFromConfig(fileGroupInstance)
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
             path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
         } else {
@@ -130,6 +125,16 @@ class FileUploaderService {
 
         NucleusUtils.save(ufile, true)
         return ufile
+    }
+
+    private static String getContainerNameFromConfig(FileGroup fileGroup) {
+        String contaierName = fileGroup.containerName
+
+        if (!contaierName) {
+            throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
+        }
+
+        return contaierName
     }
 
     /**
@@ -188,7 +193,7 @@ class FileUploaderService {
             CDNFileUploader fileUploaderInstance
             try {
                 fileUploaderInstance = providerService.getProviderInstance(ufileInstance.provider.name())
-                fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
+                fileUploaderInstance.deleteFile(ufileInstance.containerFromConfig, ufileInstance.fullName)
             } finally {
                 fileUploaderInstance?.close()
             }
@@ -386,7 +391,7 @@ class FileUploaderService {
             Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
             long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
 
-            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.container,
+            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.containerFromConfig,
                     uFileInstance.fullName, makePublic, expirationPeriod)
         }
 
@@ -463,13 +468,13 @@ class FileUploaderService {
                     CDNFileUploader fileUploaderInstance
                     try {
                         fileUploaderInstance = providerService.getProviderInstance(toCDNProvider.name())
-                        fileUploaderInstance.uploadFile(uFile.container, downloadedFile, fileName, makePublic,
+                        fileUploaderInstance.uploadFile(uFile.containerFromConfig, downloadedFile, fileName, makePublic,
                                 expirationPeriod)
 
                         if (makePublic) {
-                            savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.container, fileName)
+                            savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.containerFromConfig, fileName)
                         } else {
-                            savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.container, fileName,
+                            savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.containerFromConfig, fileName,
                                     expirationPeriod)
                         }
                     } finally {

@@ -105,8 +105,8 @@ class UFile implements Serializable {
         new File(path).exists()
     }
 
-    String getContainer() {
-        containerName(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
+    String getContainerFromConfig() {
+        containerNameFromConfig(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
     }
 
     String getFullName() {
@@ -126,7 +126,7 @@ class UFile implements Serializable {
      * @param containerName Name of the Amazon file container or Google bucket.
      * @return Modified container name as described above.
      */
-    static String containerName(String containerName) {
+    static String containerNameFromConfig(String containerName) {
         if (!containerName) {
             return
         }
