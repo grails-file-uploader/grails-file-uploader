@@ -84,7 +84,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup, BuildDataTes
         resultPath.contains('/tmp')
     }
 
-    void "test scopeFileName when getContainerName does not exist"() {
+    void "test scopeFileName when containerName does not exist"() {
         given: 'An instance of FileGroup class'
         UFile uFileInstance = UFile.build()
         FileGroup fileGroupInstance = new FileGroup('testGoogle')
@@ -99,7 +99,7 @@ class FileGroupSpec extends Specification implements BaseTestSetup, BuildDataTes
 
         when: 'scopeFileName method is called and container name does not exist'
         GroovyMock(UFile, global: true)
-        UFile.getContainerName(_) >> {
+        UFile.containerName(_) >> {
             return null
         }
 

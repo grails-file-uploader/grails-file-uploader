@@ -13,6 +13,7 @@ import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import grails.testing.gorm.DomainUnitTest
 import grails.util.Environment
+import grails.util.Holders
 import org.junit.Rule
 import org.slf4j.Logger
 import spock.lang.Specification
@@ -120,7 +121,7 @@ class UFileSpec extends Specification implements BaseTestSetup, DomainUnitTest<U
         String containerName = null
 
         when: 'containerName method is called and containerName parameter has null value'
-        def result = UFile.getContainerName(containerName)
+        def result = UFile.containerName(containerName)
 
         then: 'The method should return null'
         result == null
@@ -132,7 +133,7 @@ class UFileSpec extends Specification implements BaseTestSetup, DomainUnitTest<U
             return Environment.PRODUCTION
         }
 
-        result = UFile.getContainerName(containerName)
+        result = UFile.containerName(containerName)
 
         then: 'Method returns containerName'
         result == 'test'

@@ -47,11 +47,12 @@ class FileUploaderService {
         Date expireOn
         long currentTimeMillis = System.currentTimeMillis()
         CDNProvider cdnProvider
-        String containerName
         UFileType type = UFileType.LOCAL
         String path
         FileGroup fileGroupInstance = new FileGroup(group)
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
+
+        String containerNameFomConfig
 
         if (checksumValidator.shouldCalculateChecksum()) {
             UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksumValidator.getChecksum(file),
@@ -101,9 +102,9 @@ class FileUploaderService {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
-            containerName = fileGroupInstance.containerName
+            containerNameFomConfig = fileGroupInstance.containerName
 
-            if (!containerName) {
+            if (!containerNameFomConfig) {
                 throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
             }
 
@@ -123,6 +124,9 @@ class FileUploaderService {
             ufile.checksum = checksumValidator.getChecksum(file)
             ufile.checksumAlgorithm = checksumValidator.algorithm
         }
+
+        // Assign container name to the UFile instance
+        ufile.@containerName = containerNameFomConfig
 
         NucleusUtils.save(ufile, true)
         return ufile

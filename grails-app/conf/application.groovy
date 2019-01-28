@@ -53,6 +53,7 @@ fileuploader {
             maxSize = 1024 * 1024 * 2 // 2 MB
             allowedExtensions = ["jpg", "jpeg", "gif", "png", "txt"]
             path = '/tmp'
+            container = 'test-container'
         }
     }
 

@@ -203,7 +203,7 @@ class FileGroup {
 
     // Method which fetches containerName from application.groovy file and returns it.
     String getContainerName() {
-        return UFile.getContainerName(this.groupConfig.container ?: this.config.container)
+        return UFile.containerName(this.groupConfig.container ?: this.config.container)
     }
 
     // Method that fetched CDNProvider from the config and returns it.

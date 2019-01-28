@@ -66,7 +66,7 @@ class UFile implements Serializable {
         dateCreated bindable: false
         lastUpdated bindable: false
         envName bindable: false
-        containerName bindable: false
+        containerName nullable: true
     }
 
     static mapping = {
@@ -77,11 +77,6 @@ class UFile implements Serializable {
         checksum index: true
         //Index on checksumAlgorithm
         checksumAlgorithm index: true
-    }
-
-    // Store the container name of cloud in the {@link UFile} instance.
-    def beforeInsert() {
-        this.@containerName = this.getContainer()
     }
 
     def afterDelete() {
@@ -111,7 +106,7 @@ class UFile implements Serializable {
     }
 
     String getContainer() {
-        getContainerName(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
+        containerName(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
     }
 
     String getFullName() {
@@ -131,7 +126,7 @@ class UFile implements Serializable {
      * @param containerName Name of the Amazon file container or Google bucket.
      * @return Modified container name as described above.
      */
-    static String getContainerName(String containerName) {
+    static String containerName(String containerName) {
         if (!containerName) {
             return
         }
