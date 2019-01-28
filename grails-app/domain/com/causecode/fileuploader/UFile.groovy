@@ -37,6 +37,7 @@ class UFile implements Serializable {
     String fileGroup
     String name
     String path
+    String containerName // Name of the cloud container.
 
     //Contains calculated hash value of file content
     String checksum
@@ -65,6 +66,7 @@ class UFile implements Serializable {
         dateCreated bindable: false
         lastUpdated bindable: false
         envName bindable: false
+        containerName bindable: false
     }
 
     static mapping = {
@@ -75,6 +77,11 @@ class UFile implements Serializable {
         checksum index: true
         //Index on checksumAlgorithm
         checksumAlgorithm index: true
+    }
+
+    // Store the container name of cloud in the {@link UFile} instance.
+    def beforeInsert() {
+        this.containerName = this.getContainer()
     }
 
     def afterDelete() {
