@@ -133,13 +133,13 @@ class FileUploaderService {
      * @throws StorageConfigurationException - When container name is not defined.
      */
     private static String getContainerNameFromConfig(FileGroup fileGroup) throws StorageConfigurationException {
-        String contaierName = fileGroup.containerName
+        String containerName = fileGroup.containerName
 
-        if (!contaierName) {
+        if (!containerName) {
             throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
         }
 
-        return contaierName
+        return containerName
     }
 
     /**
