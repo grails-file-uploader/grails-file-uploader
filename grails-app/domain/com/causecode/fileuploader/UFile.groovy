@@ -66,7 +66,7 @@ class UFile implements Serializable {
         dateCreated bindable: false
         lastUpdated bindable: false
         envName bindable: false
-        containerName nullable: true
+        containerName size: 3..63, nullable: true
     }
 
     static mapping = {
