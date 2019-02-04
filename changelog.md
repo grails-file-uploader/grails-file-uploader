@@ -1,6 +1,11 @@
 # ChangeLog
 
-## Version 4.0.0 [Unreleased]
+## Version 4.0.1 [Unreleased]
+
+### Added
+- Field to store the container name in UFile domain.
+
+## Version 4.0.0 [19-12-2018]
 
 ### Changed
 - Upgraded the plugin to support grails 3.3.5
