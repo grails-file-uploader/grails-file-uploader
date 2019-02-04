@@ -17,7 +17,6 @@ import grails.util.Holders
 import groovy.json.JsonBuilder
 import org.apache.commons.fileupload.disk.DiskFileItem
 import org.apache.commons.validator.UrlValidator
-import org.grails.plugins.codecs.HTMLCodec
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.web.multipart.MultipartFile
@@ -34,7 +33,7 @@ import javax.servlet.http.Part
 // Suppressed Methods counts since this class contains more than 30 methods.
 @ConfineMetaClassChanges([FileUploaderService, File])
 @Build([UFile, UFileMoveHistory])
-@SuppressWarnings('MethodCount')
+@SuppressWarnings(['MethodCount', 'FileLengthRule'])
 class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implements ServiceUnitTest<FileUploaderService>,
         BuildDataTest {
 
@@ -92,6 +91,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         new FileGroup(_) >> fileGroupMock
         fileGroupMock.cdnProvider >> provider
+        fileGroupMock.containerName >> 'test-bucket'
         fileGroupMock.groupConfig >> [storageTypes: 'CDN']
 
         when: 'The saveFile method is called'
@@ -100,7 +100,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         then: 'UFile instance should be successfully saved'
         ufileInstancefile.provider == provider
         ufileInstancefile.extension == 'txt'
-        ufileInstancefile.container == 'causecode-test'
+        ufileInstancefile.containerFromConfig == 'causecode-test'
         ufileInstancefile.fileGroup == fileGroup
 
         file.delete()
@@ -125,6 +125,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         and: 'Mocked FileGroup class method call'
         new FileGroup(_) >> fileGroupMock
         fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+        fileGroupMock.containerName >> 'test-container'
         fileGroupMock.groupConfig >> [storageTypes: 'CDN']
         mockGetFileNameAndExtensions()
 
@@ -544,6 +545,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         mockGetFileNameAndExtensions()
         mockUploadFileMethod(true)
         mockGetProviderInstance('google')
+        4 * fileGroupMock.containerName >> 'test-container'
         5 * fileGroupMock.cdnProvider >> {
             return
         } >> {
@@ -565,6 +567,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         then: 'Method should return instance of UFile'
         result.fileGroup == 'testGoogle'
         result.type == UFileType.CDN_PUBLIC
+        result.containerName == 'test-container'
 
         when: 'saveFile method is hit and file belongs to StandardMultiartFile'
         mockUploadFileMethod(true)
@@ -608,6 +611,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
 
         then: 'Method should return saved UFile instance'
         result.id != null
+        assert result.containerName == null
 
         when: 'saveFile method is called and error occurs while saving file'
         result = service.saveFile('testLocal', commonsMultipartFileInstance, 'test')
@@ -787,6 +791,7 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         and: 'Mocked FileGroup Instance'
         new FileGroup(_) >> fileGroupMock
         fileGroupMock.cdnProvider >> CDNProvider.GOOGLE
+        fileGroupMock.containerName >> 'test-container'
         fileGroupMock.groupConfig >> [storageTypes: 'CDN', checksum: [calculate: true, algorithm: Algorithm.SHA1]]
 
         and: 'The saveFile method has been already called once for given file'
@@ -838,5 +843,32 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         Exception exception = thrown(IllegalArgumentException)
         exception.message == "No enum constant ${Algorithm.canonicalName}.ABCD"
     }
-}
 
+    void "test saveFile method when container name is not defined in the config"() {
+        given: 'Instances of CommonsMultipartFile to upload'
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        DiskFileItem fileItem = getDiskFileItemInstance(fileInstance)
+        CommonsMultipartFile commonsMultipartFileInstance = new CommonsMultipartFile(fileItem)
+
+        and: 'Mocked methods of FileGroup to return empty container name'
+        mockFileGroupConstructor('CDN')
+        fileGroupMock.containerName >> {
+            return null
+        }
+
+        fileGroupMock.cdnProvider >> {
+            return CDNProvider.GOOGLE
+        }
+
+        and: 'Mocked getFileNameAndExtensions method of fileGroupMock'
+        mockGetFileNameAndExtensions()
+
+        when: 'saveFile is called and container name is not defined'
+        service.saveFile('testGoogle', commonsMultipartFileInstance, 'test')
+
+        then: 'Method should throw StorageConfigurationException and message should match'
+        StorageConfigurationException exception = thrown(StorageConfigurationException)
+        exception.message == 'Container name not defined in the Config. Please define one.'
+    }
+}

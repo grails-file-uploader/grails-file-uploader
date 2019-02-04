@@ -119,8 +119,8 @@ class UFileSpec extends Specification implements BaseTestSetup, DomainUnitTest<U
         given: 'Parameter variable'
         String containerName = null
 
-        when: 'containerName method is called and containerName parameter has null value'
-        def result = UFile.containerName(containerName)
+        when: 'containerNameFromConfig method is called and containerNameFromConfig parameter has null value'
+        def result = UFile.containerNameFromConfig(containerName)
 
         then: 'The method should return null'
         result == null
@@ -132,9 +132,9 @@ class UFileSpec extends Specification implements BaseTestSetup, DomainUnitTest<U
             return Environment.PRODUCTION
         }
 
-        result = UFile.containerName(containerName)
+        result = UFile.containerNameFromConfig(containerName)
 
-        then: 'Method returns containerName'
+        then: 'Method returns containerNameFromConfig'
         result == 'test'
     }
 

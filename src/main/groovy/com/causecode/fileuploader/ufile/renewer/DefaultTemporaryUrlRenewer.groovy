@@ -105,7 +105,7 @@ class DefaultTemporaryUrlRenewer implements TemporaryUrlRenewer {
     private boolean updateExpirationPeriodAndUrl(UFile uFile) {
         long expirationPeriod = getExpirationPeriod(uFile.fileGroup)
 
-        uFile.path = cdnFileUploader.getTemporaryURL(uFile.container, uFile.fullName, expirationPeriod)
+        uFile.path = cdnFileUploader.getTemporaryURL(uFile.containerFromConfig, uFile.fullName, expirationPeriod)
         uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
 
         if (NucleusUtils.save(uFile, true)) {

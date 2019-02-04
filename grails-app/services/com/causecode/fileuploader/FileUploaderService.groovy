@@ -52,6 +52,8 @@ class FileUploaderService {
         FileGroup fileGroupInstance = new FileGroup(group)
         ChecksumValidator checksumValidator = new ChecksumValidator(fileGroupInstance)
 
+        String containerName
+
         if (checksumValidator.shouldCalculateChecksum()) {
             UFile uFileInstance = UFile.findByChecksumAndChecksumAlgorithm(checksumValidator.getChecksum(file),
                     checksumValidator.algorithm)
@@ -100,6 +102,7 @@ class FileUploaderService {
                 throw new StorageConfigurationException('Provider not defined in the Config. Please define one.')
             }
 
+            containerName = getContainerNameFromConfig(fileGroupInstance)
             expireOn = isPublicGroup(group) ? null : new Date(new Date().time + expirationPeriod * 1000)
             path = uploadFileToCloud(fileData, fileGroupInstance, tempFile)
         } else {
@@ -110,7 +113,8 @@ class FileUploaderService {
 
         UFile ufile = new UFile(
                 [name     : fileData.fileName, size: fileData.fileSize, path: path, type: type,
-                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider])
+                 extension: fileData.fileExtension, expiresOn: expireOn, fileGroup: group, provider: cdnProvider,
+                 containerName: containerName])
 
         if (checksumValidator.shouldCalculateChecksum()) {
             ufile.checksum = checksumValidator.getChecksum(file)
@@ -119,6 +123,23 @@ class FileUploaderService {
 
         NucleusUtils.save(ufile, true)
         return ufile
+    }
+
+    /**
+     * This method checks if the configuration {@link FileGroup} contains the {@link String} container name.
+     *
+     * @param fileGroup {@link FileGroup}
+     * @return {@link String} - containerName
+     * @throws StorageConfigurationException - When container name is not defined.
+     */
+    private static String getContainerNameFromConfig(FileGroup fileGroup) throws StorageConfigurationException {
+        String containerName = fileGroup.containerName
+
+        if (!containerName) {
+            throw new StorageConfigurationException('Container name not defined in the Config. Please define one.')
+        }
+
+        return containerName
     }
 
     /**
@@ -177,7 +198,7 @@ class FileUploaderService {
             CDNFileUploader fileUploaderInstance
             try {
                 fileUploaderInstance = providerService.getProviderInstance(ufileInstance.provider.name())
-                fileUploaderInstance.deleteFile(ufileInstance.container, ufileInstance.fullName)
+                fileUploaderInstance.deleteFile(ufileInstance.containerFromConfig, ufileInstance.fullName)
             } finally {
                 fileUploaderInstance?.close()
             }
@@ -375,7 +396,7 @@ class FileUploaderService {
             Boolean makePublic = isPublicGroup(uFileInstance.fileGroup)
             long expirationPeriod = getExpirationPeriod(uFileInstance.fileGroup)
 
-            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.container,
+            amazonFileUploaderInstance.updatePreviousFileMetaData(uFileInstance.containerFromConfig,
                     uFileInstance.fullName, makePublic, expirationPeriod)
         }
 
@@ -452,13 +473,13 @@ class FileUploaderService {
                     CDNFileUploader fileUploaderInstance
                     try {
                         fileUploaderInstance = providerService.getProviderInstance(toCDNProvider.name())
-                        fileUploaderInstance.uploadFile(uFile.container, downloadedFile, fileName, makePublic,
+                        fileUploaderInstance.uploadFile(uFile.containerFromConfig, downloadedFile, fileName, makePublic,
                                 expirationPeriod)
 
                         if (makePublic) {
-                            savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.container, fileName)
+                            savedUrlPath = fileUploaderInstance.getPermanentURL(uFile.containerFromConfig, fileName)
                         } else {
-                            savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.container, fileName,
+                            savedUrlPath = fileUploaderInstance.getTemporaryURL(uFile.containerFromConfig, fileName,
                                     expirationPeriod)
                         }
                     } finally {

@@ -37,6 +37,7 @@ class UFile implements Serializable {
     String fileGroup
     String name
     String path
+    String containerName // Name of the cloud container.
 
     //Contains calculated hash value of file content
     String checksum
@@ -65,6 +66,7 @@ class UFile implements Serializable {
         dateCreated bindable: false
         lastUpdated bindable: false
         envName bindable: false
+        containerName size: 3..63, nullable: true
     }
 
     static mapping = {
@@ -103,8 +105,8 @@ class UFile implements Serializable {
         new File(path).exists()
     }
 
-    String getContainer() {
-        containerName(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
+    String getContainerFromConfig() {
+        containerNameFromConfig(Holders.flatConfig["fileuploader.groups.${fileGroup}.container"])
     }
 
     String getFullName() {
@@ -124,7 +126,7 @@ class UFile implements Serializable {
      * @param containerName Name of the Amazon file container or Google bucket.
      * @return Modified container name as described above.
      */
-    static String containerName(String containerName) {
+    static String containerNameFromConfig(String containerName) {
         if (!containerName) {
             return
         }

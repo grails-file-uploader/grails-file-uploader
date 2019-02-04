@@ -98,6 +98,7 @@ class BaseFileUploaderServiceSpecSetup extends Specification implements BaseTest
     void mockFileGroupConstructor(String storageTypes) {
         new FileGroup(_) >> { String group ->
             fileGroupMock.groupName = group
+            fileGroupMock.containerName >> 'test-container'
             fileGroupMock.groupConfig >> [storageTypes: storageTypes]
 
             return fileGroupMock
