@@ -1,6 +1,6 @@
 # ChangeLog
 
-## Version 4.0.1 [Unreleased]
+## Version 4.0.1 [04-02-2019]
 
 ### Added
 - Field to store the container name in UFile domain.
