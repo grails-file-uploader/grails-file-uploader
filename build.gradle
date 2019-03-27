@@ -15,7 +15,7 @@ buildscript {
     }
 }
 
-version "4.0.1"
+version "4.0.2"
 group "com.causecode.plugins"
 
 apply plugin: "idea"
@@ -86,22 +86,22 @@ dependencies {
         exclude module: "guice"
         exclude module: "asm"
     }
-    compile("org.apache.jclouds:jclouds-compute:1.9.2") {
+    compile("org.apache.jclouds:jclouds-compute:2.1.2") {
         exclude module: "jclouds-core"
         exclude module: "guice"
         exclude module: "asm"
     }
-    compile("org.apache.jclouds.provider:aws-s3:1.9.2") {
+    compile("org.apache.jclouds.provider:aws-s3:2.1.2") {
         exclude module: "jclouds-core"
         exclude module: "guice"
         exclude module: "asm"
     }
-    compile ("org.apache.jclouds:jclouds-core:1.9.2") {
+    compile ("org.apache.jclouds:jclouds-core:2.1.2") {
         exclude module: 'asm'
         exclude module: 'http-client'
         exclude module: 'cglib'
     }
-    compile("com.google.guava:guava:19.0")
+    compile("com.google.guava:guava:23.0")
     compile("com.google.cloud:google-cloud-storage:1.4.0") {
         exclude module: 'guice'
         exclude module: 'http-client'

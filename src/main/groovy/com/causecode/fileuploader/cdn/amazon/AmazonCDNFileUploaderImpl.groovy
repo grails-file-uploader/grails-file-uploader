@@ -124,22 +124,34 @@ class AmazonCDNFileUploaderImpl extends CDNFileUploader implements Closeable {
         MutableObjectMetadataImpl mutableObjectMetadata = new MutableObjectMetadataImpl()
         mutableObjectMetadata.setKey(fileName)
 
-        log.info("Setting cache control in $fileName with max age $maxAge")
-        mutableObjectMetadata.setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
-
         // Getting the content type of file from the file name
         String contentType = new MimetypesFileTypeMap().getContentType(fileName)
-
-        /*
-         * MutableObjectMetadata successfully set content type locally but it's not reflected on Amazon server
-         * whereas blobStore can easily set content-type but lacks other options. Even tested on jclouds 1.9.1.
-         * TODO: Needs to be revisited.
-         */
-        mutableObjectMetadata.contentMetadata.setContentType(contentType)
 
         S3Object s3ObjectToUpdate = new S3ObjectImpl(mutableObjectMetadata)
 
         s3ObjectToUpdate.setPayload(file)
+
+        /**
+         * It replaces the earlier created meta with the File metadata where it only sets the length of file in the
+         * header.
+         *
+         * Line 131: {@link S3ObjectImpl}
+         * public void setPayload(Payload data) {
+         *      super.setPayload(data);
+         *      metadata.setContentMetadata(data.getContentMetadata());
+         * }
+         *
+         * After setting file payload, it replaces all the metadata with null values i.e metadata of file.
+         * {@link  org.jclouds.io.payloads.FilePayload}
+         */
+        s3ObjectToUpdate.payload.contentMetadata.setContentDisposition("attachment; filename= ${fileName}")
+        s3ObjectToUpdate.payload.contentMetadata.setContentType(contentType)
+
+        log.info("Setting cache control in $fileName with max age $maxAge")
+
+        s3ObjectToUpdate.payload.contentMetadata
+                .setCacheControl("max-age=$maxAge, public, must-revalidate, proxy-revalidate")
+
         try {
             /* Throws HttpResponseException if the conditions requested set are not satisfied by the object
              * on the server.

@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Version 4.0.2 [Unreleased]
+
+### Changed
+- JCloud dependencies to work with gson 2.5
+
 ## Version 4.0.1 [04-02-2019]
 
 ### Added
@@ -18,7 +23,7 @@
 ## Version 3.1.2 [02-May-2018]
 
 ### Added
-- Added environment specific UFile feature. This enables deletion of remote files only when the upload operation was  
+- Added environment specific UFile feature. This enables deletion of remote files only when the upload operation was
 performed in the same environment.
 
 ## Modified
