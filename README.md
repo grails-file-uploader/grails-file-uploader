@@ -1,4 +1,4 @@
-# File-Uploader Plugin (Latest 4.0.1)
+# File-Uploader Plugin (Latest 4.0.2)
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/maintainability)](https://codeclimate.com/github/causecode/grails-file-uploader/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/13bfee73c29ecd2ea4b2/test_coverage)](https://codeclimate.com/github/causecode/grails-file-uploader/test_coverage)
@@ -61,7 +61,7 @@ fileuploader {
             //Explnation about this congiguration is given below
             checksum {
                 calculate = true
-                algorithm = Algorithm.MD5                
+                algorithm = Algorithm.MD5
             }
         }
         userAvatar {
@@ -71,7 +71,7 @@ fileuploader {
             container = "anyContainerName"
             checksum {
                 calculate = false
-                algorithm = Algorithm.SHA1                
+                algorithm = Algorithm.SHA1
              }
         }
         logo {
@@ -88,7 +88,7 @@ fileuploader {
 
 To enable CDN to any group you must have a [rackspace](http://docs.rackspace.com/) account with a username & key.
 This username & key needs to be passed in config as shown in above example. Authentication can be done using username
-& password pair but currently only key/username pair is supported.    
+& password pair but currently only key/username pair is supported.
 
 1. To enable CDN uploading to any group just set **storageType** to **CDN** & provide a container name.
 
@@ -101,7 +101,7 @@ can be overwritten for group level configuration by setting **expirationPeriod**
    # Google Default Credentials
    export GOOGLE_APPLICATION_CREDENTIALS='/path/to/key.json'
    ```
-4. To Enable checksum checks and generation, define configuration as shown in the sample configuration, 
+4. To Enable checksum checks and generation, define configuration as shown in the sample configuration,
 ```
  groups {
         degreeApplication {			// Non CDN files, will be stored in local directory.
@@ -111,19 +111,19 @@ can be overwritten for group level configuration by setting **expirationPeriod**
             storageTypes = ""
             checksum {
                 calculate = true
-                algorithm = Algorithm.MD5                
+                algorithm = Algorithm.MD5
             }
         }
   }
 
-``` 
+```
 If first flag is set to true, plugin will generate checksum for the uploaded file and try to find a file from database having same checksum. If any such file is found, then plugin will throw an **DuplicateFileException** exception.
 Second flag will tell plugin which algorithm to use to calculate the checksum. Currently, possible choices are,
-``` 
+```
 Algorithm.MD5 and,
 Algorithm.SHA1
 ```
-Second flag will be ignored if first flag is set to false. By default checksum calculation features is disabled. To enable provide valid configurations. 
+Second flag will be ignored if first flag is set to false. By default checksum calculation features is disabled. To enable provide valid configurations.
 
 5. To disable the auto renew URL job from the installing app, add the following config in the application.groovy file.
 ```
