@@ -1,9 +1,12 @@
 # ChangeLog
 
-## Version 4.0.2 [Unreleased]
+## Version 4.0.2 [27-03-2019]
 
 ### Changed
-- JCloud dependencies to work with gson 2.5
+- Updated JCloud dependencies to work with gson 2.5
+
+### Fixed
+- Header properties settings issue for the amazon s3 obejcts.
 
 ## Version 4.0.1 [04-02-2019]
 
