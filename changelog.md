@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Version 4.0.3 [28-03-2019]
+
+### Fixed
+- Update container name when file moved to another CDN.
+
 ## Version 4.0.2 [27-03-2019]
 
 ### Changed

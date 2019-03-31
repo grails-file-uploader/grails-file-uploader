@@ -500,6 +500,7 @@ class FileUploaderService {
                 uFileHistory.status = MoveStatus.SUCCESS
                 uFile.name = fileName
                 uFile.path = savedUrlPath
+                uFile.containerName = uFile.containerFromConfig
                 uFile.provider = toCDNProvider
                 uFile.expiresOn = new Date(new Date().time + expirationPeriod * 1000)
                 uFile.type = makePublic ? UFileType.CDN_PUBLIC : UFileType.CDN_PRIVATE
