@@ -414,6 +414,22 @@ class FileUploaderService {
         return Holders.flatConfig["fileuploader.groups.${fileGroup}.makePublic"] ? true : false
     }
 
+    boolean moveToNewCDN(CDNProvider toCDNProvider = CDNProvider.AMAZON, boolean makePublic = false) {
+        List<UFile> uFileList, uFilesUploadFailuresList = []
+        int offset = 0
+
+        while ((uFileList =  UFile.createCriteria().list(max: 500, offset: 0) {}) && uFileList.size()) {
+            uFilesUploadFailuresList.addAll(moveFilesToCDN(uFileList, toCDNProvider, makePublic))
+
+            offset += 500
+        }
+
+        log.debug "Successfully moved files to new ${toCDNProvider.toString()} CDN and failed to upload total files" +
+                ": ${uFilesUploadFailuresList.size()}"
+
+        return true
+    }
+
     /**
      * Moves all UFiles stored at any CDN provider to the given CDN provider. Does not touch UFiles stored locally.
      * Needs to be executed only once.
