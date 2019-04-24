@@ -5,6 +5,7 @@ import com.causecode.fileuploader.util.checksum.Algorithm
 import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileException
 import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
+import grails.gorm.CriteriaBuilder
 import grails.testing.services.ServiceUnitTest
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -34,6 +35,23 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         ProviderService providerService= Mock(ProviderService)
         providerService.grailsApplication = Holders.grailsApplication
         service.providerService = providerService
+    }
+
+    @SuppressWarnings('MapAsMethodParameter')
+    void mockCreateCriteria(List<Object> resultList) {
+        GroovyMock(UFile, global: true)
+        CriteriaBuilder criteriaBuilder = Mock()
+
+        criteriaBuilder.list(_, _) >> { Map params, Closure closure ->
+            JsonBuilder jsonBuilder = new JsonBuilder()
+            jsonBuilder closure
+
+            return resultList
+        } >> {
+            return []
+        }
+
+        UFile.createCriteria() >> criteriaBuilder
     }
 
     void "test isPublicGroup for various file groups"() {
@@ -863,5 +881,96 @@ class FileUploaderServiceSpec extends BaseFileUploaderServiceSpecSetup implement
         then: 'Method should throw StorageConfigurationException and message should match'
         StorageConfigurationException exception = thrown(StorageConfigurationException)
         exception.message == 'Container name not defined in the Config. Please define one.'
+    }
+
+    void "test moveToNewCDN method for successfully moving the files to the target CDN provider"() {
+        given: 'An instance of UFile'
+        UFile uFileOne = UFile.build(path: '/tmp/test1.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
+        UFile uFileTwo = UFile.build(path: '/tmp/test2.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
+
+        and: 'Mocked the createCriteria method to return the UFiles list'
+        mockCreateCriteria([uFileOne, uFileTwo])
+
+        and: 'Mocked the moveFilesToCDN method to move the files to source CDN provider successfully'
+        service.metaClass.static.moveFilesToCDN = { List<UFile> list, CDNProvider provider, boolean makePublic ->
+            list.each { UFile file ->
+                file.provider = CDNProvider.AMAZON
+                file.save()
+            }
+        }
+
+        when: 'moveToNewCDN method is called'
+        assert uFileOne.provider == CDNProvider.GOOGLE
+        assert uFileTwo.provider == CDNProvider.GOOGLE
+
+        boolean status = service.moveToNewCDN(CDNProvider.AMAZON, false)
+
+        then: 'it should return true and all the UFile providers must be changed to target CDN'
+        status
+        uFileOne.provider == CDNProvider.AMAZON
+        uFileTwo.provider == CDNProvider.AMAZON
+    }
+
+    void "test moveToNewCDN method for the failure case when we move files to target CDN"() {
+        given: 'An instance of UFile'
+        UFile uFileOne = UFile.build(path: '/tmp/test1.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
+        UFile uFileTwo = UFile.build(path: '/tmp/test2.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
+
+        and: 'Mocked the createCriteria method to return the UFiles list'
+        mockCreateCriteria([uFileOne, uFileTwo])
+
+        and: 'Mocked the moveFilesToCDN method to return the list of failed documents'
+        service.metaClass.static.moveFilesToCDN = { List<UFile> list, CDNProvider provider, boolean makePublic ->
+            list.each { UFile file ->
+                UFileMoveHistory.build(ufile: file, fromCDN: file.provider, toCDN: provider, status: MoveStatus.FAILURE,
+                        details: 'failed to move.')
+               return false
+            }
+
+            return list
+        }
+
+        when: 'moveToNewCDN method is called'
+        boolean status = service.moveToNewCDN(CDNProvider.AMAZON, false)
+
+        then: 'it should return true and all the UFile providers must not be changed'
+        status
+        uFileOne.provider == CDNProvider.GOOGLE
+        uFileTwo.provider == CDNProvider.GOOGLE
+        UFileMoveHistory.count() == 2
+    }
+
+    void "test moveToNewCDN method for amazon when exception occurs in a file URL"() {
+        given: 'An instance of UFile and File'
+        UFile uFileInstance = UFile.build(path: '/tmp/test.txt', provider: CDNProvider.GOOGLE, fileGroup: 'testGoogle')
+        File fileInstance = getFileInstance('/tmp/test.txt')
+
+        and: 'Mocked method'
+        service.metaClass.getFileFromURL = { String url, String filename ->
+            throw new IOException('Error getting file from URL')
+        }
+
+        and: 'Mocked Amazon provider instance'
+        mockGetProviderInstance(CDNProvider.AMAZON.name())
+
+        and: 'Mocked the uploadFile method of amazon'
+        mockUploadFileMethod(true)
+
+        when: 'moveFilesToCDN method is called'
+        service.moveToNewCDN(CDNProvider.AMAZON, true)
+
+        then: 'File won\'t be moved'
+        uFileInstance.provider == CDNProvider.GOOGLE
+
+        cleanup:
+        fileInstance.delete()
+    }
+
+    void "test moveToNewCDN method is called with null CDN provider name"() {
+        when: 'moveToNewCDN method is called'
+        boolean status = service.moveToNewCDN(null, false)
+
+        then: 'it should return false'
+        !status
     }
 }
