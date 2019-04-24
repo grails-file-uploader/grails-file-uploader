@@ -414,12 +414,32 @@ class FileUploaderService {
         return Holders.flatConfig["fileuploader.groups.${fileGroup}.makePublic"] ? true : false
     }
 
-    boolean moveToNewCDN(CDNProvider toCDNProvider = CDNProvider.AMAZON, boolean makePublic = false) {
+    /**
+     * This methods move all the instances of {@link UFile} which are not local to the destination {@link CDNProvider}.
+     * The migration from one CDN to another follows below steps.
+     * 1. A copy of {@link File} from the source CDN.
+     * 2. Upload it to the destination CDN.
+     * 3. Update the respective {@link UFile} instance.
+     * 4. Creates an instance of {@link UFileMoveHistory} which contains the {@link UFile} move history.
+     *
+     * @param toCDNProvider {@link CDNProvider} - Target destination CDN provider.
+     * @param makePublic {@link boolean} - All the URLs either public or signed.
+     * @return {@link boolean} Based on the successful move.
+     */
+    boolean moveToNewCDN(CDNProvider toCDNProvider, boolean makePublic = false) {
+        if (!toCDNProvider) {
+            return false
+        }
+
         List<UFile> uFileList, uFilesUploadFailuresList = []
         int offset = 0
 
-        while ((uFileList =  UFile.createCriteria().list(max: 500, offset: 0) {}) && uFileList.size()) {
+        while ((uFileList =  UFile.createCriteria().list(max: 500, offset: 0) {
+            ne('type', CDNProvider.LOCAL)
+        }).size()) {
             uFilesUploadFailuresList.addAll(moveFilesToCDN(uFileList, toCDNProvider, makePublic))
+
+            log.debug "Moved ${uFileList.size()} files to new CDN and failed count: ${uFilesUploadFailuresList.size()}"
 
             offset += 500
         }
