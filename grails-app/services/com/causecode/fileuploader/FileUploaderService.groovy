@@ -417,7 +417,7 @@ class FileUploaderService {
     /**
      * This methods move all the instances of {@link UFile} which are not local to the destination {@link CDNProvider}.
      * The migration from one CDN to another follows below steps.
-     * 1. A copy of {@link File} from the source CDN.
+     * 1. A copy of {@link File} from the source CDN {@link UFile} instance.
      * 2. Upload it to the destination CDN.
      * 3. Update the respective {@link UFile} instance.
      * 4. Creates an instance of {@link UFileMoveHistory} which contains the {@link UFile} move history.
@@ -433,10 +433,14 @@ class FileUploaderService {
             return false
         }
 
+        log.debug "Migration from source CDN to target ${toCDNProvider.name()} has been started..."
+
         List<UFile> uFileList, uFilesUploadFailuresList = []
         int offset = 0
 
-        while ((uFileList =  UFile.createCriteria().list(max: 500, offset: 0) {}).size()) {
+        while ((uFileList =  UFile.createCriteria().list(max: 500, offset: offset) {
+            ne('type', CDNProvider.LOCAL)
+        }).size()) {
             uFilesUploadFailuresList.addAll(moveFilesToCDN(uFileList, toCDNProvider, makePublic))
 
             log.debug "Moved ${uFileList.size()} files to new CDN and failed count: ${uFilesUploadFailuresList.size()}"
