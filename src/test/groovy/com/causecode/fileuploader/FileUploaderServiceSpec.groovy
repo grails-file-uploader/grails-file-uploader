@@ -6,7 +6,6 @@ import com.causecode.fileuploader.util.checksum.exceptions.DuplicateFileExceptio
 import grails.buildtestdata.BuildDataTest
 import grails.buildtestdata.mixin.Build
 import grails.gorm.CriteriaBuilder
-import grails.gorm.PagedResultList
 import grails.testing.services.ServiceUnitTest
 import grails.util.Holders
 import groovy.json.JsonBuilder
