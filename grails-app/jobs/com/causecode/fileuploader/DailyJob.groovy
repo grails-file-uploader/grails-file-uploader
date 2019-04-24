@@ -31,7 +31,7 @@ class DailyJob {
 
         UFile.withNewSession {
             temporaryUrlRenewerService.renewTemporaryURL()
-            fileUploaderService.moveFailedFilesToCDN() // create Issue github to retry at least 5 times
+            fileUploaderService.moveFailedFilesToCDN()
         }
 
         log.info 'Finished executing DailyJob.'
