@@ -1,27 +1,35 @@
-.* # Ignore all dotfiles...
+# Ignore all dot files...
 .classpath
 .project
 !.gitignore # except for .gitignore
-!.settings
+.settings
+/out
 
-#ignoro la carpeta target
+*.tmproj
+
+#Ingore Build Files
 target/*
-target/**/*
+target-eclipse/*
+build/**
+build.gradle.save
 
-#ignoro archivos de intellij idea
+#Gradle files
+.gradle/*
+
+#Ignore IntelliJ files
 *.iml
 *.ipr
 *.iws
 .idea/*
 .idea/**/*
 
-#ignoro logs
+#Ignore Eclipse files
+plugin.xml
+
+#Ignore logs
 *.log
 
-#ignoro css, images y js
-web-app/css/*
-web-app/css/**/*
-web-app/js/*
-web-app/js/**/*
-web-app/images/*
-web-app/images/**/*
+grails-file-uploader-*.zip
+grails-file-uploader-*.zip.sha1
+bin/**
+temp
