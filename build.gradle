@@ -1,0 +1,214 @@
+buildscript {
+    ext {
+        grailsVersion = project.grailsVersion
+    }
+    repositories {
+        mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://repo.grails.org/grails/core" }
+        maven { url "http://repo.spring.io/milestone/" }
+        maven { url "https://repo.grails.org/grails/plugins" }
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+    }
+}
+
+version "4.0.4"
+group "com.causecode.plugins"
+
+apply plugin: "idea"
+apply plugin: "org.grails.grails-plugin"
+apply plugin: "org.grails.grails-gsp"
+apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+ext {
+    grailsVersion = project.grailsVersion
+    gradleWrapperVersion = project.gradleWrapperVersion
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://repo.grails.org/grails/core" }
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.grails:grails-bom:$grailsVersion"
+    }
+    applyMavenExclusions false
+}
+
+dependencies {
+    /*
+     * Default dependencies in grails 3.3.5 for plugin.
+     * While porting to a new grails version, create a blank app and replace the default dependencies with the new ones.
+     */
+    compile "org.springframework.boot:spring-boot-starter-logging:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-autoconfigure:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-actuator:1.5.12.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-tomcat:1.5.12.RELEASE"
+
+    compile "org.grails:grails-core:3.3.5"
+    compile "org.grails:grails-web-boot:3.3.5"
+    compile "org.grails.plugins:cache:4.0.0"
+    compile "org.grails.plugins:scaffolding:3.4.1"
+    compile "org.grails.plugins:gsp:3.3.1"
+
+    profile "org.grails.profiles:web-plugin"
+
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
+    provided "org.hibernate:hibernate-core:5.1.5.Final"
+    provided "org.grails.plugins:hibernate5:6.1.9"
+
+    provided "com.h2database:h2"
+
+    testCompile 'cglib:cglib:3.2.5' // To resolve cglib dependency for test cases.
+    testCompile "org.grails:grails-test-mixins:3.3.0"
+    testCompile "org.grails.plugins:build-test-data:3.3.0"
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails:grails-datastore-rest-client"
+    testCompile "org.grails:grails-web-testing-support"
+
+    /*
+    * Dependencies which were needed for the application/plugin.
+    */
+    compile "com.google.code.gson:gson:2.5" // To resolve guice dependency.
+    provided "org.grails.plugins:quartz:2.0.13"
+
+    compile("org.apache.jclouds.provider:cloudfiles-us:1.9.2") {
+        exclude module: "jclouds-core"
+        exclude module: "guice"
+        exclude module: "asm"
+    }
+    compile("org.apache.jclouds:jclouds-compute:2.1.2") {
+        exclude module: "jclouds-core"
+        exclude module: "guice"
+        exclude module: "asm"
+    }
+    compile("org.apache.jclouds.provider:aws-s3:2.1.2") {
+        exclude module: "jclouds-core"
+        exclude module: "guice"
+        exclude module: "asm"
+    }
+    compile ("org.apache.jclouds:jclouds-core:2.1.2") {
+        exclude module: 'asm'
+        exclude module: 'http-client'
+        exclude module: 'cglib'
+    }
+    compile("com.google.guava:guava:23.0")
+    compile("com.google.cloud:google-cloud-storage:1.4.0") {
+        exclude module: 'guice'
+        exclude module: 'http-client'
+    }
+
+    compile "commons-fileupload:commons-fileupload:1.3.1"
+    compile "org.ow2.asm:asm:5.0.3"
+
+    provided "com.causecode.plugins:nucleus:1.0.0"
+    provided 'org.grails.plugins:spring-security-core:3.2.1'
+}
+
+artifacts {
+    archives jar
+
+    archives javadocJar
+    archives sourcesJar
+}
+
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            if (!project.hasProperty('ossrhUsername') || !project.hasProperty('ossrhPassword')) {
+                return
+            }
+
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'grails-file-uploader'
+                packaging 'jar'
+                description 'This Plugin provides endpoints for file upload to CDN related operations.'
+                url 'https://github.com/causecode/grails-file-uploader'
+
+                scm {
+                    url 'scm:svn:https://github.com/causecode/grails-file-uploader'
+                    connection 'scm:svn:https://github.com/causecode/grails-file-uploader.git'
+                    developerConnection 'https://github.com:causecode/grails-file-uploader.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'causecode'
+                        name 'CauseCode Technologies'
+                        email 'bootstrap@causecode.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            artifactId "grails-file-uploader"
+            pom.withXml {
+                def pomNode = asNode()
+                // version-less dependencies are handled with dependencyManagement
+                pomNode.dependencies.dependency.findAll {
+                    it.version.text().isEmpty()
+                }.each {
+                    it.replaceNode {}
+                }
+            }
+        }
+    }
+}
+
+
+jar {
+    exclude('**/UrlMappings*')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWrapperVersion
+}
+
+// Adding migration files to jar
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
+    }
+}
